@@ -10,8 +10,11 @@
     
 <body>
     <main>
-        <h1 class="title">Gripe Aviária</h1>
-        <img class="placa" src="../imagens/cenario/placa_direita.png">
+ <div class="cenario">
+    <h1 class="title">Gripe Aviária</h1>
+    <img
+        class="placa"  src="../imagens/cenario/placa_direita.png">
+</div>
     </main>
 
 </body>
