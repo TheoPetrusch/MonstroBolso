@@ -1,11 +1,11 @@
 <?php
 
 // Se escolheu Opção A (Composer):
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/autoload.php';
 
 // Se escolheu Opção B (Sem Composer), comente a linha acima e use esta:
 // require_once __DIR__ . '/../config/autoload.php';
-
+    
 use App\Models\Avemon;
 use App\Models\Movimento;
 
