@@ -5,10 +5,12 @@ namespace App\Models;
 class Avemon {
     private ?int $idAvemon;
     private string $nome;
+
+    private ?string $caminhoImagem;
     private ?string $descricao;
     private string $tipo1;
     private ?string $tipo2;
-    private int $hpMax;
+    private int $hp;
     private int $velocidade;
     private int $ataque;
     private int $ataqueEspecial;
@@ -53,5 +55,48 @@ class Avemon {
         if (count($this->movimentos) < 4) {
             $this->movimentos[] = $movimento;
         }
+    }
+
+    public static function importPokeApi(int $idPokemon, array $dadosPersonalizados, \PDO $pdo): bool{
+        $url = "https://pokeapi.com/api/v2/pokemon/{$idPokemon}";
+        
+        $options = [
+            "http" => [
+                "header" => "User-Agent: PHP-Game_Client\r\n"
+            ]
+        ];
+        $context = stream_context_create($options);
+        $response = file_get_contents($url, false, $context);
+        
+        if ($response === false) {
+            return false;
+        }
+
+        $data = json_decode($response, true);
+
+        $stats = [];
+        foreach ($data['stats'] as $s) {
+            $stats[$s['stat']['name']] = $s['base_stat'];
+        }
+
+        $sql = "INSERT INTO avemon
+                (nome, caminhoImagem, descricao, tipo1, tipo2, hp, velocidade, ataque, ataqueEspecial, defesa, defesaEspecial)
+                VALUES (:nome, :caminhoImagem, :descricao, :tipo1, :tipo2, :hp, :velocidade, :ataque, :ataqueEspecial, :defesa, :defesaEspecial)";
+        
+        $stmt = $pdo->prepare($sql);
+
+        return $stmt->execute([
+            ':nome' => $dadosPersonalizados['nome'],
+            ':caminhoImagem' => $dadosPersonalizados['caminhoImagem'],
+            ':descricao' => $dadosPersonalizados['descricao'],
+            ':tipo1' => $dadosPersonalizados['tipo1'],
+            ':tipo2' => $dadosPersonalizados['tipo2'] ?? null,
+            ':hp' => $stats['hp'] ?? 50,
+            ':velocidade' => $stats['speed'] ?? 50,
+            ':ataque' => $stats['attack'] ?? 50,
+            ':ataqueEspecial' => $stats['special-attack'] ?? 50,
+            ':defesa' => $stats['defense'] ?? 50,
+            ':defesaEspecial' => $stats['special-defense'] ?? 50
+        ]);
     }
 }
