@@ -10,7 +10,7 @@ class Avemon {
     private ?string $descricao;
     private string $tipo1;
     private ?string $tipo2;
-    private int $hp;
+    private int $hpMax;
     private int $velocidade;
     private int $ataque;
     private int $ataqueEspecial;
@@ -20,7 +20,6 @@ class Avemon {
     // Atributos de controle em memória
     private int $hpAtual;
     private string $status;
-    private int $prioridade = 0;
     private array $movimentos = [];
 
     public function __construct(
@@ -47,8 +46,6 @@ class Avemon {
     public function getVelocidade(): int { return $this->velocidade; }
     public function getStatus(): string { return $this->status; }
     public function setStatus(string $status): void { $this->status = $status; }
-    public function getPrioridade(): int { return $this->prioridade; }
-    public function setPrioridade(int $prioridade): void { $this->prioridade = $prioridade; }
     public function getMovimentos(): array { return $this->movimentos; }
 
     public function adicionarMovimento(Movimento $movimento): void {
