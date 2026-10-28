@@ -1,0 +1,16 @@
+{
+  "name": "grupo/monstrobolso",
+  "description": "MonstroBolso - jogo estilo Pokémon em PHP OO",
+  "require": {
+    "php": ">=8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\Controllers\\": "app/controllers/",
+      "App\\Models\\": "app/models/",
+      "App\\Core\\": "app/core/",
+      "App\\Exceptions\\": "app/exceptions/",
+      "App\\Traits\\": "app/traits/"
+    }
+  }
+}
