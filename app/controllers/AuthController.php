@@ -89,7 +89,7 @@ class AuthController extends BaseController
         } catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
         } catch (PDOException $e) {
-            $this->json(['ok' => false, 'erro' => 'Erro ao gravar no banco.'], 500);
+            $this->json(['ok' => false, 'erro' => 'Erro ao gravar no banco: ' . $e->getMessage()], 500);
         }
     }
 

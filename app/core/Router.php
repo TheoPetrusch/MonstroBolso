@@ -26,7 +26,7 @@ class Router
     {
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';
         $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-        if ($base !== '' && str_starts_with($path, $base)) {
+        if ($base !== '' && stripos($path, $base) === 0) {
             $path = substr($path, strlen($base));
         }
         $path = '/' . trim($path, '/');

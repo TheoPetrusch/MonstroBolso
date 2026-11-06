@@ -34,4 +34,20 @@ abstract class BaseController
     {
         header('Location: ' . $this->basePath() . $rota);
     }
+
+    /** Id do usuário logado ou null (sessão iniciada no index.php). */
+    protected function usuarioIdLogado(): ?int
+    {
+        return isset($_SESSION['usuario_id']) ? (int) $_SESSION['usuario_id'] : null;
+    }
+
+    /** Para rotas da API: responde 401 e devolve null se não houver login. */
+    protected function exigirLoginApi(): ?int
+    {
+        $id = $this->usuarioIdLogado();
+        if ($id === null) {
+            $this->json(['ok' => false, 'erro' => 'Não autenticado.'], 401);
+        }
+        return $id;
+    }
 }
