@@ -9,10 +9,11 @@
 </head>
     
 <body>
-    <main>
+
+<div class="Cenario ">
         <h1 class="title">Gripe Aviária</h1>
         <img class="placa" src="../imagens/cenario/placa_direita.png">
-    </main>
+</div>
 
 </body>
 
