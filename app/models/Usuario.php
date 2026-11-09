@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use InvalidArgumentException;
@@ -33,8 +34,12 @@ class Usuario
     public static function fromRow(array $r): self
     {
         return new self(
-            (int) $r['id'], $r['nome'], $r['email'], $r['senha_hash'],
-            $r['perfil'], (int) $r['pokedollar']
+            (int) $r['id'],
+            $r['nome'],
+            $r['email'],
+            $r['senha_hash'],
+            $r['perfil'],
+            (int) $r['pokedollar']
         );
     }
 
@@ -52,13 +57,34 @@ class Usuario
     }
 
     //getters
-    public function getId(): ?int { return $this->id; }
-    public function getNome(): string { return $this->nome; }
-    public function getEmail(): string { return $this->email; }
-    public function getSenhaHash(): string { return $this->senhaHash; }
-    public function getPerfil(): string { return $this->perfil; }
-    public function getPokedollar(): int { return $this->pokedollar; }
-    public function isAdmin(): bool { return $this->perfil === 'admin'; }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+    public function getNome(): string
+    {
+        return $this->nome;
+    }
+    public function getEmail(): string
+    {
+        return $this->email;
+    }
+    public function getSenhaHash(): string
+    {
+        return $this->senhaHash;
+    }
+    public function getPerfil(): string
+    {
+        return $this->perfil;
+    }
+    public function getPokedollar(): int
+    {
+        return $this->pokedollar;
+    }
+    public function isAdmin(): bool
+    {
+        return $this->perfil === 'admin';
+    }
 
     // setters com validacao
     public function setNome(string $nome): void

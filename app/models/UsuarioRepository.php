@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Database;
@@ -46,7 +47,7 @@ class UsuarioRepository
             $id = (int) $this->pdo->lastInsertId();
 
             $this->pdo->prepare('INSERT INTO times (usuario_id) VALUES (:id)')
-                      ->execute(['id' => $id]);
+                ->execute(['id' => $id]);
 
             $this->pdo->commit();
         } catch (\Throwable $e) {

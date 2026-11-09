@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 /**
@@ -24,19 +25,44 @@ class Especie
     public static function fromRow(array $r): self
     {
         return new self(
-            (int) $r['id'], (int) $r['pokeapi_id'], $r['nome'], $r['tipo'],
-            (int) $r['hp'], (int) $r['ataque'], (int) $r['defesa'],
-            (int) $r['sp_atk'], (int) $r['sp_def'], (int) $r['velocidade'],
+            (int) $r['id'],
+            (int) $r['pokeapi_id'],
+            $r['nome'],
+            $r['tipo'],
+            (int) $r['hp'],
+            (int) $r['ataque'],
+            (int) $r['defesa'],
+            (int) $r['sp_atk'],
+            (int) $r['sp_def'],
+            (int) $r['velocidade'],
             $r['sprite_url'] ?? null
         );
     }
 
-    public function getId(): int { return $this->id; }
-    public function getPokeapiId(): int { return $this->pokeapiId; }
-    public function getNome(): string { return $this->nome; }
-    public function getTipo(): string { return $this->tipo; }
-    public function getHp(): int { return $this->hp; }
-    public function getVelocidade(): int { return $this->velocidade; }
+    public function getId(): int
+    {
+        return $this->id;
+    }
+    public function getPokeapiId(): int
+    {
+        return $this->pokeapiId;
+    }
+    public function getNome(): string
+    {
+        return $this->nome;
+    }
+    public function getTipo(): string
+    {
+        return $this->tipo;
+    }
+    public function getHp(): int
+    {
+        return $this->hp;
+    }
+    public function getVelocidade(): int
+    {
+        return $this->velocidade;
+    }
 
     public function paraArray(): array
     {

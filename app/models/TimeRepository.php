@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Database;
@@ -60,7 +61,10 @@ class TimeRepository
 
             $livre = null;
             for ($i = 1; $i <= Time::MAXIMO; $i++) {
-                if (!in_array($i, $ocupadas, true)) { $livre = $i; break; }
+                if (!in_array($i, $ocupadas, true)) {
+                    $livre = $i;
+                    break;
+                }
             }
             if ($livre === null) {
                 throw new TimeCheioException(Time::MAXIMO);

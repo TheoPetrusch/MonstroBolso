@@ -110,7 +110,7 @@ class TeamBuilder {
 
         this.#especies
             .filter(e => !termo || e.nome.toLowerCase().includes(termo)
-                               || e.tipo.toLowerCase().includes(termo))
+                || e.tipo.toLowerCase().includes(termo))
             .forEach(e => {
                 const card = document.createElement('div');
                 card.className = 'card-poke';
