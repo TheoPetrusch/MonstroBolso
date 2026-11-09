@@ -1,18 +1,37 @@
 <?php
+declare(strict_types=1);
 
-// Se escolheu Opção A (Composer):
-require_once __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
-// Se escolheu Opção B (Sem Composer), comente a linha acima e use esta:
-// require_once __DIR__ . '/../config/autoload.php';
+use App\Core\Router;
+use App\Controllers\PingController;
+use App\Controllers\AuthController;
+use App\Controllers\TimeController;
 
-use App\Models\Avemon;
-use App\Models\Movimento;
+session_start();
 
-$meuAvemon = new Avemon(1, 'Pikachu', 100, 90, 'ELE');
-$golpe = new Movimento(1, 'Choque do Trovão', 'Causa dano elétrico', 'dano', 40, 0);
+$router = new Router();
 
-$meuAvemon->adicionarMovimento($golpe);
+// utilitárias
+$router->get('/api/ping', [PingController::class, 'ping']);
+$router->get('/api/db',   [PingController::class, 'db']);
 
-echo "Avemon criado: " . $meuAvemon->getNome() . "<br>";
-echo "Golpe adicionado: " . $meuAvemon->getMovimentos()[0]->getNome();
+// páginas
+$router->get('/',     [AuthController::class, 'paginaLogin']);
+$router->get('/home', [AuthController::class, 'paginaHome']);
+$router->get('/time', [TimeController::class, 'pagina']);
+
+// API de autenticação
+$router->post('/api/login',          [AuthController::class, 'login']);
+$router->post('/api/registrar',      [AuthController::class, 'registrar']);
+$router->post('/api/logout',         [AuthController::class, 'logout']);
+$router->get('/api/eu',              [AuthController::class, 'eu']);
+$router->post('/api/perfil/trocar',  [AuthController::class, 'trocarPerfil']);
+
+// API do Team Builder
+$router->get('/api/especies',        [TimeController::class, 'listarEspecies']);
+$router->get('/api/time',            [TimeController::class, 'meuTime']);
+$router->post('/api/time/adicionar', [TimeController::class, 'adicionar']);
+$router->post('/api/time/remover',   [TimeController::class, 'remover']);
+
+$router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
