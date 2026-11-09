@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 /**
@@ -28,22 +29,55 @@ class Pokemon
     public static function fromRow(array $r): self
     {
         return new self(
-            (int) $r['pokemon_id'], (int) $r['usuario_id'], Especie::fromRow($r),
-            $r['apelido'] ?? null, (int) $r['nivel'], (int) $r['hp_max'],
-            (int) $r['hp_atual'], $r['status'], (bool) $r['desmaiado'],
+            (int) $r['pokemon_id'],
+            (int) $r['usuario_id'],
+            Especie::fromRow($r),
+            $r['apelido'] ?? null,
+            (int) $r['nivel'],
+            (int) $r['hp_max'],
+            (int) $r['hp_atual'],
+            $r['status'],
+            (bool) $r['desmaiado'],
             isset($r['posicao']) ? (int) $r['posicao'] : null
         );
     }
 
-    public function getId(): ?int { return $this->id; }
-    public function getUsuarioId(): int { return $this->usuarioId; }
-    public function getEspecie(): Especie { return $this->especie; }
-    public function getNivel(): int { return $this->nivel; }
-    public function getHpMax(): int { return $this->hpMax; }
-    public function getHpAtual(): int { return $this->hpAtual; }
-    public function getPosicao(): ?int { return $this->posicao; }
-    public function estaDesmaiado(): bool { return $this->desmaiado; }
-    public function getNomeExibicao(): string { return $this->apelido ?: $this->especie->getNome(); }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+    public function getUsuarioId(): int
+    {
+        return $this->usuarioId;
+    }
+    public function getEspecie(): Especie
+    {
+        return $this->especie;
+    }
+    public function getNivel(): int
+    {
+        return $this->nivel;
+    }
+    public function getHpMax(): int
+    {
+        return $this->hpMax;
+    }
+    public function getHpAtual(): int
+    {
+        return $this->hpAtual;
+    }
+    public function getPosicao(): ?int
+    {
+        return $this->posicao;
+    }
+    public function estaDesmaiado(): bool
+    {
+        return $this->desmaiado;
+    }
+    public function getNomeExibicao(): string
+    {
+        return $this->apelido ?: $this->especie->getNome();
+    }
 
     /** HP nunca fica fora de 0..hpMax (encapsulamento). */
     public function setHpAtual(int $hp): void

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Exceptions\TimeCheioException;
@@ -37,10 +38,19 @@ class Time
         ));
     }
 
-    public function estaCheio(): bool { return count($this->pokemons) >= self::MAXIMO; }
-    public function getUsuarioId(): int { return $this->usuarioId; }
+    public function estaCheio(): bool
+    {
+        return count($this->pokemons) >= self::MAXIMO;
+    }
+    public function getUsuarioId(): int
+    {
+        return $this->usuarioId;
+    }
     /** @return Pokemon[] */
-    public function getPokemons(): array { return $this->pokemons; }
+    public function getPokemons(): array
+    {
+        return $this->pokemons;
+    }
 
     public function paraArray(): array
     {
