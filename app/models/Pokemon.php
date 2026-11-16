@@ -25,13 +25,36 @@ class Pokemon
         $this->setHpAtual($hpAtual);
     }
 
-    /** Linha vinda da view vw_time_completo + dados da espécie. */
+    /**
+     * Regra de negócio: um Pokémon novo nasce no nível 5,
+     * com HP máximo e atual iguais ao HP base da espécie.
+     */
+    public static function novoDaEspecie(int $usuarioId, Especie $especie): self
+    {
+        return new self(
+            null,
+            $usuarioId,
+            $especie,
+            null,
+            5,
+            $especie->getHp(),
+            $especie->getHp()
+        );
+    }
+
+    /** Linha vinda da view vw_time_completo (Pokémon + espécie). */
     public static function fromRow(array $r): self
     {
+        // a view usa "especie_id" e "especie"; a Especie espera "id" e "nome"
+        $especie = Especie::fromRow(array_merge($r, [
+            'id'   => $r['especie_id'],
+            'nome' => $r['especie'],
+        ]));
+
         return new self(
             (int) $r['pokemon_id'],
             (int) $r['usuario_id'],
-            Especie::fromRow($r),
+            $especie,
             $r['apelido'] ?? null,
             (int) $r['nivel'],
             (int) $r['hp_max'],

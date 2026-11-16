@@ -5,20 +5,32 @@
 USE monstrobolso;
 
 -- 1) Time completo do jogador (JOIN de 5 tabelas) -> Team Builder / Batalha
+--    Traz tudo o que o PHP precisa para montar Pokemon + Especie,
+--    então o TimeRepository só faz SELECT * FROM vw_time_completo.
 CREATE
 OR REPLACE VIEW vw_time_completo AS
 SELECT
     t.usuario_id,
     tp.posicao,
+    -- dados do Pokémon (instância)
     p.id AS pokemon_id,
+    p.apelido,
     COALESCE(p.apelido, e.nome) AS nome_exibicao,
-    e.nome AS especie,
-    ti.nome AS tipo,
     p.nivel,
     p.hp_atual,
     p.hp_max,
     p.status,
     p.desmaiado,
+    -- dados da espécie (stats base)
+    e.id AS especie_id,
+    e.pokeapi_id,
+    e.nome AS especie,
+    ti.nome AS tipo,
+    e.hp,
+    e.ataque,
+    e.defesa,
+    e.sp_atk,
+    e.sp_def,
     e.velocidade,
     e.sprite_url
 FROM

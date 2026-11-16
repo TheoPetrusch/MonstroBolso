@@ -29,16 +29,6 @@ class AuthController extends BaseController
         $this->view('login');
     }
 
-    public function paginaHome(): void
-    {
-        $u = $this->usuarioLogado();
-        if (!$u) {
-            $this->redirecionar('/');
-            return;
-        }
-        $this->view('home', ['usuario' => $u->paraArray()]);
-    }
-
     // API json
 
     public function login(): void

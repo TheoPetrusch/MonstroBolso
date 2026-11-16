@@ -28,12 +28,7 @@
         window.BASE = <?= json_encode($base) ?>;
     </script>
     <script src="<?= $base ?>/assets/js/ApiClient.js"></script>
-    <script>
-        document.getElementById('btn-sair').addEventListener('click', async () => {
-            await new ApiClient(window.BASE).post('/api/logout');
-            location.href = window.BASE + '/';
-        });
-    </script>
+    <script src="<?= $base ?>/assets/js/home.js"></script>
 </body>
 
 </html>
