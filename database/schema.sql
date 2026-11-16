@@ -85,7 +85,9 @@ CREATE TABLE
             'paralisado'
         ) NULL,
         cura_todos_status TINYINT (1) NOT NULL DEFAULT 0, -- Full Heal / Full Restore
-        CHECK (cura_percentual <= 100)
+        tipo_id TINYINT UNSIGNED NULL, -- pedras: tipo da linha que ela evolui
+        CHECK (cura_percentual <= 100),
+        FOREIGN KEY (tipo_id) REFERENCES tipos (id)
     ) ENGINE = InnoDB;
 
 -- ---------------------------------------------------------------------

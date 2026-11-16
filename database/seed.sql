@@ -396,11 +396,126 @@ VALUES
         0,
         NULL,
         0
+    ),
+    (
+        'Pedra da Terra',
+        'evolucao',
+        'Evolui Pokémon da linha de Terra.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra do Inseto',
+        'evolucao',
+        'Evolui Pokémon da linha de Inseto.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Normal',
+        'evolucao',
+        'Evolui Pokémon da linha de Normal.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Venenosa',
+        'evolucao',
+        'Evolui Pokémon da linha de Venenoso.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra da Lua',
+        'evolucao',
+        'Evolui Pokémon da linha de Fada.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra da Luta',
+        'evolucao',
+        'Evolui Pokémon da linha de Lutador.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Psíquica',
+        'evolucao',
+        'Evolui Pokémon da linha de Psíquico.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Fantasma',
+        'evolucao',
+        'Evolui Pokémon da linha de Fantasma.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra do Dragão',
+        'evolucao',
+        'Evolui Pokémon da linha de Dragão.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
     );
 
+-- Cada pedra evolui as espécies de um tipo (itens.tipo_id).
+-- O importador usa essa ligação para achar a pedra de cada evolução.
+UPDATE itens i
+JOIN (
+    SELECT 'Pedra do Fogo' item, 'Fogo' tipo
+    UNION ALL SELECT 'Pedra da Água', 'Água'
+    UNION ALL SELECT 'Pedra da Folha', 'Planta'
+    UNION ALL SELECT 'Pedra do Trovão', 'Elétrico'
+    UNION ALL SELECT 'Pedra Rochosa', 'Pedra'
+    UNION ALL SELECT 'Pedra da Terra', 'Terra'
+    UNION ALL SELECT 'Pedra do Inseto', 'Inseto'
+    UNION ALL SELECT 'Pedra Normal', 'Normal'
+    UNION ALL SELECT 'Pedra Venenosa', 'Venenoso'
+    UNION ALL SELECT 'Pedra da Lua', 'Fada'
+    UNION ALL SELECT 'Pedra da Luta', 'Lutador'
+    UNION ALL SELECT 'Pedra Psíquica', 'Psíquico'
+    UNION ALL SELECT 'Pedra Fantasma', 'Fantasma'
+    UNION ALL SELECT 'Pedra do Dragão', 'Dragão'
+) m ON m.item = i.nome
+JOIN tipos t ON t.nome = m.tipo
+SET
+    i.tipo_id = t.id;
+
 -- ---------------------------------------------------------------------
--- Espécies (stats base da PokéAPI; o importador pode complementar)
+-- Espécies iniciais (stats base atuais da PokéAPI)
 -- Tipo único = 1º tipo da PokéAPI: Charizard = Fogo, Geodude = Pedra etc.
+-- As outras espécies da 1ª geração entram pelo importador: na Home, o
+-- admin clica em "Importar 1ª geração (PokéAPI)".
 -- ---------------------------------------------------------------------
 INSERT INTO
     especies (
@@ -432,218 +547,45 @@ SELECT
     )
 FROM
     (
-        SELECT
-            1 pid,
-            'Bulbasaur' nome,
-            'Planta' tipo,
-            45 hp,
-            49 atk,
-            49 def,
-            65 spa,
-            65 spd,
-            45 vel
-        UNION ALL
-        SELECT
-            2,
-            'Ivysaur',
-            'Planta',
-            60,
-            62,
-            63,
-            80,
-            80,
-            60
-        UNION ALL
-        SELECT
-            3,
-            'Venusaur',
-            'Planta',
-            80,
-            82,
-            83,
-            100,
-            100,
-            80
-        UNION ALL
-        SELECT
-            4,
-            'Charmander',
-            'Fogo',
-            39,
-            52,
-            43,
-            60,
-            50,
-            65
-        UNION ALL
-        SELECT
-            5,
-            'Charmeleon',
-            'Fogo',
-            58,
-            64,
-            58,
-            80,
-            65,
-            80
-        UNION ALL
-        SELECT
-            6,
-            'Charizard',
-            'Fogo',
-            78,
-            84,
-            78,
-            109,
-            85,
-            100
-        UNION ALL
-        SELECT
-            7,
-            'Squirtle',
-            'Água',
-            44,
-            48,
-            65,
-            50,
-            64,
-            43
-        UNION ALL
-        SELECT
-            8,
-            'Wartortle',
-            'Água',
-            59,
-            63,
-            80,
-            65,
-            80,
-            58
-        UNION ALL
-        SELECT
-            9,
-            'Blastoise',
-            'Água',
-            79,
-            83,
-            100,
-            85,
-            105,
-            78
-        UNION ALL
-        SELECT
-            25,
-            'Pikachu',
-            'Elétrico',
-            35,
-            55,
-            40,
-            50,
-            50,
-            90
-        UNION ALL
-        SELECT
-            26,
-            'Raichu',
-            'Elétrico',
-            60,
-            90,
-            55,
-            90,
-            80,
-            110
-        UNION ALL
-        SELECT
-            74,
-            'Geodude',
-            'Pedra',
-            40,
-            80,
-            100,
-            30,
-            30,
-            20
-        UNION ALL
-        SELECT
-            75,
-            'Graveler',
-            'Pedra',
-            55,
-            95,
-            115,
-            45,
-            45,
-            35
-        UNION ALL
-        SELECT
-            76,
-            'Golem',
-            'Pedra',
-            80,
-            120,
-            130,
-            55,
-            65,
-            45
+        SELECT   1 pid, 'Bulbasaur' nome, 'Planta' tipo, 45 hp, 49 atk, 49 def, 65 spa, 65 spd, 45 vel
+        UNION ALL SELECT   2, 'Ivysaur'    , 'Planta'   ,  60,  62,  63,  80,  80,  60
+        UNION ALL SELECT   3, 'Venusaur'   , 'Planta'   ,  80,  82,  83, 100, 100,  80
+        UNION ALL SELECT   4, 'Charmander' , 'Fogo'     ,  39,  52,  43,  60,  50,  65
+        UNION ALL SELECT   5, 'Charmeleon' , 'Fogo'     ,  58,  64,  58,  80,  65,  80
+        UNION ALL SELECT   6, 'Charizard'  , 'Fogo'     ,  78,  84,  78, 109,  85, 100
+        UNION ALL SELECT   7, 'Squirtle'   , 'Água'     ,  44,  48,  65,  50,  64,  43
+        UNION ALL SELECT   8, 'Wartortle'  , 'Água'     ,  59,  63,  80,  65,  80,  58
+        UNION ALL SELECT   9, 'Blastoise'  , 'Água'     ,  79,  83, 100,  85, 105,  78
+        UNION ALL SELECT  25, 'Pikachu'    , 'Elétrico' ,  35,  55,  40,  50,  50,  90
+        UNION ALL SELECT  26, 'Raichu'     , 'Elétrico' ,  60,  90,  55,  90,  80, 110
+        UNION ALL SELECT  74, 'Geodude'    , 'Pedra'    ,  40,  80, 100,  30,  30,  20
+        UNION ALL SELECT  75, 'Graveler'   , 'Pedra'    ,  55,  95, 115,  45,  45,  35
+        UNION ALL SELECT  76, 'Golem'      , 'Pedra'    ,  80, 120, 130,  55,  65,  45
     ) s
     JOIN tipos t ON t.nome = s.tipo;
 
--- Evoluções (UPDATE = DML): espécie atual -> próxima, pelo item da loja
+-- Evoluções (UPDATE = DML): espécie atual -> próxima.
+-- A pedra é a do tipo da espécie (itens.tipo_id = especies.tipo_id).
 UPDATE especies e
 JOIN (
-    SELECT
-        'Bulbasaur' de,
-        'Ivysaur' para,
-        'Pedra da Folha' item
-    UNION ALL
-    SELECT
-        'Ivysaur',
-        'Venusaur',
-        'Pedra da Folha'
-    UNION ALL
-    SELECT
-        'Charmander',
-        'Charmeleon',
-        'Pedra do Fogo'
-    UNION ALL
-    SELECT
-        'Charmeleon',
-        'Charizard',
-        'Pedra do Fogo'
-    UNION ALL
-    SELECT
-        'Squirtle',
-        'Wartortle',
-        'Pedra da Água'
-    UNION ALL
-    SELECT
-        'Wartortle',
-        'Blastoise',
-        'Pedra da Água'
-    UNION ALL
-    SELECT
-        'Pikachu',
-        'Raichu',
-        'Pedra do Trovão'
-    UNION ALL
-    SELECT
-        'Geodude',
-        'Graveler',
-        'Pedra Rochosa'
-    UNION ALL
-    SELECT
-        'Graveler',
-        'Golem',
-        'Pedra Rochosa'
+    SELECT 'Bulbasaur' de, 'Ivysaur' para
+    UNION ALL SELECT 'Ivysaur'    , 'Venusaur'
+    UNION ALL SELECT 'Charmander' , 'Charmeleon'
+    UNION ALL SELECT 'Charmeleon' , 'Charizard'
+    UNION ALL SELECT 'Squirtle'   , 'Wartortle'
+    UNION ALL SELECT 'Wartortle'  , 'Blastoise'
+    UNION ALL SELECT 'Pikachu'    , 'Raichu'
+    UNION ALL SELECT 'Geodude'    , 'Graveler'
+    UNION ALL SELECT 'Graveler'   , 'Golem'
 ) m ON m.de = e.nome
 JOIN especies prox ON prox.nome = m.para
-JOIN itens i ON i.nome = m.item
+JOIN itens i ON i.categoria = 'evolucao' AND i.tipo_id = e.tipo_id
 SET
     e.evolui_para_id = prox.id,
     e.item_evolucao_id = i.id;
 
 -- ---------------------------------------------------------------------
--- Golpes
+-- Golpes: 2 físicos e 2 especiais (um fraco e um forte) de cada tipo
 -- ---------------------------------------------------------------------
 INSERT INTO
     golpes (nome, tipo_id, poder, precisao, categoria)
@@ -655,121 +597,85 @@ SELECT
     g.cat
 FROM
     (
-        SELECT
-            'Tackle' nome,
-            'Normal' tipo,
-            40 poder,
-            100 prec,
-            'fisico' cat
-        UNION ALL
-        SELECT
-            'Quick Attack',
-            'Normal',
-            40,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Slash',
-            'Normal',
-            70,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Body Slam',
-            'Normal',
-            85,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Ember',
-            'Fogo',
-            40,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Flamethrower',
-            'Fogo',
-            90,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Water Gun',
-            'Água',
-            40,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Surf',
-            'Água',
-            90,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Vine Whip',
-            'Planta',
-            45,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Razor Leaf',
-            'Planta',
-            55,
-            95,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Thunder Shock',
-            'Elétrico',
-            40,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Thunderbolt',
-            'Elétrico',
-            90,
-            100,
-            'especial'
-        UNION ALL
-        SELECT
-            'Rock Throw',
-            'Pedra',
-            50,
-            90,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Earthquake',
-            'Terra',
-            100,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Wing Attack',
-            'Voador',
-            60,
-            100,
-            'fisico'
-        UNION ALL
-        SELECT
-            'Ice Beam',
-            'Gelo',
-            90,
-            100,
-            'especial'
+        SELECT 'Tackle' nome, 'Normal' tipo, 40 poder, 100 prec, 'fisico' cat
+        UNION ALL SELECT 'Body Slam'     , 'Normal'    ,  85, 100, 'fisico'
+        UNION ALL SELECT 'Swift'         , 'Normal'    ,  60, 100, 'especial'
+        UNION ALL SELECT 'Hyper Voice'   , 'Normal'    ,  90, 100, 'especial'
+        UNION ALL SELECT 'Karate Chop'   , 'Lutador'   ,  50, 100, 'fisico'
+        UNION ALL SELECT 'Submission'    , 'Lutador'   ,  80,  80, 'fisico'
+        UNION ALL SELECT 'Vacuum Wave'   , 'Lutador'   ,  40, 100, 'especial'
+        UNION ALL SELECT 'Aura Sphere'   , 'Lutador'   ,  80, 100, 'especial'
+        UNION ALL SELECT 'Wing Attack'   , 'Voador'    ,  60, 100, 'fisico'
+        UNION ALL SELECT 'Drill Peck'    , 'Voador'    ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Gust'          , 'Voador'    ,  40, 100, 'especial'
+        UNION ALL SELECT 'Air Slash'     , 'Voador'    ,  75,  95, 'especial'
+        UNION ALL SELECT 'Poison Fang'   , 'Venenoso'  ,  50, 100, 'fisico'
+        UNION ALL SELECT 'Poison Jab'    , 'Venenoso'  ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Acid'          , 'Venenoso'  ,  40, 100, 'especial'
+        UNION ALL SELECT 'Sludge Bomb'   , 'Venenoso'  ,  90, 100, 'especial'
+        UNION ALL SELECT 'Bone Club'     , 'Terra'     ,  65,  85, 'fisico'
+        UNION ALL SELECT 'Earthquake'    , 'Terra'     , 100, 100, 'fisico'
+        UNION ALL SELECT 'Mud Shot'      , 'Terra'     ,  55,  95, 'especial'
+        UNION ALL SELECT 'Earth Power'   , 'Terra'     ,  90, 100, 'especial'
+        UNION ALL SELECT 'Rock Throw'    , 'Pedra'     ,  50,  90, 'fisico'
+        UNION ALL SELECT 'Rock Slide'    , 'Pedra'     ,  75,  90, 'fisico'
+        UNION ALL SELECT 'Ancient Power' , 'Pedra'     ,  60, 100, 'especial'
+        UNION ALL SELECT 'Power Gem'     , 'Pedra'     ,  80, 100, 'especial'
+        UNION ALL SELECT 'Fury Cutter'   , 'Inseto'    ,  40,  95, 'fisico'
+        UNION ALL SELECT 'X-Scissor'     , 'Inseto'    ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Silver Wind'   , 'Inseto'    ,  60, 100, 'especial'
+        UNION ALL SELECT 'Bug Buzz'      , 'Inseto'    ,  90, 100, 'especial'
+        UNION ALL SELECT 'Lick'          , 'Fantasma'  ,  30, 100, 'fisico'
+        UNION ALL SELECT 'Shadow Claw'   , 'Fantasma'  ,  70, 100, 'fisico'
+        UNION ALL SELECT 'Ominous Wind'  , 'Fantasma'  ,  60, 100, 'especial'
+        UNION ALL SELECT 'Shadow Ball'   , 'Fantasma'  ,  80, 100, 'especial'
+        UNION ALL SELECT 'Metal Claw'    , 'Aço'       ,  50,  95, 'fisico'
+        UNION ALL SELECT 'Iron Head'     , 'Aço'       ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Mirror Shot'   , 'Aço'       ,  65,  85, 'especial'
+        UNION ALL SELECT 'Flash Cannon'  , 'Aço'       ,  80, 100, 'especial'
+        UNION ALL SELECT 'Fire Fang'     , 'Fogo'      ,  65,  95, 'fisico'
+        UNION ALL SELECT 'Fire Punch'    , 'Fogo'      ,  75, 100, 'fisico'
+        UNION ALL SELECT 'Ember'         , 'Fogo'      ,  40, 100, 'especial'
+        UNION ALL SELECT 'Flamethrower'  , 'Fogo'      ,  90, 100, 'especial'
+        UNION ALL SELECT 'Aqua Jet'      , 'Água'      ,  40, 100, 'fisico'
+        UNION ALL SELECT 'Waterfall'     , 'Água'      ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Water Gun'     , 'Água'      ,  40, 100, 'especial'
+        UNION ALL SELECT 'Surf'          , 'Água'      ,  90, 100, 'especial'
+        UNION ALL SELECT 'Vine Whip'     , 'Planta'    ,  45, 100, 'fisico'
+        UNION ALL SELECT 'Razor Leaf'    , 'Planta'    ,  55,  95, 'fisico'
+        UNION ALL SELECT 'Mega Drain'    , 'Planta'    ,  40, 100, 'especial'
+        UNION ALL SELECT 'Energy Ball'   , 'Planta'    ,  90, 100, 'especial'
+        UNION ALL SELECT 'Spark'         , 'Elétrico'  ,  65, 100, 'fisico'
+        UNION ALL SELECT 'Thunder Punch' , 'Elétrico'  ,  75, 100, 'fisico'
+        UNION ALL SELECT 'Thunder Shock' , 'Elétrico'  ,  40, 100, 'especial'
+        UNION ALL SELECT 'Thunderbolt'   , 'Elétrico'  ,  90, 100, 'especial'
+        UNION ALL SELECT 'Psycho Cut'    , 'Psíquico'  ,  70, 100, 'fisico'
+        UNION ALL SELECT 'Zen Headbutt'  , 'Psíquico'  ,  80,  90, 'fisico'
+        UNION ALL SELECT 'Confusion'     , 'Psíquico'  ,  50, 100, 'especial'
+        UNION ALL SELECT 'Psychic'       , 'Psíquico'  ,  90, 100, 'especial'
+        UNION ALL SELECT 'Ice Shard'     , 'Gelo'      ,  40, 100, 'fisico'
+        UNION ALL SELECT 'Ice Punch'     , 'Gelo'      ,  75, 100, 'fisico'
+        UNION ALL SELECT 'Powder Snow'   , 'Gelo'      ,  40, 100, 'especial'
+        UNION ALL SELECT 'Ice Beam'      , 'Gelo'      ,  90, 100, 'especial'
+        UNION ALL SELECT 'Dragon Tail'   , 'Dragão'    ,  60,  90, 'fisico'
+        UNION ALL SELECT 'Dragon Claw'   , 'Dragão'    ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Twister'       , 'Dragão'    ,  40, 100, 'especial'
+        UNION ALL SELECT 'Dragon Pulse'  , 'Dragão'    ,  85, 100, 'especial'
+        UNION ALL SELECT 'Bite'          , 'Sombrio'   ,  60, 100, 'fisico'
+        UNION ALL SELECT 'Crunch'        , 'Sombrio'   ,  80, 100, 'fisico'
+        UNION ALL SELECT 'Snarl'         , 'Sombrio'   ,  55,  95, 'especial'
+        UNION ALL SELECT 'Dark Pulse'    , 'Sombrio'   ,  80, 100, 'especial'
+        UNION ALL SELECT 'Fairy Wind'    , 'Fada'      ,  40, 100, 'especial'
+        UNION ALL SELECT 'Play Rough'    , 'Fada'      ,  90,  90, 'fisico'
+        UNION ALL SELECT 'Moonblast'     , 'Fada'      ,  95, 100, 'especial'
+        UNION ALL SELECT 'Quick Attack'  , 'Normal'    ,  40, 100, 'fisico'
+        UNION ALL SELECT 'Slash'         , 'Normal'    ,  70, 100, 'fisico'
     ) g
     JOIN tipos t ON t.nome = g.tipo;
 
--- Golpes que cada espécie conhece (4 por espécie)
+-- Golpes de cada espécie (4 por espécie), escolhidos pela mesma regra
+-- da classe SeletorDeGolpes (app/models/SeletorDeGolpes.php), que o
+-- importador usa para as demais espécies.
 INSERT INTO
     especie_golpes (especie_id, golpe_id)
 SELECT
@@ -777,229 +683,62 @@ SELECT
     g.id
 FROM
     (
-        SELECT
-            'Bulbasaur' esp,
-            'Tackle' gol
-        UNION ALL
-        SELECT
-            'Bulbasaur',
-            'Vine Whip'
-        UNION ALL
-        SELECT
-            'Bulbasaur',
-            'Razor Leaf'
-        UNION ALL
-        SELECT
-            'Bulbasaur',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Ivysaur',
-            'Tackle'
-        UNION ALL
-        SELECT
-            'Ivysaur',
-            'Vine Whip'
-        UNION ALL
-        SELECT
-            'Ivysaur',
-            'Razor Leaf'
-        UNION ALL
-        SELECT
-            'Ivysaur',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Venusaur',
-            'Vine Whip'
-        UNION ALL
-        SELECT
-            'Venusaur',
-            'Razor Leaf'
-        UNION ALL
-        SELECT
-            'Venusaur',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Venusaur',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Charmander',
-            'Tackle'
-        UNION ALL
-        SELECT
-            'Charmander',
-            'Ember'
-        UNION ALL
-        SELECT
-            'Charmander',
-            'Slash'
-        UNION ALL
-        SELECT
-            'Charmander',
-            'Quick Attack'
-        UNION ALL
-        SELECT
-            'Charmeleon',
-            'Ember'
-        UNION ALL
-        SELECT
-            'Charmeleon',
-            'Slash'
-        UNION ALL
-        SELECT
-            'Charmeleon',
-            'Flamethrower'
-        UNION ALL
-        SELECT
-            'Charmeleon',
-            'Quick Attack'
-        UNION ALL
-        SELECT
-            'Charizard',
-            'Flamethrower'
-        UNION ALL
-        SELECT
-            'Charizard',
-            'Wing Attack'
-        UNION ALL
-        SELECT
-            'Charizard',
-            'Slash'
-        UNION ALL
-        SELECT
-            'Charizard',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Squirtle',
-            'Tackle'
-        UNION ALL
-        SELECT
-            'Squirtle',
-            'Water Gun'
-        UNION ALL
-        SELECT
-            'Squirtle',
-            'Quick Attack'
-        UNION ALL
-        SELECT
-            'Squirtle',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Wartortle',
-            'Water Gun'
-        UNION ALL
-        SELECT
-            'Wartortle',
-            'Surf'
-        UNION ALL
-        SELECT
-            'Wartortle',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Wartortle',
-            'Ice Beam'
-        UNION ALL
-        SELECT
-            'Blastoise',
-            'Surf'
-        UNION ALL
-        SELECT
-            'Blastoise',
-            'Ice Beam'
-        UNION ALL
-        SELECT
-            'Blastoise',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Blastoise',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Pikachu',
-            'Thunder Shock'
-        UNION ALL
-        SELECT
-            'Pikachu',
-            'Quick Attack'
-        UNION ALL
-        SELECT
-            'Pikachu',
-            'Tackle'
-        UNION ALL
-        SELECT
-            'Pikachu',
-            'Thunderbolt'
-        UNION ALL
-        SELECT
-            'Raichu',
-            'Thunderbolt'
-        UNION ALL
-        SELECT
-            'Raichu',
-            'Quick Attack'
-        UNION ALL
-        SELECT
-            'Raichu',
-            'Slash'
-        UNION ALL
-        SELECT
-            'Raichu',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Geodude',
-            'Tackle'
-        UNION ALL
-        SELECT
-            'Geodude',
-            'Rock Throw'
-        UNION ALL
-        SELECT
-            'Geodude',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Geodude',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Graveler',
-            'Rock Throw'
-        UNION ALL
-        SELECT
-            'Graveler',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Graveler',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Graveler',
-            'Slash'
-        UNION ALL
-        SELECT
-            'Golem',
-            'Rock Throw'
-        UNION ALL
-        SELECT
-            'Golem',
-            'Earthquake'
-        UNION ALL
-        SELECT
-            'Golem',
-            'Body Slam'
-        UNION ALL
-        SELECT
-            'Golem',
-            'Slash'
+        SELECT 'Bulbasaur' esp, 'Mega Drain' gol
+        UNION ALL SELECT 'Bulbasaur'  , 'Tackle'
+        UNION ALL SELECT 'Bulbasaur'  , 'Acid'
+        UNION ALL SELECT 'Bulbasaur'  , 'Quick Attack'
+        UNION ALL SELECT 'Ivysaur'    , 'Mega Drain'
+        UNION ALL SELECT 'Ivysaur'    , 'Energy Ball'
+        UNION ALL SELECT 'Ivysaur'    , 'Sludge Bomb'
+        UNION ALL SELECT 'Ivysaur'    , 'Hyper Voice'
+        UNION ALL SELECT 'Venusaur'   , 'Mega Drain'
+        UNION ALL SELECT 'Venusaur'   , 'Energy Ball'
+        UNION ALL SELECT 'Venusaur'   , 'Sludge Bomb'
+        UNION ALL SELECT 'Venusaur'   , 'Hyper Voice'
+        UNION ALL SELECT 'Charmander' , 'Ember'
+        UNION ALL SELECT 'Charmander' , 'Quick Attack'
+        UNION ALL SELECT 'Charmander' , 'Mud Shot'
+        UNION ALL SELECT 'Charmander' , 'Tackle'
+        UNION ALL SELECT 'Charmeleon' , 'Ember'
+        UNION ALL SELECT 'Charmeleon' , 'Flamethrower'
+        UNION ALL SELECT 'Charmeleon' , 'Earth Power'
+        UNION ALL SELECT 'Charmeleon' , 'Hyper Voice'
+        UNION ALL SELECT 'Charizard'  , 'Ember'
+        UNION ALL SELECT 'Charizard'  , 'Flamethrower'
+        UNION ALL SELECT 'Charizard'  , 'Air Slash'
+        UNION ALL SELECT 'Charizard'  , 'Hyper Voice'
+        UNION ALL SELECT 'Squirtle'   , 'Water Gun'
+        UNION ALL SELECT 'Squirtle'   , 'Tackle'
+        UNION ALL SELECT 'Squirtle'   , 'Powder Snow'
+        UNION ALL SELECT 'Squirtle'   , 'Quick Attack'
+        UNION ALL SELECT 'Wartortle'  , 'Water Gun'
+        UNION ALL SELECT 'Wartortle'  , 'Surf'
+        UNION ALL SELECT 'Wartortle'  , 'Ice Beam'
+        UNION ALL SELECT 'Wartortle'  , 'Hyper Voice'
+        UNION ALL SELECT 'Blastoise'  , 'Water Gun'
+        UNION ALL SELECT 'Blastoise'  , 'Surf'
+        UNION ALL SELECT 'Blastoise'  , 'Ice Beam'
+        UNION ALL SELECT 'Blastoise'  , 'Hyper Voice'
+        UNION ALL SELECT 'Pikachu'    , 'Spark'
+        UNION ALL SELECT 'Pikachu'    , 'Quick Attack'
+        UNION ALL SELECT 'Pikachu'    , 'Metal Claw'
+        UNION ALL SELECT 'Pikachu'    , 'Tackle'
+        UNION ALL SELECT 'Raichu'     , 'Spark'
+        UNION ALL SELECT 'Raichu'     , 'Thunder Punch'
+        UNION ALL SELECT 'Raichu'     , 'Iron Head'
+        UNION ALL SELECT 'Raichu'     , 'Body Slam'
+        UNION ALL SELECT 'Geodude'    , 'Rock Throw'
+        UNION ALL SELECT 'Geodude'    , 'Tackle'
+        UNION ALL SELECT 'Geodude'    , 'Bone Club'
+        UNION ALL SELECT 'Geodude'    , 'Quick Attack'
+        UNION ALL SELECT 'Graveler'   , 'Rock Throw'
+        UNION ALL SELECT 'Graveler'   , 'Rock Slide'
+        UNION ALL SELECT 'Graveler'   , 'Earthquake'
+        UNION ALL SELECT 'Graveler'   , 'Body Slam'
+        UNION ALL SELECT 'Golem'      , 'Rock Throw'
+        UNION ALL SELECT 'Golem'      , 'Rock Slide'
+        UNION ALL SELECT 'Golem'      , 'Earthquake'
+        UNION ALL SELECT 'Golem'      , 'Body Slam'
     ) m
     JOIN especies e ON e.nome = m.esp
     JOIN golpes g ON g.nome = m.gol;

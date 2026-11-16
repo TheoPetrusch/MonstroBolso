@@ -8,6 +8,7 @@ use App\Core\Router;
 use App\Controllers\PingController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
+use App\Controllers\ImportadorController;
 use App\Controllers\TimeController;
 
 session_start();
@@ -35,5 +36,8 @@ $router->get('/api/especies',        [TimeController::class, 'listarEspecies']);
 $router->get('/api/time',            [TimeController::class, 'meuTime']);
 $router->post('/api/time/adicionar', [TimeController::class, 'adicionar']);
 $router->post('/api/time/remover',   [TimeController::class, 'remover']);
+
+// API de admin
+$router->post('/api/admin/importar', [ImportadorController::class, 'importar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
