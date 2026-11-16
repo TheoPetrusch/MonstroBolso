@@ -29,21 +29,35 @@ VALUES
     );
 
 -- ---------------------------------------------------------------------
--- Tipos
+-- Tipos (os 18 oficiais). A ordem segue a PokéAPI, então tipos.id é igual
+-- ao id do tipo na PokéAPI (1 = normal, 2 = fighting ... 18 = fairy).
 -- ---------------------------------------------------------------------
 INSERT INTO
     tipos (nome)
 VALUES
     ('Normal'),
+    ('Lutador'),
+    ('Voador'),
+    ('Venenoso'),
+    ('Terra'),
+    ('Pedra'),
+    ('Inseto'),
+    ('Fantasma'),
+    ('Aço'),
     ('Fogo'),
     ('Água'),
     ('Planta'),
     ('Elétrico'),
-    ('Terra'),
+    ('Psíquico'),
     ('Gelo'),
-    ('Voador');
+    ('Dragão'),
+    ('Sombrio'),
+    ('Fada');
 
--- Vantagens (2.0 = super efetivo, 0.5 = pouco efetivo, 0.0 = imune)
+-- Tabela de vantagens completa (120 pares).
+-- 2.0 = super efetivo, 0.5 = pouco efetivo, 0.0 = imune.
+-- Pares que não aparecem aqui valem 1.0 (dano normal): o PHP deve usar
+-- COALESCE(multiplicador, 1.0) ou tratar a ausência como 1.
 INSERT INTO
     tipo_vantagens (tipo_atacante_id, tipo_defensor_id, multiplicador)
 SELECT
@@ -52,150 +66,144 @@ SELECT
     v.m
 FROM
     (
-        SELECT
-            'Fogo' AS a,
-            'Planta' AS d,
-            2.0 AS m
-        UNION ALL
-        SELECT
-            'Fogo',
-            'Gelo',
-            2.0
-        UNION ALL
-        SELECT
-            'Fogo',
-            'Água',
-            0.5
-        UNION ALL
-        SELECT
-            'Fogo',
-            'Fogo',
-            0.5
-        UNION ALL
-        SELECT
-            'Água',
-            'Fogo',
-            2.0
-        UNION ALL
-        SELECT
-            'Água',
-            'Terra',
-            2.0
-        UNION ALL
-        SELECT
-            'Água',
-            'Água',
-            0.5
-        UNION ALL
-        SELECT
-            'Água',
-            'Planta',
-            0.5
-        UNION ALL
-        SELECT
-            'Planta',
-            'Água',
-            2.0
-        UNION ALL
-        SELECT
-            'Planta',
-            'Terra',
-            2.0
-        UNION ALL
-        SELECT
-            'Planta',
-            'Fogo',
-            0.5
-        UNION ALL
-        SELECT
-            'Planta',
-            'Planta',
-            0.5
-        UNION ALL
-        SELECT
-            'Planta',
-            'Voador',
-            0.5
-        UNION ALL
-        SELECT
-            'Elétrico',
-            'Água',
-            2.0
-        UNION ALL
-        SELECT
-            'Elétrico',
-            'Voador',
-            2.0
-        UNION ALL
-        SELECT
-            'Elétrico',
-            'Planta',
-            0.5
-        UNION ALL
-        SELECT
-            'Elétrico',
-            'Elétrico',
-            0.5
-        UNION ALL
-        SELECT
-            'Elétrico',
-            'Terra',
-            0.0
-        UNION ALL
-        SELECT
-            'Terra',
-            'Fogo',
-            2.0
-        UNION ALL
-        SELECT
-            'Terra',
-            'Elétrico',
-            2.0
-        UNION ALL
-        SELECT
-            'Terra',
-            'Planta',
-            0.5
-        UNION ALL
-        SELECT
-            'Terra',
-            'Voador',
-            0.0
-        UNION ALL
-        SELECT
-            'Gelo',
-            'Planta',
-            2.0
-        UNION ALL
-        SELECT
-            'Gelo',
-            'Terra',
-            2.0
-        UNION ALL
-        SELECT
-            'Gelo',
-            'Voador',
-            2.0
-        UNION ALL
-        SELECT
-            'Gelo',
-            'Fogo',
-            0.5
-        UNION ALL
-        SELECT
-            'Gelo',
-            'Água',
-            0.5
-        UNION ALL
-        SELECT
-            'Voador',
-            'Planta',
-            2.0
-        UNION ALL
-        SELECT
-            'Voador',
-            'Elétrico',
-            0.5
+        -- Normal
+        SELECT 'Normal'    AS a, 'Pedra'     AS d, 0.5 AS m
+        UNION ALL SELECT 'Normal'   , 'Aço'      , 0.5
+        UNION ALL SELECT 'Normal'   , 'Fantasma' , 0.0
+        -- Lutador
+        UNION ALL SELECT 'Lutador'  , 'Normal'   , 2.0
+        UNION ALL SELECT 'Lutador'  , 'Gelo'     , 2.0
+        UNION ALL SELECT 'Lutador'  , 'Venenoso' , 0.5
+        UNION ALL SELECT 'Lutador'  , 'Voador'   , 0.5
+        UNION ALL SELECT 'Lutador'  , 'Psíquico' , 0.5
+        UNION ALL SELECT 'Lutador'  , 'Inseto'   , 0.5
+        UNION ALL SELECT 'Lutador'  , 'Pedra'    , 2.0
+        UNION ALL SELECT 'Lutador'  , 'Fantasma' , 0.0
+        UNION ALL SELECT 'Lutador'  , 'Sombrio'  , 2.0
+        UNION ALL SELECT 'Lutador'  , 'Aço'      , 2.0
+        UNION ALL SELECT 'Lutador'  , 'Fada'     , 0.5
+        -- Voador
+        UNION ALL SELECT 'Voador'   , 'Elétrico' , 0.5
+        UNION ALL SELECT 'Voador'   , 'Planta'   , 2.0
+        UNION ALL SELECT 'Voador'   , 'Lutador'  , 2.0
+        UNION ALL SELECT 'Voador'   , 'Inseto'   , 2.0
+        UNION ALL SELECT 'Voador'   , 'Pedra'    , 0.5
+        UNION ALL SELECT 'Voador'   , 'Aço'      , 0.5
+        -- Venenoso
+        UNION ALL SELECT 'Venenoso' , 'Planta'   , 2.0
+        UNION ALL SELECT 'Venenoso' , 'Venenoso' , 0.5
+        UNION ALL SELECT 'Venenoso' , 'Terra'    , 0.5
+        UNION ALL SELECT 'Venenoso' , 'Pedra'    , 0.5
+        UNION ALL SELECT 'Venenoso' , 'Fantasma' , 0.5
+        UNION ALL SELECT 'Venenoso' , 'Aço'      , 0.0
+        UNION ALL SELECT 'Venenoso' , 'Fada'     , 2.0
+        -- Terra
+        UNION ALL SELECT 'Terra'    , 'Fogo'     , 2.0
+        UNION ALL SELECT 'Terra'    , 'Elétrico' , 2.0
+        UNION ALL SELECT 'Terra'    , 'Planta'   , 0.5
+        UNION ALL SELECT 'Terra'    , 'Venenoso' , 2.0
+        UNION ALL SELECT 'Terra'    , 'Voador'   , 0.0
+        UNION ALL SELECT 'Terra'    , 'Inseto'   , 0.5
+        UNION ALL SELECT 'Terra'    , 'Pedra'    , 2.0
+        UNION ALL SELECT 'Terra'    , 'Aço'      , 2.0
+        -- Pedra
+        UNION ALL SELECT 'Pedra'    , 'Fogo'     , 2.0
+        UNION ALL SELECT 'Pedra'    , 'Gelo'     , 2.0
+        UNION ALL SELECT 'Pedra'    , 'Lutador'  , 0.5
+        UNION ALL SELECT 'Pedra'    , 'Terra'    , 0.5
+        UNION ALL SELECT 'Pedra'    , 'Voador'   , 2.0
+        UNION ALL SELECT 'Pedra'    , 'Inseto'   , 2.0
+        UNION ALL SELECT 'Pedra'    , 'Aço'      , 0.5
+        -- Inseto
+        UNION ALL SELECT 'Inseto'   , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Planta'   , 2.0
+        UNION ALL SELECT 'Inseto'   , 'Lutador'  , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Venenoso' , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Voador'   , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Psíquico' , 2.0
+        UNION ALL SELECT 'Inseto'   , 'Fantasma' , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Sombrio'  , 2.0
+        UNION ALL SELECT 'Inseto'   , 'Aço'      , 0.5
+        UNION ALL SELECT 'Inseto'   , 'Fada'     , 0.5
+        -- Fantasma
+        UNION ALL SELECT 'Fantasma' , 'Normal'   , 0.0
+        UNION ALL SELECT 'Fantasma' , 'Psíquico' , 2.0
+        UNION ALL SELECT 'Fantasma' , 'Fantasma' , 2.0
+        UNION ALL SELECT 'Fantasma' , 'Sombrio'  , 0.5
+        -- Aço
+        UNION ALL SELECT 'Aço'      , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Aço'      , 'Água'     , 0.5
+        UNION ALL SELECT 'Aço'      , 'Elétrico' , 0.5
+        UNION ALL SELECT 'Aço'      , 'Gelo'     , 2.0
+        UNION ALL SELECT 'Aço'      , 'Pedra'    , 2.0
+        UNION ALL SELECT 'Aço'      , 'Aço'      , 0.5
+        UNION ALL SELECT 'Aço'      , 'Fada'     , 2.0
+        -- Fogo
+        UNION ALL SELECT 'Fogo'     , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Fogo'     , 'Água'     , 0.5
+        UNION ALL SELECT 'Fogo'     , 'Planta'   , 2.0
+        UNION ALL SELECT 'Fogo'     , 'Gelo'     , 2.0
+        UNION ALL SELECT 'Fogo'     , 'Inseto'   , 2.0
+        UNION ALL SELECT 'Fogo'     , 'Pedra'    , 0.5
+        UNION ALL SELECT 'Fogo'     , 'Dragão'   , 0.5
+        UNION ALL SELECT 'Fogo'     , 'Aço'      , 2.0
+        -- Água
+        UNION ALL SELECT 'Água'     , 'Fogo'     , 2.0
+        UNION ALL SELECT 'Água'     , 'Água'     , 0.5
+        UNION ALL SELECT 'Água'     , 'Planta'   , 0.5
+        UNION ALL SELECT 'Água'     , 'Terra'    , 2.0
+        UNION ALL SELECT 'Água'     , 'Pedra'    , 2.0
+        UNION ALL SELECT 'Água'     , 'Dragão'   , 0.5
+        -- Planta
+        UNION ALL SELECT 'Planta'   , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Planta'   , 'Água'     , 2.0
+        UNION ALL SELECT 'Planta'   , 'Planta'   , 0.5
+        UNION ALL SELECT 'Planta'   , 'Venenoso' , 0.5
+        UNION ALL SELECT 'Planta'   , 'Terra'    , 2.0
+        UNION ALL SELECT 'Planta'   , 'Voador'   , 0.5
+        UNION ALL SELECT 'Planta'   , 'Inseto'   , 0.5
+        UNION ALL SELECT 'Planta'   , 'Pedra'    , 2.0
+        UNION ALL SELECT 'Planta'   , 'Dragão'   , 0.5
+        UNION ALL SELECT 'Planta'   , 'Aço'      , 0.5
+        -- Elétrico
+        UNION ALL SELECT 'Elétrico' , 'Água'     , 2.0
+        UNION ALL SELECT 'Elétrico' , 'Elétrico' , 0.5
+        UNION ALL SELECT 'Elétrico' , 'Planta'   , 0.5
+        UNION ALL SELECT 'Elétrico' , 'Terra'    , 0.0
+        UNION ALL SELECT 'Elétrico' , 'Voador'   , 2.0
+        UNION ALL SELECT 'Elétrico' , 'Dragão'   , 0.5
+        -- Psíquico
+        UNION ALL SELECT 'Psíquico' , 'Lutador'  , 2.0
+        UNION ALL SELECT 'Psíquico' , 'Venenoso' , 2.0
+        UNION ALL SELECT 'Psíquico' , 'Psíquico' , 0.5
+        UNION ALL SELECT 'Psíquico' , 'Sombrio'  , 0.0
+        UNION ALL SELECT 'Psíquico' , 'Aço'      , 0.5
+        -- Gelo
+        UNION ALL SELECT 'Gelo'     , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Gelo'     , 'Água'     , 0.5
+        UNION ALL SELECT 'Gelo'     , 'Planta'   , 2.0
+        UNION ALL SELECT 'Gelo'     , 'Gelo'     , 0.5
+        UNION ALL SELECT 'Gelo'     , 'Terra'    , 2.0
+        UNION ALL SELECT 'Gelo'     , 'Voador'   , 2.0
+        UNION ALL SELECT 'Gelo'     , 'Dragão'   , 2.0
+        UNION ALL SELECT 'Gelo'     , 'Aço'      , 0.5
+        -- Dragão
+        UNION ALL SELECT 'Dragão'   , 'Dragão'   , 2.0
+        UNION ALL SELECT 'Dragão'   , 'Aço'      , 0.5
+        UNION ALL SELECT 'Dragão'   , 'Fada'     , 0.0
+        -- Sombrio
+        UNION ALL SELECT 'Sombrio'  , 'Lutador'  , 0.5
+        UNION ALL SELECT 'Sombrio'  , 'Psíquico' , 2.0
+        UNION ALL SELECT 'Sombrio'  , 'Fantasma' , 2.0
+        UNION ALL SELECT 'Sombrio'  , 'Sombrio'  , 0.5
+        UNION ALL SELECT 'Sombrio'  , 'Fada'     , 0.5
+        -- Fada
+        UNION ALL SELECT 'Fada'     , 'Fogo'     , 0.5
+        UNION ALL SELECT 'Fada'     , 'Lutador'  , 2.0
+        UNION ALL SELECT 'Fada'     , 'Venenoso' , 0.5
+        UNION ALL SELECT 'Fada'     , 'Dragão'   , 2.0
+        UNION ALL SELECT 'Fada'     , 'Sombrio'  , 2.0
+        UNION ALL SELECT 'Fada'     , 'Aço'      , 0.5
     ) v
     JOIN tipos a ON a.nome = v.a
     JOIN tipos d ON d.nome = v.d;
@@ -382,7 +390,7 @@ VALUES
     (
         'Pedra Rochosa',
         'evolucao',
-        'Evolui Pokémon da linha de Terra.',
+        'Evolui Pokémon da linha de Pedra.',
         2100,
         0,
         0,
@@ -392,7 +400,7 @@ VALUES
 
 -- ---------------------------------------------------------------------
 -- Espécies (stats base da PokéAPI; o importador pode complementar)
--- Tipo único: Charizard = Fogo, Raichu = Elétrico etc.
+-- Tipo único = 1º tipo da PokéAPI: Charizard = Fogo, Geodude = Pedra etc.
 -- ---------------------------------------------------------------------
 INSERT INTO
     especies (
@@ -548,7 +556,7 @@ FROM
         SELECT
             74,
             'Geodude',
-            'Terra',
+            'Pedra',
             40,
             80,
             100,
@@ -559,7 +567,7 @@ FROM
         SELECT
             75,
             'Graveler',
-            'Terra',
+            'Pedra',
             55,
             95,
             115,
@@ -570,7 +578,7 @@ FROM
         SELECT
             76,
             'Golem',
-            'Terra',
+            'Pedra',
             80,
             120,
             130,
@@ -733,7 +741,7 @@ FROM
         UNION ALL
         SELECT
             'Rock Throw',
-            'Terra',
+            'Pedra',
             50,
             90,
             'fisico'
