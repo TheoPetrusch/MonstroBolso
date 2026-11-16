@@ -5,6 +5,22 @@ body.pagina {
     place-items: initial;
 }
 
+body.pagina::before {
+    content: "";
+    position: fixed;
+    top: 80px;
+    bottom: 24px;
+    left: 12px;
+    width: 18px;
+    background-image: url("../imagens/fundoA.gif");
+    background-size: cover;
+    background-position: center;
+    border: 3px solid #11161f;
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 10;
+}
+
 .topo {
     display: flex;
     align-items: center;
