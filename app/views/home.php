@@ -18,7 +18,7 @@
         <nav class="menu">
             <a class="botao" href="<?= $base ?>/time">Team Builder</a>
             <span class="botao desativado">Batalha (em breve)</span>
-            <span class="botao desativado">Poké Mart (em breve)</span>
+            <a class="botao" href="<?= $base ?>/loja">Poké Mart</a>
         </nav>
 
         <?php if ($usuario['perfil'] === 'admin'): ?>
