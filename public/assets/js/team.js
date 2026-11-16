@@ -1,3 +1,8 @@
+/** Escapa texto antes de ir para o innerHTML (evita XSS, ex.: apelido com <script>). */
+const esc = (texto) => String(texto ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 /**
  * TeamBuilder - tela de montagem de time.
  * Usa ApiClient (back-end próprio) e PokeApi (API externa), ambos assíncronos.
@@ -57,12 +62,12 @@ class TeamBuilder {
         try {
             const d = await this.#pokeApi.buscar(especie.pokeapi_id);
             alvo.innerHTML = `
-                <img src="${d.arte}" alt="${especie.nome}" width="140">
+                <img src="${esc(d.arte)}" alt="${esc(especie.nome)}" width="140">
                 <div>
-                    <h3>${especie.nome}</h3>
-                    <p>Tipos (PokéAPI): ${d.tipos.join(', ')}</p>
+                    <h3>${esc(especie.nome)}</h3>
+                    <p>Tipos (PokéAPI): ${esc(d.tipos.join(', '))}</p>
                     <p>Altura: ${d.altura} m &middot; Peso: ${d.peso} kg</p>
-                    <p>Habilidades: ${d.habilidades.join(', ')}</p>
+                    <p>Habilidades: ${esc(d.habilidades.join(', '))}</p>
                     <p>HP ${especie.hp} &middot; Atq ${especie.ataque} &middot; Def ${especie.defesa}
                        &middot; SpA ${especie.sp_atk} &middot; SpD ${especie.sp_def}
                        &middot; Vel ${especie.velocidade}</p>
@@ -90,9 +95,9 @@ class TeamBuilder {
             div.className = 'slot' + (p ? ' ocupado' : '');
             if (p) {
                 div.innerHTML = `
-                    <img src="${p.especie.sprite_url}" alt="${p.nome}">
-                    <strong>${p.nome}</strong>
-                    <small>${p.especie.tipo} &middot; HP ${p.hp_atual}/${p.hp_max}</small>
+                    <img src="${esc(p.especie.sprite_url)}" alt="${esc(p.nome)}">
+                    <strong>${esc(p.nome)}</strong>
+                    <small>${esc(p.especie.tipo)} &middot; HP ${p.hp_atual}/${p.hp_max}</small>
                     <button type="button" class="perigo">Remover</button>`;
                 div.querySelector('button').addEventListener('click', () => this.#remover(p.id));
             } else {
@@ -110,14 +115,14 @@ class TeamBuilder {
 
         this.#especies
             .filter(e => !termo || e.nome.toLowerCase().includes(termo)
-                               || e.tipo.toLowerCase().includes(termo))
+                || e.tipo.toLowerCase().includes(termo))
             .forEach(e => {
                 const card = document.createElement('div');
                 card.className = 'card-poke';
                 card.innerHTML = `
-                    <img src="${e.sprite_url}" alt="${e.nome}">
-                    <strong>${e.nome}</strong>
-                    <small>${e.tipo} &middot; HP ${e.hp} &middot; Vel ${e.velocidade}</small>
+                    <img src="${esc(e.sprite_url)}" alt="${esc(e.nome)}">
+                    <strong>${esc(e.nome)}</strong>
+                    <small>${esc(e.tipo)} &middot; HP ${e.hp} &middot; Vel ${e.velocidade}</small>
                     <div class="acoes">
                         <button type="button" class="sec">Detalhes</button>
                         <button type="button" class="add" ${cheio ? 'disabled' : ''}>Adicionar</button>

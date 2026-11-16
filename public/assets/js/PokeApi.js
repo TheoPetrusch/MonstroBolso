@@ -5,6 +5,16 @@
  */
 class PokeApi {
     static #URL = 'https://pokeapi.co/api/v2/pokemon/';
+
+    /** Nomes dos 18 tipos em português (iguais aos da tabela "tipos" do banco). */
+    static #TIPOS = {
+        normal: 'Normal', fighting: 'Lutador', flying: 'Voador', poison: 'Venenoso',
+        ground: 'Terra', rock: 'Pedra', bug: 'Inseto', ghost: 'Fantasma',
+        steel: 'Aço', fire: 'Fogo', water: 'Água', grass: 'Planta',
+        electric: 'Elétrico', psychic: 'Psíquico', ice: 'Gelo', dragon: 'Dragão',
+        dark: 'Sombrio', fairy: 'Fada',
+    };
+
     #cache = new Map();
 
     async buscar(pokeapiId) {
@@ -20,7 +30,7 @@ class PokeApi {
             arte: d.sprites?.other?.['official-artwork']?.front_default ?? d.sprites?.front_default,
             altura: d.height / 10,   // decímetros -> metros
             peso: d.weight / 10,     // hectogramas -> kg
-            tipos: d.types.map(t => t.type.name),
+            tipos: d.types.map(t => PokeApi.#TIPOS[t.type.name] ?? t.type.name),
             habilidades: d.abilities.map(a => a.ability.name),
         };
         this.#cache.set(pokeapiId, resumo);

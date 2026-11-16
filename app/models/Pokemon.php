@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 /**
@@ -24,26 +25,82 @@ class Pokemon
         $this->setHpAtual($hpAtual);
     }
 
-    /** Linha vinda da view vw_time_completo + dados da espécie. */
-    public static function fromRow(array $r): self
+    /**
+     * Regra de negócio: um Pokémon novo nasce no nível 5,
+     * com HP máximo e atual iguais ao HP base da espécie.
+     */
+    public static function novoDaEspecie(int $usuarioId, Especie $especie): self
     {
         return new self(
-            (int) $r['pokemon_id'], (int) $r['usuario_id'], Especie::fromRow($r),
-            $r['apelido'] ?? null, (int) $r['nivel'], (int) $r['hp_max'],
-            (int) $r['hp_atual'], $r['status'], (bool) $r['desmaiado'],
+            null,
+            $usuarioId,
+            $especie,
+            null,
+            5,
+            $especie->getHp(),
+            $especie->getHp()
+        );
+    }
+
+    /** Linha vinda da view vw_time_completo (Pokémon + espécie). */
+    public static function fromRow(array $r): self
+    {
+        // a view usa "especie_id" e "especie"; a Especie espera "id" e "nome"
+        $especie = Especie::fromRow(array_merge($r, [
+            'id'   => $r['especie_id'],
+            'nome' => $r['especie'],
+        ]));
+
+        return new self(
+            (int) $r['pokemon_id'],
+            (int) $r['usuario_id'],
+            $especie,
+            $r['apelido'] ?? null,
+            (int) $r['nivel'],
+            (int) $r['hp_max'],
+            (int) $r['hp_atual'],
+            $r['status'],
+            (bool) $r['desmaiado'],
             isset($r['posicao']) ? (int) $r['posicao'] : null
         );
     }
 
-    public function getId(): ?int { return $this->id; }
-    public function getUsuarioId(): int { return $this->usuarioId; }
-    public function getEspecie(): Especie { return $this->especie; }
-    public function getNivel(): int { return $this->nivel; }
-    public function getHpMax(): int { return $this->hpMax; }
-    public function getHpAtual(): int { return $this->hpAtual; }
-    public function getPosicao(): ?int { return $this->posicao; }
-    public function estaDesmaiado(): bool { return $this->desmaiado; }
-    public function getNomeExibicao(): string { return $this->apelido ?: $this->especie->getNome(); }
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+    public function getUsuarioId(): int
+    {
+        return $this->usuarioId;
+    }
+    public function getEspecie(): Especie
+    {
+        return $this->especie;
+    }
+    public function getNivel(): int
+    {
+        return $this->nivel;
+    }
+    public function getHpMax(): int
+    {
+        return $this->hpMax;
+    }
+    public function getHpAtual(): int
+    {
+        return $this->hpAtual;
+    }
+    public function getPosicao(): ?int
+    {
+        return $this->posicao;
+    }
+    public function estaDesmaiado(): bool
+    {
+        return $this->desmaiado;
+    }
+    public function getNomeExibicao(): string
+    {
+        return $this->apelido ?: $this->especie->getNome();
+    }
 
     /** HP nunca fica fora de 0..hpMax (encapsulamento). */
     public function setHpAtual(int $hp): void
