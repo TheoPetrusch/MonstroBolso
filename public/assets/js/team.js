@@ -116,17 +116,32 @@ class TeamBuilder {
         this.#especies
             .filter(e => !termo || e.nome.toLowerCase().includes(termo)
                 || e.tipo.toLowerCase().includes(termo))
-            .forEach(e => {
+                       .forEach(e => {
                 const card = document.createElement('div');
                 card.className = 'card-poke';
+                card.dataset.tipo = e.tipo;
+
+                const shiny = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(e.pokeapi_id)}.png`;
+                const barra = (valor) => `<div class="barra"><span style="width:${Math.min(valor / 1.5, 100)}%"></span></div>`;
+
                 card.innerHTML = `
-                    <img src="${esc(e.sprite_url)}" alt="${esc(e.nome)}">
+                    <div class="sprite">
+                        <img class="normal" src="${esc(e.sprite_url)}" alt="${esc(e.nome)}">
+                        <img class="shiny" src="${shiny}" alt="">
+                    </div>
                     <strong>${esc(e.nome)}</strong>
                     <small>${esc(e.tipo)} &middot; HP ${e.hp} &middot; Vel ${e.velocidade}</small>
+                    <div class="previa">
+                        HP ${e.hp} ${barra(e.hp)}
+                        Ataque ${e.ataque} ${barra(e.ataque)}
+                        Defesa ${e.defesa} ${barra(e.defesa)}
+                        Vel ${e.velocidade} ${barra(e.velocidade)}
+                    </div>
                     <div class="acoes">
                         <button type="button" class="sec">Detalhes</button>
                         <button type="button" class="add" ${cheio ? 'disabled' : ''}>Adicionar</button>
                     </div>`;
+
                 card.querySelector('.sec').addEventListener('click', () => this.#mostrarDetalhes(e));
                 card.querySelector('.add').addEventListener('click', () => this.#adicionar(e.id));
                 catalogo.appendChild(card);

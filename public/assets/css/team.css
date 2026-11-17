@@ -21,6 +21,86 @@ body.pagina::before {
     z-index: 10;
 }
 
+/*teste*/
+.card-poke {
+    position: relative;
+    transition: transform .2s, box-shadow .2s;
+    --cor-tipo: #9fb3ff;                   
+}
+
+.card-poke[data-tipo="Planta"]   { --cor-tipo: #5dca65; }
+.card-poke[data-tipo="Fogo"]     { --cor-tipo: #ff7a3d; }
+.card-poke[data-tipo="Água"]     { --cor-tipo: #4aa8ff; }
+.card-poke[data-tipo="Elétrico"] { --cor-tipo: #f5d33a; }
+.card-poke[data-tipo="Pedra"]    { --cor-tipo: #b8a26a; }
+
+
+.card-poke:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 0 2px var(--cor-tipo), 0 0 16px var(--cor-tipo);
+    z-index: 5;
+}
+
+/* 2: pulo */
+.card-poke .sprite {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+.card-poke:hover .sprite {
+    animation: pulinho .5s ease-in-out infinite;
+}
+@keyframes pulinho {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+}
+
+/* 4: troca pra shiny (as duas imagens ficam uma em cima da outra) */
+.card-poke .sprite img {
+    position: absolute;
+    inset: 0;
+    transition: opacity .2s;
+}
+.card-poke .sprite .shiny        { opacity: 0; }
+.card-poke:hover .sprite .shiny  { opacity: 1; }
+.card-poke:hover .sprite .normal { opacity: 0; }
+
+/* 5: prévia dos status */
+.card-poke .previa {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    background: #11161f;
+    border: 1px solid #3a4560;
+    border-radius: 8px;
+    font-size: .75rem;
+    text-align: left;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity .2s, transform .2s;
+    pointer-events: none;
+}
+.card-poke:hover .previa {
+    opacity: 1;
+    transform: translateY(0);
+}
+.barra {
+    height: 5px;
+    margin: 2px 0 6px;
+    background: #3a4560;
+    border-radius: 3px;
+}
+.barra span {
+    display: block;
+    height: 100%;
+    background: var(--cor-tipo);
+    border-radius: 3px;
+}
+/*teste*/
+
 .topo {
     display: flex;
     align-items: center;
@@ -43,7 +123,7 @@ body.pagina::before {
     display: grid;
     grid-template-columns: 1fr 1.4fr;
     gap: 24px;
-    padding: 24px;
+    padding: 24px 24px 24px 52px;   
 }
 
 @media (max-width: 820px) {
