@@ -18,8 +18,16 @@
         <nav class="menu">
             <a class="botao" href="<?= $base ?>/time">Team Builder</a>
             <span class="botao desativado">Batalha (em breve)</span>
-            <span class="botao desativado">Poké Mart (em breve)</span>
+            <a class="botao" href="<?= $base ?>/loja">Poké Mart</a>
         </nav>
+
+        <?php if ($usuario['perfil'] === 'admin'): ?>
+            <div class="menu">
+                <p class="aviso">Área do admin</p>
+                <button type="button" id="btn-importar">Importar 1ª geração (PokéAPI)</button>
+                <p id="status-importacao" class="aviso" role="status"></p>
+            </div>
+        <?php endif; ?>
 
         <button type="button" id="btn-sair">Sair</button>
     </main>
