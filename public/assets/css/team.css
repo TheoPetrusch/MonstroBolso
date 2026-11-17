@@ -292,3 +292,50 @@ button:disabled {
     background: #c5cad6;
     color: #667;
 }
+/* ---------- Poké Mart ---------- */
+.saldo {
+    margin-left: auto;
+    font-weight: bold;
+    color: #ffd54a;
+}
+
+.card-poke .descricao {
+    margin: 0;
+    font-size: .8rem;
+    color: #aab4cc;
+}
+
+.preco {
+    font-weight: bold;
+    color: #ffd54a;
+}
+
+.acoes .qtd {
+    width: 56px;
+    padding: 6px;
+    font-size: .8rem;
+}
+
+.mochila {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.mochila li {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    background: #232b3d;
+    border-radius: 10px;
+}
+
+.mochila small {
+    color: #aab4cc;
+}
+
+#mensagem.toast.sucesso {
+    background: #1e7a3c;
+}

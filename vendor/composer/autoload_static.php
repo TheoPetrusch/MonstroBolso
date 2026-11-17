@@ -6,10 +6,11 @@ namespace Composer\Autoload;
 
 class ComposerStaticInit6db59567863d90973943a5acfb9c77db
 {
-    public static $prefixLengthsPsr4 = array(
+    public static $prefixLengthsPsr4 = array (
         'A' =>
-        array(
+        array (
             'App\\Traits\\' => 11,
+            'App\\Services\\' => 13,
             'App\\Models\\' => 11,
             'App\\Exceptions\\' => 15,
             'App\\Core\\' => 9,
@@ -17,30 +18,34 @@ class ComposerStaticInit6db59567863d90973943a5acfb9c77db
         ),
     );
 
-    public static $prefixDirsPsr4 = array(
+    public static $prefixDirsPsr4 = array (
         'App\\Traits\\' =>
-        array(
+        array (
             0 => __DIR__ . '/../..' . '/app/traits',
         ),
+        'App\\Services\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/app/services',
+        ),
         'App\\Models\\' =>
-        array(
+        array (
             0 => __DIR__ . '/../..' . '/app/models',
         ),
         'App\\Exceptions\\' =>
-        array(
+        array (
             0 => __DIR__ . '/../..' . '/app/exceptions',
         ),
         'App\\Core\\' =>
-        array(
+        array (
             0 => __DIR__ . '/../..' . '/app/core',
         ),
         'App\\Controllers\\' =>
-        array(
+        array (
             0 => __DIR__ . '/../..' . '/app/controllers',
         ),
     );
 
-    public static $classMap = array(
+    public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
 
@@ -50,6 +55,7 @@ class ComposerStaticInit6db59567863d90973943a5acfb9c77db
             $loader->prefixLengthsPsr4 = ComposerStaticInit6db59567863d90973943a5acfb9c77db::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit6db59567863d90973943a5acfb9c77db::$prefixDirsPsr4;
             $loader->classMap = ComposerStaticInit6db59567863d90973943a5acfb9c77db::$classMap;
+
         }, null, ClassLoader::class);
     }
 }
