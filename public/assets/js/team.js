@@ -12,6 +12,8 @@ class TeamBuilder {
     #pokeApi;
     #especies = [];
     #time = { maximo: 6, pokemons: [] };
+    #evolucoes = []; // [{pokemon_id, para_nome, item_id, item_nome, quantidade}]
+    #mochila = [];   // itens de cura: [{item_id, nome, categoria, descricao, quantidade}]
 
     constructor(api, pokeApi) {
         this.#api = api;
@@ -28,6 +30,8 @@ class TeamBuilder {
             ]);
             this.#especies = esp.especies;
             this.#time = time.time;
+            this.#evolucoes = time.evolucoes;
+            this.#mochila = time.mochila;
             this.#desenharTudo();
         } catch (e) {
             this.#aviso(e.message);
@@ -40,6 +44,8 @@ class TeamBuilder {
         try {
             const r = await this.#api.post('/api/time/adicionar', { especie_id: especieId });
             this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
             this.#desenharTudo();
         } catch (e) {
             this.#aviso(e.message);
@@ -50,9 +56,46 @@ class TeamBuilder {
         try {
             const r = await this.#api.post('/api/time/remover', { pokemon_id: pokemonId });
             this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
             this.#desenharTudo();
         } catch (e) {
             this.#aviso(e.message);
+        }
+    }
+
+    async #evoluir(pokemon, opcao) {
+        try {
+            const r = await this.#api.post('/api/time/evoluir', {
+                pokemon_id: pokemon.id,
+                item_id: opcao.item_id,
+            });
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            // a evolução acabou de ser desbloqueada: recarrega o catálogo
+            this.#especies = (await this.#api.get('/api/especies')).especies;
+            this.#desenharTudo();
+            this.#aviso(`${pokemon.nome} evoluiu para ${r.evoluiu_para}! Ele agora está desbloqueado.`, true);
+        } catch (e) {
+            this.#aviso(e.message);
+        }
+    }
+
+    async #usarItem(pokemon, itemId) {
+        const item = this.#mochila.find(i => i.item_id === itemId);
+        try {
+            const r = await this.#api.post('/api/time/usar-item', {
+                pokemon_id: pokemon.id,
+                item_id: itemId,
+            });
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            this.#desenharTudo();
+            this.#aviso(`Usou ${item?.nome ?? 'o item'} em ${pokemon.nome}!`, true);
+        } catch (e) {
+            this.#aviso(e.message); // ex.: "Potion não teria efeito em Pikachu."
         }
     }
 
@@ -98,13 +141,67 @@ class TeamBuilder {
                     <img src="${esc(p.especie.sprite_url)}" alt="${esc(p.nome)}">
                     <strong>${esc(p.nome)}</strong>
                     <small>${esc(p.especie.tipo)} &middot; HP ${p.hp_atual}/${p.hp_max}</small>
+                    ${TeamBuilder.#estado(p)}
+                    <div class="evolucoes"></div>
+                    <div class="usar-item"></div>
                     <button type="button" class="perigo">Remover</button>`;
-                div.querySelector('button').addEventListener('click', () => this.#remover(p.id));
+                div.querySelector('.perigo').addEventListener('click', () => this.#remover(p.id));
+                this.#desenharEvolucoes(div.querySelector('.evolucoes'), p);
+                this.#desenharUsarItem(div.querySelector('.usar-item'), p);
             } else {
                 div.innerHTML = `<span class="vazio">Slot ${i} vazio</span>`;
             }
             slots.appendChild(div);
         }
+    }
+
+    /** Um botão por evolução possível; desativado se faltar a pedra na mochila. */
+    #desenharEvolucoes(alvo, pokemon) {
+        this.#evolucoes
+            .filter(o => o.pokemon_id === pokemon.id)
+            .forEach(o => {
+                const botao = document.createElement('button');
+                botao.type = 'button';
+                botao.className = 'sec';
+                botao.textContent = `Evoluir: ${o.para_nome}`;
+                if (o.quantidade > 0) {
+                    botao.title = `Usa 1 ${o.item_nome} (você tem ${o.quantidade})`;
+                    botao.addEventListener('click', () => this.#evoluir(pokemon, o));
+                } else {
+                    botao.disabled = true;
+                    botao.title = `Precisa de ${o.item_nome}: compre no Poké Mart`;
+                }
+                alvo.appendChild(botao);
+            });
+    }
+
+    /** Desmaiado ou com condição (veneno, queimado...): mostra em destaque. */
+    static #estado(p) {
+        if (p.desmaiado) return '<small class="estado">Desmaiado</small>';
+        if (p.status !== 'normal') return `<small class="estado">${esc(p.status)}</small>`;
+        return '';
+    }
+
+    /** Lista de itens de cura da mochila + botão "Usar". */
+    #desenharUsarItem(alvo, pokemon) {
+        if (this.#mochila.length === 0) return;
+
+        const select = document.createElement('select');
+        this.#mochila.forEach(i => {
+            const opcao = document.createElement('option');
+            opcao.value = i.item_id;
+            opcao.textContent = `${i.nome} (${i.quantidade})`;
+            opcao.title = i.descricao;
+            select.appendChild(opcao);
+        });
+
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'sec';
+        botao.textContent = 'Usar';
+        botao.addEventListener('click', () => this.#usarItem(pokemon, Number(select.value)));
+
+        alvo.append(select, botao);
     }
 
     #desenharCatalogo() {
@@ -139,7 +236,11 @@ class TeamBuilder {
                     </div>
                     <div class="acoes">
                         <button type="button" class="sec">Detalhes</button>
-                        <button type="button" class="add" ${cheio ? 'disabled' : ''}>Adicionar</button>
+                        ${e.disponivel
+                            ? `<button type="button" class="add" ${cheio ? 'disabled' : ''}
+                                       ${e.basica ? '' : 'title="Desbloqueado por evolução"'}>Adicionar</button>`
+                            : `<button type="button" class="add" disabled
+                                       title="Bloqueado: evolua um Pokémon com pedra do Poké Mart para desbloquear.">Bloqueado</button>`}
                     </div>`;
 
                 card.querySelector('.sec').addEventListener('click', () => this.#mostrarDetalhes(e));
@@ -148,9 +249,10 @@ class TeamBuilder {
             });
     }
 
-    #aviso(texto) {
+    #aviso(texto, sucesso = false) {
         const el = document.getElementById('mensagem');
         el.textContent = texto;
+        el.classList.toggle('sucesso', sucesso);
         el.classList.add('visivel');
         setTimeout(() => el.classList.remove('visivel'), 3500);
     }

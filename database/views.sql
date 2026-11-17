@@ -25,6 +25,7 @@ SELECT
     e.id AS especie_id,
     e.pokeapi_id,
     e.nome AS especie,
+    e.evolui_de_id, -- NULL = espécie básica
     ti.nome AS tipo,
     e.hp,
     e.ataque,
@@ -131,3 +132,32 @@ FROM
 GROUP BY
     u.id,
     u.nome;
+
+-- 7) Evoluções possíveis: qual pedra leva cada espécie a qual evolução.
+--    - Um caminho só (Charmander -> Charmeleon): a pedra é a da espécie
+--      (especies.item_evolucao_id, que já é a pedra do tipo dela).
+--    - Vários caminhos (Eevee): o pai não tem evolui_para_id, então a pedra
+--      é a do TIPO DA EVOLUÇÃO: Pedra da Água -> Vaporeon,
+--      Pedra do Trovão -> Jolteon, Pedra do Fogo -> Flareon.
+CREATE
+OR REPLACE VIEW vw_evolucoes AS
+SELECT
+    pai.id AS especie_id,
+    filho.id AS para_especie_id,
+    filho.nome AS para_nome,
+    i.id AS item_id,
+    i.nome AS item_nome
+FROM
+    especies filho
+    JOIN especies pai ON pai.id = filho.evolui_de_id
+    JOIN itens i ON i.categoria = 'evolucao'
+    AND (
+        (
+            pai.evolui_para_id = filho.id
+            AND i.id = pai.item_evolucao_id
+        )
+        OR (
+            pai.evolui_para_id IS NULL
+            AND i.tipo_id = filho.tipo_id
+        )
+    );

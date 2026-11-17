@@ -21,6 +21,15 @@ class ItemRepository
         return array_map([Item::class, 'fromRow'], $linhas);
     }
 
+    /** Item com todos os efeitos (cura_hp, cura_percentual...), direto da tabela. */
+    public function buscarPorId(int $id): ?Item
+    {
+        $st = $this->pdo->prepare('SELECT * FROM itens WHERE id = :id');
+        $st->execute(['id' => $id]);
+        $linha = $st->fetch();
+        return $linha ? Item::fromRow($linha) : null;
+    }
+
     /** Mochila do jogador, lida da VIEW vw_inventario (só itens com quantidade > 0). */
     public function inventario(int $usuarioId): array
     {

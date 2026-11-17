@@ -167,6 +167,45 @@ h2 {
     image-rendering: pixelated;
 }
 
+.slot .evolucoes {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+}
+
+.slot .evolucoes button {
+    padding: 4px 6px;
+    font-size: .75rem;
+}
+
+.slot .usar-item {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+}
+
+.slot .usar-item select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid #3a4560;
+    background: #11161f;
+    color: #eef1f8;
+    font-size: .75rem;
+}
+
+.slot .usar-item button {
+    padding: 4px 8px;
+    font-size: .75rem;
+}
+
+.slot .estado {
+    color: #ffb4a6;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
 .vazio {
     align-self: center;
     color: #7b88a6;

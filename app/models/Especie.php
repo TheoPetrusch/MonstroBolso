@@ -19,7 +19,8 @@ class Especie
         private int $spAtk,
         private int $spDef,
         private int $velocidade,
-        private ?string $spriteUrl
+        private ?string $spriteUrl,
+        private ?int $evoluiDeId = null
     ) {}
 
     public static function fromRow(array $r): self
@@ -35,8 +36,19 @@ class Especie
             (int) $r['sp_atk'],
             (int) $r['sp_def'],
             (int) $r['velocidade'],
-            $r['sprite_url'] ?? null
+            $r['sprite_url'] ?? null,
+            isset($r['evolui_de_id']) ? (int) $r['evolui_de_id'] : null
         );
+    }
+
+    /**
+     * Regra de negócio: espécie BÁSICA é a que não evolui de ninguém.
+     * Só ela pode entrar no time; as evoluções vêm das pedras do Poké Mart.
+     * Ex.: Charmander e Eevee são básicas; Charmeleon e Vaporeon não.
+     */
+    public function isBasica(): bool
+    {
+        return $this->evoluiDeId === null;
     }
 
     public function getId(): int
@@ -78,6 +90,7 @@ class Especie
             'sp_def'     => $this->spDef,
             'velocidade' => $this->velocidade,
             'sprite_url' => $this->spriteUrl,
+            'basica'     => $this->isBasica(),
         ];
     }
 }

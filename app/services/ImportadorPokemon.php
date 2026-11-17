@@ -33,17 +33,12 @@ class ImportadorPokemon
     /** @return array{importadas:int, evolucoes:int, sem_evolucao:string[]} */
     public function importar(int $de, int $ate): array
     {
-        // ---------- 1) baixa os dados ----------
-        $caminhos = [];
-        foreach (range($de, $ate) as $id) {
-            $caminhos["p{$id}"] = "pokemon/{$id}";
-            $caminhos["s{$id}"] = "pokemon-species/{$id}";
-        }
-        $json = $this->api->buscarVarios($caminhos);
-
+        // ---------- 1) baixa os dados (2 consultas por Pokémon) ----------
         $dados = [];
         foreach (range($de, $ate) as $id) {
-            $dados[$id] = self::montarDados($json["p{$id}"], $json["s{$id}"]);
+            $pokemon = $this->api->buscar("pokemon/{$id}");          // stats, tipos, sprite
+            $especie = $this->api->buscar("pokemon-species/{$id}");  // nome e pré-evolução
+            $dados[$id] = self::montarDados($pokemon, $especie);
         }
 
         // quem evolui para quem, só entre as espécies importadas agora
@@ -81,6 +76,12 @@ class ImportadorPokemon
             }
 
             foreach ($filhos as $paiId => $lista) {
+                // todo filho guarda o pai, mesmo quando são vários (Eevee):
+                // é isso que tira Vaporeon, Jolteon e Flareon da lista de básicos
+                foreach ($lista as $filhoId) {
+                    $this->especies->definirPreEvolucao($paiId, $filhoId);
+                }
+
                 if (count($lista) === 1) {
                     $this->especies->definirEvolucao($paiId, $lista[0]);
                     $evolucoes++;
@@ -123,6 +124,13 @@ class ImportadorPokemon
             }
             return PokeApiService::TIPOS[$nome];
         }, $tipos);
+
+        // O jogo usa um tipo só (o 1º da PokéAPI). Aves como Pidgey são
+        // Normal/Voador e ficariam "Normal": aqui elas viram Voador,
+        // e Normal passa a ser o 2º tipo (usado só para escolher golpes).
+        if ($tipos[0] === 'Normal' && ($tipos[1] ?? null) === 'Voador') {
+            $tipos = ['Voador', 'Normal'];
+        }
 
         $nome = ucfirst($pokemon['name']);
         foreach ($especie['names'] ?? [] as $n) {

@@ -38,6 +38,8 @@ $router->get('/api/especies',        [TimeController::class, 'listarEspecies']);
 $router->get('/api/time',            [TimeController::class, 'meuTime']);
 $router->post('/api/time/adicionar', [TimeController::class, 'adicionar']);
 $router->post('/api/time/remover',   [TimeController::class, 'remover']);
+$router->post('/api/time/evoluir',   [TimeController::class, 'evoluir']);
+$router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
 
 // API do Poké Mart
 $router->get('/api/loja',             [LojaController::class, 'dados']);
