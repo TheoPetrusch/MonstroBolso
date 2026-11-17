@@ -10,6 +10,9 @@ use InvalidArgumentException;
  */
 class Pokemon
 {
+    /** Chance de nascer shiny: 1 em CHANCE_SHINY. */
+    public const CHANCE_SHINY = 64;
+
     private int $hpAtual;
 
     public function __construct(
@@ -22,14 +25,16 @@ class Pokemon
         int $hpAtual,
         private string $status = 'normal',
         private bool $desmaiado = false,
-        private ?int $posicao = null
+        private ?int $posicao = null,
+        private bool $shiny = false
     ) {
         $this->setHpAtual($hpAtual);
     }
 
     /**
      * Regra de negócio: um Pokémon novo nasce no nível 5,
-     * com HP máximo e atual iguais ao HP base da espécie.
+     * com HP máximo e atual iguais ao HP base da espécie,
+     * e tem 1 chance em 64 de ser shiny (cor rara; continua shiny ao evoluir).
      */
     public static function novoDaEspecie(int $usuarioId, Especie $especie): self
     {
@@ -40,7 +45,8 @@ class Pokemon
             null,
             5,
             $especie->getHp(),
-            $especie->getHp()
+            $especie->getHp(),
+            shiny: random_int(1, self::CHANCE_SHINY) === 1
         );
     }
 
@@ -63,13 +69,18 @@ class Pokemon
             (int) $r['hp_atual'],
             $r['status'],
             (bool) $r['desmaiado'],
-            isset($r['posicao']) ? (int) $r['posicao'] : null
+            isset($r['posicao']) ? (int) $r['posicao'] : null,
+            (bool) ($r['shiny'] ?? false)
         );
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+    public function isShiny(): bool
+    {
+        return $this->shiny;
     }
     public function getUsuarioId(): int
     {
@@ -187,6 +198,7 @@ class Pokemon
             'hp_max'    => $this->hpMax,
             'status'    => $this->status,
             'desmaiado' => $this->desmaiado,
+            'shiny'     => $this->shiny,
             'especie'   => $this->especie->paraArray(),
         ];
     }

@@ -55,14 +55,16 @@ class EspecieRepository
     {
         $this->pdo->prepare(
             'INSERT INTO especies
-                    (pokeapi_id, nome, tipo_id, hp, ataque, defesa, sp_atk, sp_def, velocidade, sprite_url)
+                    (pokeapi_id, nome, tipo_id, hp, ataque, defesa, sp_atk, sp_def, velocidade,
+                     sprite_url, evolui_de_pokeapi_id)
              VALUES (:pid, :nome, (SELECT id FROM tipos WHERE nome = :tipo),
-                     :hp, :atk, :def, :spa, :spd, :vel, :sprite)
+                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai)
              ON DUPLICATE KEY UPDATE
                     nome = VALUES(nome), tipo_id = VALUES(tipo_id), hp = VALUES(hp),
                     ataque = VALUES(ataque), defesa = VALUES(defesa), sp_atk = VALUES(sp_atk),
                     sp_def = VALUES(sp_def), velocidade = VALUES(velocidade),
-                    sprite_url = VALUES(sprite_url)'
+                    sprite_url = VALUES(sprite_url),
+                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id)'
         )->execute([
             'pid'    => $d['pokeapi_id'],
             'nome'   => $d['nome'],
@@ -74,6 +76,7 @@ class EspecieRepository
             'spd'    => $d['sp_def'],
             'vel'    => $d['velocidade'],
             'sprite' => $d['sprite_url'],
+            'pai'    => $d['evolui_de'],
         ]);
 
         $st = $this->pdo->prepare('SELECT id FROM especies WHERE pokeapi_id = :pid');
@@ -82,33 +85,70 @@ class EspecieRepository
     }
 
     /**
-     * Liga a espécie à sua evolução. A pedra usada é a pedra do tipo da
-     * espécie (itens.tipo_id), então a regra fica no banco e não no PHP.
+     * Liga as evoluções do banco INTEIRO, não só as da geração importada agora.
+     * Assim a ordem de importação não importa: se a 2ª geração (Pichu) entrar
+     * depois da 1ª (Pikachu), o Pikachu passa a evoluir do Pichu.
+     *   1) evolui_de_id: acha o pai pelo pokeapi_id guardado (evolui_de_pokeapi_id);
+     *   2) evolui_para_id / item_evolucao_id: preenchidos só para quem tem
+     *      UMA evolução (com várias, como Eevee, a vw_evolucoes resolve).
+     * Deve ser chamado dentro de uma transação (o importador abre uma).
+     * @return int total de evoluções ligadas no banco
      */
-    public function definirEvolucao(int $pokeapiDe, int $pokeapiPara): void
+    public function ligarEvolucoes(): int
     {
-        $this->pdo->prepare(
+        // 1) pai de cada espécie (NULL se o pai ainda não foi importado)
+        $this->pdo->exec(
+            'UPDATE especies filho
+               LEFT JOIN especies pai ON pai.pokeapi_id = filho.evolui_de_pokeapi_id
+                SET filho.evolui_de_id = pai.id
+              WHERE filho.evolui_de_pokeapi_id IS NOT NULL'
+        );
+
+        // 2) evolução única de cada pai; a pedra é a do tipo da evolução
+        $pais = $this->pdo->query(
+            'SELECT evolui_de_id AS pai, MIN(id) AS filho, COUNT(*) AS total
+               FROM especies
+              WHERE evolui_de_id IS NOT NULL
+              GROUP BY evolui_de_id'
+        )->fetchAll();
+
+        $st = $this->pdo->prepare(
             'UPDATE especies e
-               JOIN especies prox ON prox.pokeapi_id = :para
-               LEFT JOIN itens i ON i.categoria = \'evolucao\' AND i.tipo_id = e.tipo_id
+               LEFT JOIN especies prox ON prox.id = :filho
+               LEFT JOIN itens i ON i.categoria = \'evolucao\' AND i.tipo_id = prox.tipo_id
                 SET e.evolui_para_id = prox.id,
                     e.item_evolucao_id = i.id
-              WHERE e.pokeapi_id = :de'
-        )->execute(['de' => $pokeapiDe, 'para' => $pokeapiPara]);
+              WHERE e.id = :pai'
+        );
+        $total = 0;
+        foreach ($pais as $p) {
+            $st->execute([
+                'pai'   => $p['pai'],
+                'filho' => (int) $p['total'] === 1 ? $p['filho'] : null,
+            ]);
+            $total += (int) $p['total'];
+        }
+        return $total;
+    }
+
+    /** pokeapi_id de todas as espécies já importadas. @return int[] */
+    public function pokeapiIds(): array
+    {
+        return array_map('intval', $this->pdo->query(
+            'SELECT pokeapi_id FROM especies'
+        )->fetchAll(PDO::FETCH_COLUMN));
     }
 
     /**
-     * Grava de quem a espécie evolui (evolui_de_id). Vale também para quem
-     * tem mais de um caminho, como as evoluções do Eevee: assim elas deixam
-     * de ser "básicas" mesmo sem o pai apontar para elas em evolui_para_id.
+     * pokeapi_id de todas as espécies que têm evolução no banco
+     * (usado para saber quem é 1º estágio na hora de escolher golpes).
+     * @return int[]
      */
-    public function definirPreEvolucao(int $pokeapiPai, int $pokeapiFilho): void
+    public function pokeapiIdsComEvolucao(): array
     {
-        $this->pdo->prepare(
-            'UPDATE especies filho
-               JOIN especies pai ON pai.pokeapi_id = :pai
-                SET filho.evolui_de_id = pai.id
-              WHERE filho.pokeapi_id = :filho'
-        )->execute(['pai' => $pokeapiPai, 'filho' => $pokeapiFilho]);
+        return array_map('intval', $this->pdo->query(
+            'SELECT DISTINCT evolui_de_pokeapi_id FROM especies
+              WHERE evolui_de_pokeapi_id IS NOT NULL'
+        )->fetchAll(PDO::FETCH_COLUMN));
     }
 }

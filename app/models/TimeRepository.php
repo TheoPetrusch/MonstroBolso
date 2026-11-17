@@ -30,9 +30,10 @@ class TimeRepository
 
     /**
      * Cria um Pokémon da espécie escolhida e coloca no 1º slot livre.
+     * Devolve o Pokémon criado (para a tela saber se saiu shiny).
      * TRANSAÇÃO: se algo falhar, nada fica gravado.
      */
-    public function adicionarEspecie(int $usuarioId, Especie $especie): void
+    public function adicionarEspecie(int $usuarioId, Especie $especie): Pokemon
     {
         $this->pdo->beginTransaction();
         try {
@@ -67,14 +68,15 @@ class TimeRepository
             $novo = Pokemon::novoDaEspecie($usuarioId, $especie);
 
             $this->pdo->prepare(
-                'INSERT INTO pokemons (usuario_id, especie_id, nivel, hp_max, hp_atual)
-                 VALUES (:u, :e, :nivel, :hp_max, :hp_atual)'
+                'INSERT INTO pokemons (usuario_id, especie_id, nivel, hp_max, hp_atual, shiny)
+                 VALUES (:u, :e, :nivel, :hp_max, :hp_atual, :shiny)'
             )->execute([
                 'u'        => $novo->getUsuarioId(),
                 'e'        => $novo->getEspecie()->getId(),
                 'nivel'    => $novo->getNivel(),
                 'hp_max'   => $novo->getHpMax(),
                 'hp_atual' => $novo->getHpAtual(),
+                'shiny'    => (int) $novo->isShiny(),
             ]);
             $pokemonId = (int) $this->pdo->lastInsertId();
 
@@ -84,6 +86,7 @@ class TimeRepository
             )->execute(['t' => $timeId, 'p' => $livre, 'pk' => $pokemonId]);
 
             $this->pdo->commit();
+            return $novo;
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
             throw $e;
@@ -97,7 +100,7 @@ class TimeRepository
     public function opcoesDeEvolucao(int $usuarioId): array
     {
         $st = $this->pdo->prepare(
-            'SELECT p.id AS pokemon_id, v.para_nome, v.item_id, v.item_nome,
+            'SELECT p.id AS pokemon_id, v.para_especie_id, v.para_nome, v.item_id, v.item_nome,
                     COALESCE(inv.quantidade, 0) AS quantidade
                FROM pokemons p
                JOIN vw_evolucoes v ON v.especie_id = p.especie_id
@@ -108,8 +111,9 @@ class TimeRepository
         );
         $st->execute(['u' => $usuarioId]);
         return array_map(fn(array $r) => [
-            'pokemon_id' => (int) $r['pokemon_id'],
-            'para_nome'  => $r['para_nome'],
+            'pokemon_id'      => (int) $r['pokemon_id'],
+            'para_especie_id' => (int) $r['para_especie_id'],
+            'para_nome'       => $r['para_nome'],
             'item_id'    => (int) $r['item_id'],
             'item_nome'  => $r['item_nome'],
             'quantidade' => (int) $r['quantidade'],
@@ -120,23 +124,24 @@ class TimeRepository
      * Evolui o Pokémon gastando 1 pedra da mochila.
      * TRANSAÇÃO: ou gasta a pedra E troca a espécie, ou não faz nada.
      */
-    public function evoluir(int $usuarioId, int $pokemonId, int $itemId): Pokemon
+    public function evoluir(int $usuarioId, int $pokemonId, int $itemId, int $paraEspecieId): Pokemon
     {
         $this->pdo->beginTransaction();
         try {
             $pokemon = $this->travarPokemon($usuarioId, $pokemonId);
 
-            // a pedra serve para esta espécie? (regra na vw_evolucoes)
+            // essa pedra leva esta espécie a essa evolução? (regra na vw_evolucoes)
+            // a evolução vai junto porque a mesma pedra pode servir para duas
+            // (Gloom + Pedra da Folha -> Vileplume ou Bellossom)
             $st = $this->pdo->prepare(
-                'SELECT para_especie_id FROM vw_evolucoes
-                  WHERE especie_id = :e AND item_id = :i'
+                'SELECT 1 FROM vw_evolucoes
+                  WHERE especie_id = :e AND item_id = :i AND para_especie_id = :p'
             );
-            $st->execute(['e' => $pokemon->getEspecie()->getId(), 'i' => $itemId]);
-            $paraId = $st->fetchColumn();
-            if (!$paraId) {
-                throw new InvalidArgumentException('Essa pedra não evolui este Pokémon.');
+            $st->execute(['e' => $pokemon->getEspecie()->getId(), 'i' => $itemId, 'p' => $paraEspecieId]);
+            if (!$st->fetchColumn()) {
+                throw new InvalidArgumentException('Essa pedra não evolui este Pokémon nessa forma.');
             }
-            $nova = (new EspecieRepository($this->pdo))->buscarPorId((int) $paraId);
+            $nova = (new EspecieRepository($this->pdo))->buscarPorId($paraEspecieId);
 
             // regra do model (ex.: desmaiado não evolui); lança exceção se não puder
             $pokemon->evoluirPara($nova);

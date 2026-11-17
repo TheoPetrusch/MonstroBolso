@@ -45,7 +45,7 @@ $router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
 $router->get('/api/loja',             [LojaController::class, 'dados']);
 $router->post('/api/loja/comprar',    [LojaController::class, 'comprar']);
 
-// API de admin
-$router->post('/api/admin/importar', [ImportadorController::class, 'importar']);
+// Importação de Pokémon da PokéAPI (qualquer usuário logado)
+$router->post('/api/importar', [ImportadorController::class, 'importar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

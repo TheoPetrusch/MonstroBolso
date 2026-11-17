@@ -114,6 +114,10 @@ CREATE TABLE
         -- Separado de evolui_para_id porque um pai pode ter várias evoluções
         -- (Eevee -> Vaporeon, Jolteon, Flareon) e evolui_para_id guarda só uma.
         evolui_de_id INT UNSIGNED NULL,
+        -- pokeapi_id do pai, guardado mesmo se o pai ainda não foi importado
+        -- (ex.: Pikachu vem do Pichu, da 2ª geração). Quando o pai entra,
+        -- o importador preenche evolui_de_id a partir daqui.
+        evolui_de_pokeapi_id INT UNSIGNED NULL,
         FOREIGN KEY (tipo_id) REFERENCES tipos (id),
         FOREIGN KEY (evolui_para_id) REFERENCES especies (id) ON DELETE SET NULL,
         FOREIGN KEY (evolui_de_id) REFERENCES especies (id) ON DELETE SET NULL,
@@ -161,6 +165,7 @@ CREATE TABLE
             'paralisado'
         ) NOT NULL DEFAULT 'normal',
         desmaiado TINYINT (1) NOT NULL DEFAULT 0,
+        shiny TINYINT (1) NOT NULL DEFAULT 0, -- 1 chance em 64 ao entrar no time
         criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
         FOREIGN KEY (especie_id) REFERENCES especies (id)

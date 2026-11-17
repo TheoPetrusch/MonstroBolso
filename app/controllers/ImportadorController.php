@@ -3,42 +3,33 @@
 namespace App\Controllers;
 
 use App\Core\BaseController;
-use App\Models\UsuarioRepository;
 use App\Services\ImportadorPokemon;
+use InvalidArgumentException;
 use RuntimeException;
 
-/** Rota de admin que importa espécies da PokéAPI para o banco. */
+/** Rota que importa uma geração de Pokémon da PokéAPI para o banco (qualquer usuário logado). */
 class ImportadorController extends BaseController
 {
-    private const MAXIMO_POR_VEZ = 200;
-
     public function importar(): void
     {
-        $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($this->exigirLoginApi() === null) return;
 
-        $usuario = (new UsuarioRepository())->buscarPorId($uid);
-        if (!$usuario || !$usuario->isAdmin()) {
-            $this->json(['ok' => false, 'erro' => 'Apenas admin pode importar Pokémon.'], 403);
-            return;
-        }
-
-        $d   = $this->corpoJson();
-        $de  = (int) ($d['de'] ?? 1);
-        $ate = (int) ($d['ate'] ?? 151);
-        if ($de < 1 || $ate < $de || $ate - $de >= self::MAXIMO_POR_VEZ) {
-            $this->json(['ok' => false, 'erro' => 'Intervalo inválido (até 200 por vez).'], 422);
+        $geracao = (int) ($this->corpoJson()['geracao'] ?? 0);
+        if (!isset(ImportadorPokemon::GERACOES[$geracao])) {
+            $this->json(['ok' => false, 'erro' => 'Escolha uma geração de 1 a 9.'], 422);
             return;
         }
 
         // A importação demora: libera a sessão para o jogador poder usar
         // outras abas enquanto isso, e aumenta o tempo limite do PHP.
         session_write_close();
-        set_time_limit(600); // 10 minutos: são 2 consultas por Pokémon, uma de cada vez
+        set_time_limit(900); // 15 minutos: a 5ª geração tem 156 Pokémon, 2 consultas cada
 
         try {
-            $resultado = (new ImportadorPokemon())->importar($de, $ate);
-            $this->json(['ok' => true] + $resultado);
+            $resultado = (new ImportadorPokemon())->importarGeracao($geracao);
+            $this->json(['ok' => true, 'geracao' => $geracao] + $resultado);
+        } catch (InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
         } catch (RuntimeException $e) {
             // falha na PokéAPI (internet ou certificado SSL): 502 = erro no serviço externo
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 502);
