@@ -26,7 +26,7 @@ class TelaHome {
     async #importar(botao) {
         const status = document.getElementById('status-importacao');
         botao.disabled = true;
-        status.textContent = 'Importando da PokéAPI... pode levar até 1 minuto.';
+        status.textContent = 'Importando da PokéAPI... pode levar alguns minutos, não feche a página.';
         try {
             const r = await this.#api.post('/api/admin/importar', { de: 1, ate: 151 });
             let texto = `${r.importadas} espécies importadas, ${r.evolucoes} evoluções.`;

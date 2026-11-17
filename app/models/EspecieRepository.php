@@ -33,6 +33,20 @@ class EspecieRepository
     }
 
     /**
+     * Ids das espécies evoluídas que o jogador já desbloqueou (evoluindo
+     * um Pokémon com pedra). O trigger trg_pokemons_desbloqueia preenche a tabela.
+     * @return int[]
+     */
+    public function idsDesbloqueados(int $usuarioId): array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT especie_id FROM especies_desbloqueadas WHERE usuario_id = :u'
+        );
+        $st->execute(['u' => $usuarioId]);
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
      * Insere ou atualiza uma espécie pelo pokeapi_id (UPSERT) e devolve o id.
      * Atualizar em vez de apagar mantém o id, então os Pokémon dos jogadores
      * continuam apontando para a mesma espécie.
@@ -81,5 +95,20 @@ class EspecieRepository
                     e.item_evolucao_id = i.id
               WHERE e.pokeapi_id = :de'
         )->execute(['de' => $pokeapiDe, 'para' => $pokeapiPara]);
+    }
+
+    /**
+     * Grava de quem a espécie evolui (evolui_de_id). Vale também para quem
+     * tem mais de um caminho, como as evoluções do Eevee: assim elas deixam
+     * de ser "básicas" mesmo sem o pai apontar para elas em evolui_para_id.
+     */
+    public function definirPreEvolucao(int $pokeapiPai, int $pokeapiFilho): void
+    {
+        $this->pdo->prepare(
+            'UPDATE especies filho
+               JOIN especies pai ON pai.pokeapi_id = :pai
+                SET filho.evolui_de_id = pai.id
+              WHERE filho.pokeapi_id = :filho'
+        )->execute(['pai' => $pokeapiPai, 'filho' => $pokeapiFilho]);
     }
 }

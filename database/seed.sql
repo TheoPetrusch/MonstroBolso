@@ -28,6 +28,15 @@ VALUES
         9999
     );
 
+-- Cada usuário precisa de um time (1 por usuário). No cadastro pelo site
+-- isso é feito pelo UsuarioRepository::criar(); aqui, para os de teste.
+INSERT INTO
+    times (usuario_id)
+SELECT
+    id
+FROM
+    usuarios;
+
 -- ---------------------------------------------------------------------
 -- Tipos (os 18 oficiais). A ordem segue a PokéAPI, então tipos.id é igual
 -- ao id do tipo na PokéAPI (1 = normal, 2 = fighting ... 18 = fairy).
@@ -486,6 +495,16 @@ VALUES
         0,
         NULL,
         0
+    ),
+    (
+        'Pedra do Vento',
+        'evolucao',
+        'Evolui Pokémon da linha de Voador.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
     );
 
 -- Cada pedra evolui as espécies de um tipo (itens.tipo_id).
@@ -506,6 +525,7 @@ JOIN (
     UNION ALL SELECT 'Pedra Psíquica', 'Psíquico'
     UNION ALL SELECT 'Pedra Fantasma', 'Fantasma'
     UNION ALL SELECT 'Pedra do Dragão', 'Dragão'
+    UNION ALL SELECT 'Pedra do Vento', 'Voador'
 ) m ON m.item = i.nome
 JOIN tipos t ON t.nome = m.tipo
 SET
@@ -514,6 +534,7 @@ SET
 -- ---------------------------------------------------------------------
 -- Espécies iniciais (stats base atuais da PokéAPI)
 -- Tipo único = 1º tipo da PokéAPI: Charizard = Fogo, Geodude = Pedra etc.
+-- Exceção: quem é Normal/Voador na PokéAPI (Pidgey, Spearow...) fica Voador.
 -- As outras espécies da 1ª geração entram pelo importador: na Home, o
 -- admin clica em "Importar 1ª geração (PokéAPI)".
 -- ---------------------------------------------------------------------
@@ -583,6 +604,13 @@ JOIN itens i ON i.categoria = 'evolucao' AND i.tipo_id = e.tipo_id
 SET
     e.evolui_para_id = prox.id,
     e.item_evolucao_id = i.id;
+
+-- Caminho inverso: cada evolução guarda de quem ela veio (evolui_de_id).
+-- Quem fica com evolui_de_id NULL é espécie básica.
+UPDATE especies filho
+JOIN especies pai ON pai.evolui_para_id = filho.id
+SET
+    filho.evolui_de_id = pai.id;
 
 -- ---------------------------------------------------------------------
 -- Golpes: 2 físicos e 2 especiais (um fraco e um forte) de cada tipo

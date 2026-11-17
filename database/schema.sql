@@ -18,6 +18,7 @@ batalhas,
 log_loja,
 log_perfis,
 inventario,
+especies_desbloqueadas,
 time_pokemon,
 times,
 pokemons,
@@ -109,8 +110,13 @@ CREATE TABLE
         sprite_url VARCHAR(255) NULL,
         evolui_para_id INT UNSIGNED NULL,
         item_evolucao_id INT UNSIGNED NULL,
+        -- de quem ela evolui. NULL = espécie básica (pode entrar no time).
+        -- Separado de evolui_para_id porque um pai pode ter várias evoluções
+        -- (Eevee -> Vaporeon, Jolteon, Flareon) e evolui_para_id guarda só uma.
+        evolui_de_id INT UNSIGNED NULL,
         FOREIGN KEY (tipo_id) REFERENCES tipos (id),
         FOREIGN KEY (evolui_para_id) REFERENCES especies (id) ON DELETE SET NULL,
+        FOREIGN KEY (evolui_de_id) REFERENCES especies (id) ON DELETE SET NULL,
         FOREIGN KEY (item_evolucao_id) REFERENCES itens (id) ON DELETE SET NULL
     ) ENGINE = InnoDB;
 
@@ -180,6 +186,21 @@ CREATE TABLE
         CHECK (posicao BETWEEN 1 AND 6),
         FOREIGN KEY (time_id) REFERENCES times (id) ON DELETE CASCADE,
         FOREIGN KEY (pokemon_id) REFERENCES pokemons (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Espécies evoluídas que o jogador já conseguiu (por pedra).
+-- Básicas não precisam estar aqui: elas estão sempre liberadas.
+-- Preenchida pelo trigger trg_pokemons_desbloqueia (triggers.sql).
+-- ---------------------------------------------------------------------
+CREATE TABLE
+    especies_desbloqueadas (
+        usuario_id INT UNSIGNED NOT NULL,
+        especie_id INT UNSIGNED NOT NULL,
+        desbloqueada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (usuario_id, especie_id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+        FOREIGN KEY (especie_id) REFERENCES especies (id) ON DELETE CASCADE
     ) ENGINE = InnoDB;
 
 -- ---------------------------------------------------------------------

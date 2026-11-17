@@ -34,13 +34,13 @@ class ImportadorController extends BaseController
         // A importação demora: libera a sessão para o jogador poder usar
         // outras abas enquanto isso, e aumenta o tempo limite do PHP.
         session_write_close();
-        set_time_limit(300);
+        set_time_limit(600); // 10 minutos: são 2 consultas por Pokémon, uma de cada vez
 
         try {
             $resultado = (new ImportadorPokemon())->importar($de, $ate);
             $this->json(['ok' => true] + $resultado);
         } catch (RuntimeException $e) {
-            // falha na PokéAPI (internet, SSL, curl): 502 = erro no serviço externo
+            // falha na PokéAPI (internet ou certificado SSL): 502 = erro no serviço externo
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 502);
         }
     }

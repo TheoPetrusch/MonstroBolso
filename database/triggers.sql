@@ -20,6 +20,7 @@ DROP TRIGGER IF EXISTS trg_pokemons_hp_update;
 DROP TRIGGER IF EXISTS trg_usuarios_log_perfil;
 DROP TRIGGER IF EXISTS trg_log_loja_valida;
 DROP TRIGGER IF EXISTS trg_time_pokemon_dono;
+DROP TRIGGER IF EXISTS trg_pokemons_desbloqueia;
 DROP PROCEDURE IF EXISTS sp_comprar_item;
 
 DELIMITER $$
@@ -100,6 +101,20 @@ BEGIN
     IF v_dono_time IS NULL OR v_dono_poke IS NULL OR v_dono_time <> v_dono_poke THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Este Pokémon não pertence ao dono do time.';
+    END IF;
+END$$
+
+-- 7) AFTER UPDATE em pokemons: evoluiu (mudou de espécie)? A nova espécie
+--    fica desbloqueada para o jogador, que pode pegá-la de novo no Team
+--    Builder mesmo depois de remover o Pokémon. INSERT IGNORE: se já estava
+--    desbloqueada (chave primária repetida), não faz nada.
+CREATE TRIGGER trg_pokemons_desbloqueia
+AFTER UPDATE ON pokemons
+FOR EACH ROW
+BEGIN
+    IF NEW.especie_id <> OLD.especie_id THEN
+        INSERT IGNORE INTO especies_desbloqueadas (usuario_id, especie_id)
+        VALUES (NEW.usuario_id, NEW.especie_id);
     END IF;
 END$$
 

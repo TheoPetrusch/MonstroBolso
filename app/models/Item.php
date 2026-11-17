@@ -10,10 +10,15 @@ class Item
         private string $nome,
         private string $categoria, // cura_hp, cura_status, reviver ou evolucao
         private string $descricao,
-        private int $preco
+        private int $preco,
+        // efeitos (colunas da tabela itens); a vw_loja não traz, então têm padrão
+        private int $curaHp = 0,            // cura fixa (Potion = 20)
+        private int $curaPercentual = 0,    // 0..100 (Max Potion = 100, Revive = 50)
+        private ?string $statusCurado = null, // ex.: 'veneno' (Antidote)
+        private bool $curaTodosStatus = false // Full Heal / Full Restore
     ) {}
 
-    /** Linha vinda da view vw_loja. */
+    /** Linha vinda da view vw_loja ou da tabela itens. */
     public static function fromRow(array $r): self
     {
         return new self(
@@ -21,7 +26,11 @@ class Item
             $r['nome'],
             $r['categoria'],
             $r['descricao'],
-            (int) $r['preco']
+            (int) $r['preco'],
+            (int) ($r['cura_hp'] ?? 0),
+            (int) ($r['cura_percentual'] ?? 0),
+            $r['status_curado'] ?? null,
+            (bool) ($r['cura_todos_status'] ?? false)
         );
     }
 
@@ -40,6 +49,22 @@ class Item
     public function getPreco(): int
     {
         return $this->preco;
+    }
+    public function getCuraHp(): int
+    {
+        return $this->curaHp;
+    }
+    public function getCuraPercentual(): int
+    {
+        return $this->curaPercentual;
+    }
+    public function getStatusCurado(): ?string
+    {
+        return $this->statusCurado;
+    }
+    public function curaTodosStatus(): bool
+    {
+        return $this->curaTodosStatus;
     }
 
     public function paraArray(): array
