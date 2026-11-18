@@ -1,25 +1,25 @@
-/** Escapa texto antes de ir para o innerHTML (evita XSS, ex.: apelido com <script>). */
 const esc = (texto) => String(texto ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-/**
- * TeamBuilder - tela de montagem de time.
- * Usa ApiClient (back-end próprio) e PokeApi (API externa), ambos assíncronos.
- */
 class TeamBuilder {
     #api;
     #pokeApi;
     #especies = [];
     #time = { maximo: 6, pokemons: [] };
-    #evolucoes = []; // [{pokemon_id, para_nome, item_id, item_nome, quantidade}]
-    #mochila = [];   // itens de cura: [{item_id, nome, categoria, descricao, quantidade}]
+    #evolucoes = []; 
+    #mochila = [];   
+    #filtroTipo = ''; 
 
     constructor(api, pokeApi) {
         this.#api = api;
         this.#pokeApi = pokeApi;
         document.getElementById('busca')
             .addEventListener('input', () => this.#desenharCatalogo());
+        document.getElementById('btn-limpar')
+            .addEventListener('click', () => this.#limpar());
+        document.getElementById('fechar-detalhes')
+            .addEventListener('click', () => document.getElementById('janela-detalhes').close());
     }
 
     async iniciar() {
@@ -38,8 +38,6 @@ class TeamBuilder {
         }
     }
 
-    // ---------- ações ----------
-
     async #adicionar(especieId) {
         try {
             const r = await this.#api.post('/api/time/adicionar', { especie_id: especieId });
@@ -47,6 +45,10 @@ class TeamBuilder {
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
             this.#desenharTudo();
+            if (r.shiny) {
+                const nome = this.#especies.find(e => e.id === especieId)?.nome ?? 'Pokémon';
+                this.#aviso(`✨ Uau! Seu ${nome} é shiny! (chance de 1 em 64)`, true);
+            }
         } catch (e) {
             this.#aviso(e.message);
         }
@@ -64,16 +66,32 @@ class TeamBuilder {
         }
     }
 
+    async #limpar() {
+        const total = this.#time.pokemons.length;
+        if (total === 0) return;
+        if (!confirm(`Remover os ${total} Pokémon do time? Isso não pode ser desfeito.`)) return;
+        try {
+            const r = await this.#api.post('/api/time/limpar');
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            this.#desenharTudo();
+            this.#aviso(`Time limpo: ${r.removidos} Pokémon removidos.`, true);
+        } catch (e) {
+            this.#aviso(e.message);
+        }
+    }
+
     async #evoluir(pokemon, opcao) {
         try {
             const r = await this.#api.post('/api/time/evoluir', {
                 pokemon_id: pokemon.id,
                 item_id: opcao.item_id,
+                para_especie_id: opcao.para_especie_id,
             });
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
-            // a evolução acabou de ser desbloqueada: recarrega o catálogo
             this.#especies = (await this.#api.get('/api/especies')).especies;
             this.#desenharTudo();
             this.#aviso(`${pokemon.nome} evoluiu para ${r.evoluiu_para}! Ele agora está desbloqueado.`, true);
@@ -95,52 +113,68 @@ class TeamBuilder {
             this.#desenharTudo();
             this.#aviso(`Usou ${item?.nome ?? 'o item'} em ${pokemon.nome}!`, true);
         } catch (e) {
-            this.#aviso(e.message); // ex.: "Potion não teria efeito em Pikachu."
+            this.#aviso(e.message); 
         }
     }
 
     async #mostrarDetalhes(especie) {
+        const janela = document.getElementById('janela-detalhes');
         const alvo = document.getElementById('detalhes');
+        janela.dataset.tipo = especie.tipo;
+        document.getElementById('janela-titulo').textContent = especie.nome.toUpperCase();
         alvo.textContent = 'Consultando a PokéAPI...';
+        if (!janela.open) janela.showModal();
         try {
             const d = await this.#pokeApi.buscar(especie.pokeapi_id);
+            const stats = [
+                ['HP', especie.hp], ['Ataque', especie.ataque], ['Defesa', especie.defesa],
+                ['Sp. Atq', especie.sp_atk], ['Sp. Def', especie.sp_def], ['Vel', especie.velocidade],
+            ];
             alvo.innerHTML = `
-                <img src="${esc(d.arte)}" alt="${esc(especie.nome)}" width="140">
-                <div>
-                    <h3>${esc(especie.nome)}</h3>
-                    <p>Tipos (PokéAPI): ${esc(d.tipos.join(', '))}</p>
-                    <p>Altura: ${d.altura} m &middot; Peso: ${d.peso} kg</p>
-                    <p>Habilidades: ${esc(d.habilidades.join(', '))}</p>
-                    <p>HP ${especie.hp} &middot; Atq ${especie.ataque} &middot; Def ${especie.defesa}
-                       &middot; SpA ${especie.sp_atk} &middot; SpD ${especie.sp_def}
-                       &middot; Vel ${especie.velocidade}</p>
+                <img class="arte" src="${esc(d.arte)}" alt="${esc(especie.nome)}">
+                <div class="info">
+                    <div>${d.tipos.map(t => `<span class="chip-tipo">${esc(t)}</span>`).join(' ')}</div>
+                    <p>Altura: <strong>${d.altura} m</strong> &middot; Peso: <strong>${d.peso} kg</strong></p>
+                    <p>Habilidades: <strong>${esc(d.habilidades.join(', '))}</strong></p>
+                    ${stats.map(([nome, valor]) => `
+                        <div class="stat">
+                            <span>${nome}</span><span>${Number(valor)}</span>
+                            <div class="hp"><div class="trilho"><span class="vida" style="width:${Math.min(valor / 1.5, 100)}%"></span></div></div>
+                        </div>`).join('')}
                 </div>`;
         } catch (e) {
             alvo.textContent = e.message;
         }
     }
 
-    // ---------- desenho ----------
+    
 
     #desenharTudo() {
         this.#desenharTime();
+        this.#desenharResumo();
+        this.#desenharFiltros();
         this.#desenharCatalogo();
     }
 
     #desenharTime() {
         document.getElementById('contagem').textContent = this.#time.pokemons.length;
+        document.getElementById('btn-limpar').disabled = this.#time.pokemons.length === 0;
         const slots = document.getElementById('slots');
         slots.innerHTML = '';
 
         for (let i = 1; i <= this.#time.maximo; i++) {
             const p = this.#time.pokemons.find(x => x.posicao === i);
             const div = document.createElement('div');
-            div.className = 'slot' + (p ? ' ocupado' : '');
+            div.className = 'slot' + (p ? ' ocupado' : '') + (p?.shiny ? ' shiny' : '');
             if (p) {
+                div.dataset.tipo = p.especie.tipo;
                 div.innerHTML = `
-                    <img src="${esc(p.especie.sprite_url)}" alt="${esc(p.nome)}">
-                    <strong>${esc(p.nome)}</strong>
-                    <small>${esc(p.especie.tipo)} &middot; HP ${p.hp_atual}/${p.hp_max}</small>
+                    <span class="numero">${i}</span>
+                    <img src="${esc(p.shiny ? TeamBuilder.#spriteShiny(p.especie.pokeapi_id) : p.especie.sprite_url)}"
+                         alt="${esc(p.nome)}">
+                    <strong>${p.shiny ? '✨ ' : ''}${esc(p.nome)}</strong>
+                    <span class="chip-tipo">${esc(p.especie.tipo)}</span>
+                    ${TeamBuilder.#barraHp(p.hp_atual, p.hp_max)}
                     ${TeamBuilder.#estado(p)}
                     <div class="evolucoes"></div>
                     <div class="usar-item"></div>
@@ -149,13 +183,12 @@ class TeamBuilder {
                 this.#desenharEvolucoes(div.querySelector('.evolucoes'), p);
                 this.#desenharUsarItem(div.querySelector('.usar-item'), p);
             } else {
-                div.innerHTML = `<span class="vazio">Slot ${i} vazio</span>`;
+                div.innerHTML = `<span class="vazio"><span class="mais">+</span>Slot ${i} vazio</span>`;
             }
             slots.appendChild(div);
         }
     }
 
-    /** Um botão por evolução possível; desativado se faltar a pedra na mochila. */
     #desenharEvolucoes(alvo, pokemon) {
         this.#evolucoes
             .filter(o => o.pokemon_id === pokemon.id)
@@ -175,14 +208,99 @@ class TeamBuilder {
             });
     }
 
-    /** Desmaiado ou com condição (veneno, queimado...): mostra em destaque. */
+    /** Sprite shiny da PokéAPI (o mesmo do hover do catálogo). */
+    static #spriteShiny(pokeapiId) {
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(pokeapiId)}.png`;
+    }
+
+    static #barraHp(atual, max) {
+        const pct = max > 0 ? Math.round(atual / max * 100) : 0;
+        const nivel = pct > 50 ? '' : (pct > 20 ? ' media' : ' baixa');
+        return `
+            <div class="hp">
+                <span>HP</span>
+                <div class="trilho"><span class="vida${nivel}" style="width:${pct}%"></span></div>
+                <span>${Number(atual)}/${Number(max)}</span>
+            </div>`;
+    }
+
+    #desenharResumo() {
+        const alvo = document.getElementById('resumo');
+        const pokes = this.#time.pokemons;
+        if (pokes.length === 0) {
+            alvo.innerHTML = '<p class="dica">Adicione Pokémon pra ver o resumo do time.</p>';
+            return;
+        }
+
+        const STATUS = [
+            ['hp', 'HP'], ['ataque', 'Ataque'], ['defesa', 'Defesa'],
+            ['sp_atk', 'Sp. Atq'], ['sp_def', 'Sp. Def'], ['velocidade', 'Vel'],
+        ];
+        const media = (campo) => Math.round(
+            pokes.reduce((t, p) => t + Number(p.especie[campo] || 0), 0) / pokes.length);
+        const medias = STATUS.map(([campo, nome]) => ({ campo, nome, valor: media(campo) }));
+        const geral = Math.round(medias.reduce((t, m) => t + m.valor, 0) / medias.length);
+        const fraco = medias.reduce((a, b) => (b.valor < a.valor ? b : a));
+        const forte = medias.reduce((a, b) => (b.valor > a.valor ? b : a));
+
+        const noTime = new Set(pokes.map(p => p.especie.tipo));
+        const todos = [...new Set(this.#especies.map(e => e.tipo))];
+
+        const sugestao = this.#especies
+            .filter(e => e.disponivel && !pokes.some(p => p.especie.id === e.id))
+            .sort((a, b) => Number(b[fraco.campo]) - Number(a[fraco.campo]))[0];
+
+        alvo.innerHTML = `
+            <div class="media-geral">
+                <span>Média geral</span>
+                <strong>${geral}</strong>
+            </div>
+            <div class="grafico">
+                ${medias.map(m => `
+                    <div class="linha${m === fraco ? ' fraco' : ''}${m === forte ? ' forte' : ''}">
+                        <span class="nome">${m.nome}</span>
+                        <div class="trilho"><span style="width:${Math.min(m.valor / 1.5, 100)}%"></span></div>
+                        <span class="valor">${m.valor}</span>
+                    </div>`).join('')}
+            </div>
+            <p class="destaque">
+                Ponto forte: <strong>${forte.nome}</strong> &middot;
+                Ponto fraco: <strong>${fraco.nome}</strong>
+            </p>
+            <div class="resumo-tipos">Tipos:
+                ${todos.map(tipo => noTime.has(tipo)
+                    ? `<span class="chip-tipo" data-tipo="${esc(tipo)}">${esc(tipo)}</span>`
+                    : `<span class="chip-tipo falta" title="Nenhum Pokémon desse tipo no time">${esc(tipo)}</span>`).join('')}
+            </div>
+            ${sugestao ? `<p class="dica">Pra reforçar ${fraco.nome}, que tal um <strong>${esc(sugestao.nome)}</strong> (${fraco.nome} ${Number(sugestao[fraco.campo])})?</p>` : ''}`;
+    }
+
+    #desenharFiltros() {
+        const alvo = document.getElementById('filtros');
+        const tipos = [...new Set(this.#especies.map(e => e.tipo))];
+        alvo.innerHTML = '';
+        ['', ...tipos].forEach(tipo => {
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.textContent = tipo || 'Todos';
+            if (tipo) botao.dataset.tipo = tipo;
+            if (tipo === this.#filtroTipo) botao.classList.add('ativo');
+            botao.addEventListener('click', () => {
+                this.#filtroTipo = tipo;
+                this.#desenharFiltros();
+                this.#desenharCatalogo();
+            });
+            alvo.appendChild(botao);
+        });
+    }
+
     static #estado(p) {
         if (p.desmaiado) return '<small class="estado">Desmaiado</small>';
         if (p.status !== 'normal') return `<small class="estado">${esc(p.status)}</small>`;
         return '';
     }
 
-    /** Lista de itens de cura da mochila + botão "Usar". */
+    
     #desenharUsarItem(alvo, pokemon) {
         if (this.#mochila.length === 0) return;
 
@@ -211,14 +329,15 @@ class TeamBuilder {
         catalogo.innerHTML = '';
 
         this.#especies
+            .filter(e => !this.#filtroTipo || e.tipo === this.#filtroTipo)
             .filter(e => !termo || e.nome.toLowerCase().includes(termo)
                 || e.tipo.toLowerCase().includes(termo))
                        .forEach(e => {
                 const card = document.createElement('div');
-                card.className = 'card-poke';
+                card.className = 'card-poke' + (e.disponivel ? '' : ' bloqueado');
                 card.dataset.tipo = e.tipo;
 
-                const shiny = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(e.pokeapi_id)}.png`;
+                const shiny = TeamBuilder.#spriteShiny(e.pokeapi_id);
                 const barra = (valor) => `<div class="barra"><span style="width:${Math.min(valor / 1.5, 100)}%"></span></div>`;
 
                 card.innerHTML = `
@@ -227,7 +346,10 @@ class TeamBuilder {
                         <img class="shiny" src="${shiny}" alt="">
                     </div>
                     <strong>${esc(e.nome)}</strong>
-                    <small>${esc(e.tipo)} &middot; HP ${e.hp} &middot; Vel ${e.velocidade}</small>
+                    <span class="chip-tipo">${esc(e.tipo)}</span>
+                    ${e.disponivel
+                        ? `<small>HP ${e.hp} &middot; Vel ${e.velocidade}</small>`
+                        : '<span class="dica">Evolua um Pokémon com pedra do Poké Mart</span>'}
                     <div class="previa">
                         HP ${e.hp} ${barra(e.hp)}
                         Ataque ${e.ataque} ${barra(e.ataque)}
@@ -239,12 +361,11 @@ class TeamBuilder {
                         ${e.disponivel
                             ? `<button type="button" class="add" ${cheio ? 'disabled' : ''}
                                        ${e.basica ? '' : 'title="Desbloqueado por evolução"'}>Adicionar</button>`
-                            : `<button type="button" class="add" disabled
-                                       title="Bloqueado: evolua um Pokémon com pedra do Poké Mart para desbloquear.">Bloqueado</button>`}
+                            : ''}
                     </div>`;
 
                 card.querySelector('.sec').addEventListener('click', () => this.#mostrarDetalhes(e));
-                card.querySelector('.add').addEventListener('click', () => this.#adicionar(e.id));
+                card.querySelector('.add')?.addEventListener('click', () => this.#adicionar(e.id));
                 catalogo.appendChild(card);
             });
     }

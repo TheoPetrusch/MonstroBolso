@@ -13,6 +13,7 @@ use RuntimeException;
  * Importa espécies da PokéAPI para o banco:
  *   1) baixa tudo primeiro (pokemon/{id} e pokemon-species/{id});
  *   2) grava tudo numa única TRANSAÇÃO: espécies, golpes e evoluções.
+ * Dá para importar cada geração separadamente, em qualquer ordem.
  * Se a internet cair no meio, nada é gravado pela metade.
  */
 class ImportadorPokemon
@@ -30,42 +31,73 @@ class ImportadorPokemon
         $this->golpes   = new GolpeRepository($this->pdo);
     }
 
-    /** @return array{importadas:int, evolucoes:int, sem_evolucao:string[]} */
+    /**
+     * Gerações da Pokédex nacional (número da geração => [primeiro, último]).
+     * A 9ª termina no Pecharunt (#1025).
+     */
+    public const GERACOES = [
+        1 => [1, 151],
+        2 => [152, 251],
+        3 => [252, 386],
+        4 => [387, 493],
+        5 => [494, 649],
+        6 => [650, 721],
+        7 => [722, 809],
+        8 => [810, 905],
+        9 => [906, 1025],
+    ];
+
+    /** Importa uma geração inteira (1 a 9). */
+    public function importarGeracao(int $geracao): array
+    {
+        if (!isset(self::GERACOES[$geracao])) {
+            throw new \InvalidArgumentException('Geração inválida (1 a 9).');
+        }
+        [$de, $ate] = self::GERACOES[$geracao];
+        return $this->importar($de, $ate);
+    }
+
+    /** @return array{importadas:int, evolucoes:int, pre_evolucoes:string[]} */
     public function importar(int $de, int $ate): array
     {
         // ---------- 1) baixa os dados (2 consultas por Pokémon) ----------
         $dados = [];
         foreach (range($de, $ate) as $id) {
-            $pokemon = $this->api->buscar("pokemon/{$id}");          // stats, tipos, sprite
-            $especie = $this->api->buscar("pokemon-species/{$id}");  // nome e pré-evolução
-            $dados[$id] = self::montarDados($pokemon, $especie);
+            $dados[$id] = $this->baixar($id);
         }
 
-        // quem evolui para quem, só entre as espécies importadas agora
-        // (ex.: Pikachu vem de Pichu, da 2ª geração, que não está na lista)
-        $filhos = [];
-        foreach ($dados as $id => &$d) {
-            if ($d['evolui_de'] !== null && !isset($dados[$d['evolui_de']])) {
-                $d['evolui_de'] = null;
-            }
-            if ($d['evolui_de'] !== null) {
-                $filhos[$d['evolui_de']][] = $id;
+        // Pré-evoluções de outra geração vêm junto, se ainda não estão no banco
+        // (ex.: importar a 1ª traz o Pichu, da 2ª, para o Pikachu ter de onde
+        // evoluir). Repete até não faltar ninguém, porque a pré-evolução pode
+        // ter outra antes dela (Magmortar <- Magmar <- Magby).
+        $noBanco = array_flip($this->especies->pokeapiIds());
+        $preEvolucoes = [];
+        while ($faltando = self::paisFaltando($dados, $noBanco)) {
+            foreach ($faltando as $id) {
+                $dados[$id] = $this->baixar($id);
+                $preEvolucoes[] = $dados[$id]['nome'];
             }
         }
-        unset($d);
 
         // ---------- 2) grava tudo numa transação ----------
         $seletor = new SeletorDeGolpes($this->golpes->listar());
-        $semEvolucao = [];
-        $evolucoes = 0;
 
         $this->pdo->beginTransaction();
         try {
-            foreach ($dados as $id => $d) {
-                $especieId = $this->especies->salvarDaApi($d);
+            // a) espécies (guardam o pokeapi_id do pai, mesmo de outra geração)
+            $ids = [];
+            foreach ($dados as $pid => $d) {
+                $ids[$pid] = $this->especies->salvarDaApi($d);
+            }
 
-                $primeiroEstagio = $d['evolui_de'] === null && !empty($filhos[$id]);
-                $this->golpes->definirDaEspecie($especieId, $seletor->escolher(
+            // b) liga as evoluções do banco todo: a ordem das gerações não importa
+            $evolucoes = $this->especies->ligarEvolucoes();
+
+            // c) golpes: 1º estágio = não vem de ninguém e tem evolução no banco
+            $temEvolucao = array_flip($this->especies->pokeapiIdsComEvolucao());
+            foreach ($dados as $pid => $d) {
+                $primeiroEstagio = $d['evolui_de'] === null && isset($temEvolucao[$pid]);
+                $this->golpes->definirDaEspecie($ids[$pid], $seletor->escolher(
                     $d['tipo'],
                     $d['tipo2'],
                     $d['ataque'],
@@ -75,22 +107,6 @@ class ImportadorPokemon
                 ));
             }
 
-            foreach ($filhos as $paiId => $lista) {
-                // todo filho guarda o pai, mesmo quando são vários (Eevee):
-                // é isso que tira Vaporeon, Jolteon e Flareon da lista de básicos
-                foreach ($lista as $filhoId) {
-                    $this->especies->definirPreEvolucao($paiId, $filhoId);
-                }
-
-                if (count($lista) === 1) {
-                    $this->especies->definirEvolucao($paiId, $lista[0]);
-                    $evolucoes++;
-                } else {
-                    // ex.: Eevee tem 3 evoluções e o schema guarda só uma
-                    $semEvolucao[] = $dados[$paiId]['nome'];
-                }
-            }
-
             $this->pdo->commit();
         } catch (\Throwable $e) {
             $this->pdo->rollBack();
@@ -98,10 +114,37 @@ class ImportadorPokemon
         }
 
         return [
-            'importadas'   => count($dados),
-            'evolucoes'    => $evolucoes,
-            'sem_evolucao' => $semEvolucao,
+            'importadas'    => count($dados),
+            'evolucoes'     => $evolucoes,
+            'pre_evolucoes' => $preEvolucoes,
         ];
+    }
+
+    /** Baixa uma espécie da PokéAPI (2 consultas) e converte para o formato do banco. */
+    private function baixar(int $id): array
+    {
+        $pokemon = $this->api->buscar("pokemon/{$id}");          // stats, tipos, sprite
+        $especie = $this->api->buscar("pokemon-species/{$id}");  // nome e pré-evolução
+        return self::montarDados($pokemon, $especie);
+    }
+
+    /**
+     * pokeapi_id dos pais que não estão nem na importação atual nem no banco.
+     * Público e estático para poder ser testado sem internet nem banco.
+     * @param array<int, array> $dados   espécies baixadas, pelo pokeapi_id
+     * @param array<int, mixed> $noBanco pokeapi_id => qualquer coisa
+     * @return int[]
+     */
+    public static function paisFaltando(array $dados, array $noBanco): array
+    {
+        $faltando = [];
+        foreach ($dados as $d) {
+            $pai = $d['evolui_de'];
+            if ($pai !== null && !isset($dados[$pai]) && !isset($noBanco[$pai])) {
+                $faltando[$pai] = $pai; // chave evita repetir (Eevee teria 3 filhos pedindo)
+            }
+        }
+        return array_values($faltando);
     }
 
     /**

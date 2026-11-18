@@ -5,31 +5,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Team Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/css/time.css">
 </head>
 
-<body class="pagina">
+<body class="pagina time">
     <header class="topo">
-        <a href="<?= $base ?>/home">&larr; Início</a>
-        <h1>Team Builder</h1>
+        <a class="voltar" href="<?= $base ?>/home">&larr; Início</a>
+        <h1>TEAM BUILDER</h1>
     </header>
 
     <div class="layout">
-        <section>
-            <h2>Seu time (<span id="contagem">0</span>/6)</h2>
-            <div id="slots" class="slots"></div>
+        <section class="coluna-time">
+            <div class="painel-time">
+                <div class="titulo-painel">
+                    <h2>SEU TIME</h2>
+                    <span class="contador"><span id="contagem">0</span>/6</span>
+                    <button type="button" id="btn-limpar" class="perigo">Limpar time</button>
+                </div>
+                <div id="slots" class="slots"></div>
+            </div>
 
-            <h2>Detalhes (PokéAPI)</h2>
-            <div id="detalhes" class="detalhes">Clique em "Detalhes" num Pokémon.</div>
+            <div class="painel-resumo">
+                <h2>RESUMO DO TIME</h2>
+                <div id="resumo"></div>
+            </div>
         </section>
 
-        <section>
-            <h2>Pokémon disponíveis</h2>
-            <input id="busca" type="search" placeholder="Buscar por nome ou tipo...">
+        <section class="painel-catalogo">
+            <div class="titulo-painel">
+                <h2>POKÉMON DISPONÍVEIS</h2>
+                <label class="campo-busca">
+                    <span class="sr-only">Buscar</span>
+                    <input id="busca" type="search" placeholder="Buscar por nome ou tipo">
+                </label>
+            </div>
+            <div id="filtros" class="filtros"></div>
             <div id="catalogo" class="catalogo"></div>
         </section>
     </div>
+
+    <dialog id="janela-detalhes" class="janela">
+        <div class="janela-topo">
+            <h2 id="janela-titulo">Detalhes</h2>
+            <button type="button" id="fechar-detalhes" aria-label="Fechar">&times;</button>
+        </div>
+        <div id="detalhes" class="detalhes"></div>
+    </dialog>
 
     <p id="mensagem" role="alert" class="toast"></p>
 

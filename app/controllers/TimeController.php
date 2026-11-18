@@ -77,8 +77,8 @@ class TimeController extends BaseController
                 );
             }
 
-            $this->times->adicionarEspecie($uid, $especie);
-            $this->json($this->respostaTime($uid), 201);
+            $novo = $this->times->adicionarEspecie($uid, $especie);
+            $this->json($this->respostaTime($uid) + ['shiny' => $novo->isShiny()], 201);
         } catch (TimeCheioException $e) {
             $this->json(['ok' => false, 'erro' => $e->getMessage()], $e->getCode());
         } catch (InvalidArgumentException $e) {
@@ -99,6 +99,16 @@ class TimeController extends BaseController
         $this->json($this->respostaTime($uid));
     }
 
+    /** Remove todos os Pokémon do time de uma vez. */
+    public function limpar(): void
+    {
+        $uid = $this->exigirLoginApi();
+        if ($uid === null) return;
+
+        $removidos = $this->times->limpar($uid);
+        $this->json($this->respostaTime($uid) + ['removidos' => $removidos]);
+    }
+
     /** Evolui um Pokémon do time gastando uma pedra da mochila. */
     public function evoluir(): void
     {
@@ -110,7 +120,8 @@ class TimeController extends BaseController
             $pokemon = $this->times->evoluir(
                 $uid,
                 (int) ($d['pokemon_id'] ?? 0),
-                (int) ($d['item_id'] ?? 0)
+                (int) ($d['item_id'] ?? 0),
+                (int) ($d['para_especie_id'] ?? 0)
             );
             $this->json($this->respostaTime($uid) + ['evoluiu_para' => $pokemon->getEspecie()->getNome()]);
         } catch (InvalidArgumentException $e) {

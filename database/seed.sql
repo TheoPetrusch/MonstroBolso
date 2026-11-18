@@ -25,7 +25,7 @@ VALUES
         'admin@teste.com',
         '$2y$10$7waTRHdm2lIFB9lD5SdaFO0ns/bmjEhxloaS0cB2yGJt6uD3Cb3vO',
         'admin',
-        9999
+        99999
     );
 
 -- Cada usuário precisa de um time (1 por usuário). No cadastro pelo site
@@ -505,6 +505,36 @@ VALUES
         0,
         NULL,
         0
+    ),
+    (
+        'Pedra do Gelo',
+        'evolucao',
+        'Evolui Pokémon da linha de Gelo.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Metálica',
+        'evolucao',
+        'Evolui Pokémon da linha de Aço.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
+    ),
+    (
+        'Pedra Sombria',
+        'evolucao',
+        'Evolui Pokémon da linha de Sombrio.',
+        2100,
+        0,
+        0,
+        NULL,
+        0
     );
 
 -- Cada pedra evolui as espécies de um tipo (itens.tipo_id).
@@ -526,6 +556,9 @@ JOIN (
     UNION ALL SELECT 'Pedra Fantasma', 'Fantasma'
     UNION ALL SELECT 'Pedra do Dragão', 'Dragão'
     UNION ALL SELECT 'Pedra do Vento', 'Voador'
+    UNION ALL SELECT 'Pedra do Gelo', 'Gelo'
+    UNION ALL SELECT 'Pedra Metálica', 'Aço'
+    UNION ALL SELECT 'Pedra Sombria', 'Sombrio'
 ) m ON m.item = i.nome
 JOIN tipos t ON t.nome = m.tipo
 SET
@@ -610,7 +643,8 @@ SET
 UPDATE especies filho
 JOIN especies pai ON pai.evolui_para_id = filho.id
 SET
-    filho.evolui_de_id = pai.id;
+    filho.evolui_de_id = pai.id,
+    filho.evolui_de_pokeapi_id = pai.pokeapi_id;
 
 -- ---------------------------------------------------------------------
 -- Golpes: 2 físicos e 2 especiais (um fraco e um forte) de cada tipo

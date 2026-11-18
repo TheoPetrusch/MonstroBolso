@@ -21,6 +21,11 @@ class HomeController extends BaseController
         $u  = $id !== null ? $this->repo->buscarPorId($id) : null;
 
         if (!$u) {
+            // sessão aponta para um usuário que não existe mais (ex.: o banco
+            // foi recriado). Sem limpar a sessão, o login (/) manda de volta
+            // para /home, que manda para /... e o navegador entra em loop.
+            $_SESSION = [];
+            session_destroy();
             $this->redirecionar('/');
             return;
         }
