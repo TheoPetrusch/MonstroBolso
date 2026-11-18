@@ -157,6 +157,11 @@ h2 {
     border-color: #e3350d;
 }
 
+.slot.shiny {
+    border-color: #ffd54a;
+    box-shadow: 0 0 12px rgba(255, 213, 74, .6);
+}
+
 .slot img {
     width: 72px;
     height: 72px;

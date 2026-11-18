@@ -151,7 +151,7 @@ body.home #btn-sair {
     box-shadow: 0 5px 0 #0b1020;
 }
 
-body.home .admin {
+body.home .importar {
     display: grid;
     gap: 8px;
     padding: 12px;
@@ -160,9 +160,20 @@ body.home .admin {
     color: #1c2a4a;
 }
 
-body.home .admin .aviso {
+body.home .importar .aviso {
     margin: 0;
     color: #3a4a66;
+}
+
+body.home .importar select {
+    padding: 10px;
+    border: 2px solid #c6cfe0;
+    border-radius: 8px;
+    background: #f6f8fc;
+    color: #1c2a4a;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
 }
 
 @media (max-width: 600px) {

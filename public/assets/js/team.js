@@ -16,6 +16,8 @@ class TeamBuilder {
         this.#pokeApi = pokeApi;
         document.getElementById('busca')
             .addEventListener('input', () => this.#desenharCatalogo());
+        document.getElementById('btn-limpar')
+            .addEventListener('click', () => this.#limpar());
         document.getElementById('fechar-detalhes')
             .addEventListener('click', () => document.getElementById('janela-detalhes').close());
     }
@@ -43,6 +45,10 @@ class TeamBuilder {
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
             this.#desenharTudo();
+            if (r.shiny) {
+                const nome = this.#especies.find(e => e.id === especieId)?.nome ?? 'Pokémon';
+                this.#aviso(`✨ Uau! Seu ${nome} é shiny! (chance de 1 em 64)`, true);
+            }
         } catch (e) {
             this.#aviso(e.message);
         }
@@ -60,11 +66,28 @@ class TeamBuilder {
         }
     }
 
+    async #limpar() {
+        const total = this.#time.pokemons.length;
+        if (total === 0) return;
+        if (!confirm(`Remover os ${total} Pokémon do time? Isso não pode ser desfeito.`)) return;
+        try {
+            const r = await this.#api.post('/api/time/limpar');
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            this.#desenharTudo();
+            this.#aviso(`Time limpo: ${r.removidos} Pokémon removidos.`, true);
+        } catch (e) {
+            this.#aviso(e.message);
+        }
+    }
+
     async #evoluir(pokemon, opcao) {
         try {
             const r = await this.#api.post('/api/time/evoluir', {
                 pokemon_id: pokemon.id,
                 item_id: opcao.item_id,
+                para_especie_id: opcao.para_especie_id,
             });
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
@@ -135,19 +158,21 @@ class TeamBuilder {
 
     #desenharTime() {
         document.getElementById('contagem').textContent = this.#time.pokemons.length;
+        document.getElementById('btn-limpar').disabled = this.#time.pokemons.length === 0;
         const slots = document.getElementById('slots');
         slots.innerHTML = '';
 
         for (let i = 1; i <= this.#time.maximo; i++) {
             const p = this.#time.pokemons.find(x => x.posicao === i);
             const div = document.createElement('div');
-            div.className = 'slot' + (p ? ' ocupado' : '');
+            div.className = 'slot' + (p ? ' ocupado' : '') + (p?.shiny ? ' shiny' : '');
             if (p) {
                 div.dataset.tipo = p.especie.tipo;
                 div.innerHTML = `
                     <span class="numero">${i}</span>
-                    <img src="${esc(p.especie.sprite_url)}" alt="${esc(p.nome)}">
-                    <strong>${esc(p.nome)}</strong>
+                    <img src="${esc(p.shiny ? TeamBuilder.#spriteShiny(p.especie.pokeapi_id) : p.especie.sprite_url)}"
+                         alt="${esc(p.nome)}">
+                    <strong>${p.shiny ? '✨ ' : ''}${esc(p.nome)}</strong>
                     <span class="chip-tipo">${esc(p.especie.tipo)}</span>
                     ${TeamBuilder.#barraHp(p.hp_atual, p.hp_max)}
                     ${TeamBuilder.#estado(p)}
@@ -181,6 +206,11 @@ class TeamBuilder {
                 }
                 alvo.appendChild(botao);
             });
+    }
+
+    /** Sprite shiny da PokéAPI (o mesmo do hover do catálogo). */
+    static #spriteShiny(pokeapiId) {
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(pokeapiId)}.png`;
     }
 
     static #barraHp(atual, max) {
@@ -307,7 +337,7 @@ class TeamBuilder {
                 card.className = 'card-poke' + (e.disponivel ? '' : ' bloqueado');
                 card.dataset.tipo = e.tipo;
 
-                const shiny = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(e.pokeapi_id)}.png`;
+                const shiny = TeamBuilder.#spriteShiny(e.pokeapi_id);
                 const barra = (valor) => `<div class="barra"><span style="width:${Math.min(valor / 1.5, 100)}%"></span></div>`;
 
                 card.innerHTML = `
@@ -319,7 +349,7 @@ class TeamBuilder {
                     <span class="chip-tipo">${esc(e.tipo)}</span>
                     ${e.disponivel
                         ? `<small>HP ${e.hp} &middot; Vel ${e.velocidade}</small>`
-                        : '<span class="dica">Evolua um Pokémon com pedra do Poké Mart</span>'}
+                        : '<span class="dica">Evolua o Pokémon para desbloqueá-lo</span>'}
                     <div class="previa">
                         HP ${e.hp} ${barra(e.hp)}
                         Ataque ${e.ataque} ${barra(e.ataque)}

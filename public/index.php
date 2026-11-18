@@ -38,6 +38,7 @@ $router->get('/api/especies',        [TimeController::class, 'listarEspecies']);
 $router->get('/api/time',            [TimeController::class, 'meuTime']);
 $router->post('/api/time/adicionar', [TimeController::class, 'adicionar']);
 $router->post('/api/time/remover',   [TimeController::class, 'remover']);
+$router->post('/api/time/limpar',    [TimeController::class, 'limpar']);
 $router->post('/api/time/evoluir',   [TimeController::class, 'evoluir']);
 $router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
 
@@ -45,7 +46,7 @@ $router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
 $router->get('/api/loja',             [LojaController::class, 'dados']);
 $router->post('/api/loja/comprar',    [LojaController::class, 'comprar']);
 
-// API de admin
-$router->post('/api/admin/importar', [ImportadorController::class, 'importar']);
+// Importação de Pokémon da PokéAPI (qualquer usuário logado)
+$router->post('/api/importar', [ImportadorController::class, 'importar']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

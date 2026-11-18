@@ -24,6 +24,7 @@
                 <div class="titulo-painel">
                     <h2>SEU TIME</h2>
                     <span class="contador"><span id="contagem">0</span>/6</span>
+                    <button type="button" id="btn-limpar" class="perigo">Limpar time</button>
                 </div>
                 <div id="slots" class="slots"></div>
             </div>

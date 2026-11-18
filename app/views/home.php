@@ -27,13 +27,17 @@
             <a class="botao laranja" href="<?= $base ?>/loja">Poké Mart</a>
         </nav>
 
-        <?php if ($usuario['perfil'] === 'admin'): ?>
-            <div class="admin">
-                <p class="aviso">Área do admin</p>
-                <button type="button" id="btn-importar">Importar 1ª geração (PokéAPI)</button>
-                <p id="status-importacao" class="aviso" role="status"></p>
-            </div>
-        <?php endif; ?>
+        <div class="importar">
+            <p class="aviso">Importar Pokémon da PokéAPI</p>
+            <select id="geracao" aria-label="Geração">
+                <?php foreach ([1 => 'Kanto', 2 => 'Johto', 3 => 'Hoenn', 4 => 'Sinnoh', 5 => 'Unova',
+                                6 => 'Kalos', 7 => 'Alola', 8 => 'Galar', 9 => 'Paldea'] as $n => $regiao): ?>
+                    <option value="<?= $n ?>"><?= $n ?>ª geração (<?= $regiao ?>)</option>
+                <?php endforeach; ?>
+            </select>
+            <button type="button" id="btn-importar">Importar geração</button>
+            <p id="status-importacao" class="aviso" role="status"></p>
+        </div>
 
         <button type="button" id="btn-sair">Sair</button>
     </main>

@@ -143,6 +143,11 @@ body.time .slot.ocupado {
     background: #ffffff;
 }
 
+body.time .slot.shiny {
+    border-color: #e0bb20;
+    box-shadow: 0 0 0 3px #ffd84a, 0 0 18px rgba(255, 216, 74, .8);
+}
+
 body.time .slot .numero {
     position: absolute;
     top: 8px;
@@ -246,6 +251,13 @@ body.time button.perigo {
     background: #fde3dc;
     color: #8a1f07;
     font-weight: 800;
+}
+
+#btn-limpar {
+    margin-left: auto;
+    padding: 6px 12px;
+    font-size: .8rem;
+    border: 2px solid #8a1f07;
 }
 
 body.time button.add {
