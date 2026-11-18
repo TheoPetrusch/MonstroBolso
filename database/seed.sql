@@ -568,8 +568,8 @@ SET
 -- Espécies iniciais (stats base atuais da PokéAPI)
 -- Tipo único = 1º tipo da PokéAPI: Charizard = Fogo, Geodude = Pedra etc.
 -- Exceção: quem é Normal/Voador na PokéAPI (Pidgey, Spearow...) fica Voador.
--- As outras espécies da 1ª geração entram pelo importador: na Home, o
--- admin clica em "Importar 1ª geração (PokéAPI)".
+-- As outras espécies entram pelo importador: na Home, qualquer jogador
+-- escolhe uma geração (1ª a 9ª) e clica em "Importar geração".
 -- ---------------------------------------------------------------------
 INSERT INTO
     especies (
