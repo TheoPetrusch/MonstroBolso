@@ -49,6 +49,10 @@ class TeamBuilder {
                 const nome = this.#especies.find(e => e.id === especieId)?.nome ?? 'Pokémon';
                 this.#aviso(`✨ Uau! Seu ${nome} é shiny! (chance de 1 em 64)`, true);
             }
+            if (r.shiny) {
+                const nome = this.#especies.find(e => e.id === especieId)?.nome ?? 'Pokémon';
+                this.#aviso(`✨ Uau! Seu ${nome} é shiny! (chance de 1 em 64)`, true);
+            }
         } catch (e) {
             this.#aviso(e.message);
         }
@@ -87,6 +91,7 @@ class TeamBuilder {
             const r = await this.#api.post('/api/time/evoluir', {
                 pokemon_id: pokemon.id,
                 item_id: opcao.item_id,
+                para_especie_id: opcao.para_especie_id,
                 para_especie_id: opcao.para_especie_id,
             });
             this.#time = r.time;
@@ -166,6 +171,7 @@ class TeamBuilder {
             const p = this.#time.pokemons.find(x => x.posicao === i);
             const div = document.createElement('div');
             div.className = 'slot' + (p ? ' ocupado' : '') + (p?.shiny ? ' shiny' : '');
+            div.className = 'slot' + (p ? ' ocupado' : '') + (p?.shiny ? ' shiny' : '');
             if (p) {
                 div.dataset.tipo = p.especie.tipo;
                 div.innerHTML = `
@@ -175,6 +181,10 @@ class TeamBuilder {
                     <strong>${p.shiny ? '✨ ' : ''}${esc(p.nome)}</strong>
                     <span class="chip-tipo">${esc(p.especie.tipo)}</span>
                     ${TeamBuilder.#barraHp(p.hp_atual, p.hp_max)}
+                    <img src="${esc(p.shiny ? TeamBuilder.#spriteShiny(p.especie.pokeapi_id) : p.especie.sprite_url)}"
+                         alt="${esc(p.nome)}">
+                    <strong>${p.shiny ? '✨ ' : ''}${esc(p.nome)}</strong>
+                    <small>${esc(p.especie.tipo)} &middot; HP ${p.hp_atual}/${p.hp_max}</small>
                     ${TeamBuilder.#estado(p)}
                     <div class="evolucoes"></div>
                     <div class="usar-item"></div>
@@ -206,6 +216,11 @@ class TeamBuilder {
                 }
                 alvo.appendChild(botao);
             });
+    }
+
+    /** Sprite shiny da PokéAPI (mesmo usado no hover do catálogo). */
+    static #spriteShiny(pokeapiId) {
+        return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${Number(pokeapiId)}.png`;
     }
 
     /** Sprite shiny da PokéAPI (o mesmo do hover do catálogo). */
@@ -337,6 +352,7 @@ class TeamBuilder {
                 card.className = 'card-poke' + (e.disponivel ? '' : ' bloqueado');
                 card.dataset.tipo = e.tipo;
 
+                const shiny = TeamBuilder.#spriteShiny(e.pokeapi_id);
                 const shiny = TeamBuilder.#spriteShiny(e.pokeapi_id);
                 const barra = (valor) => `<div class="barra"><span style="width:${Math.min(valor / 1.5, 100)}%"></span></div>`;
 
