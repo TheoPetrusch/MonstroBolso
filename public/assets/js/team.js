@@ -349,7 +349,7 @@ class TeamBuilder {
                     <span class="chip-tipo">${esc(e.tipo)}</span>
                     ${e.disponivel
                         ? `<small>HP ${e.hp} &middot; Vel ${e.velocidade}</small>`
-                        : '<span class="dica">Evolua um Pokémon com pedra do Poké Mart</span>'}
+                        : '<span class="dica">Evolua o Pokémon para desbloqueá-lo</span>'}
                     <div class="previa">
                         HP ${e.hp} ${barra(e.hp)}
                         Ataque ${e.ataque} ${barra(e.ataque)}
