@@ -246,10 +246,6 @@ class TeamBuilder {
         const noTime = new Set(pokes.map(p => p.especie.tipo));
         const todos = [...new Set(this.#especies.map(e => e.tipo))];
 
-        const sugestao = this.#especies
-            .filter(e => e.disponivel && !pokes.some(p => p.especie.id === e.id))
-            .sort((a, b) => Number(b[fraco.campo]) - Number(a[fraco.campo]))[0];
-
         alvo.innerHTML = `
             <div class="media-geral">
                 <span>Média geral</span>
@@ -271,8 +267,7 @@ class TeamBuilder {
                 ${todos.map(tipo => noTime.has(tipo)
                     ? `<span class="chip-tipo" data-tipo="${esc(tipo)}">${esc(tipo)}</span>`
                     : `<span class="chip-tipo falta" title="Nenhum Pokémon desse tipo no time">${esc(tipo)}</span>`).join('')}
-            </div>
-            ${sugestao ? `<p class="dica">Pra reforçar ${fraco.nome}, que tal um <strong>${esc(sugestao.nome)}</strong> (${fraco.nome} ${Number(sugestao[fraco.campo])})?</p>` : ''}`;
+            </div>`;
     }
 
     #desenharFiltros() {
