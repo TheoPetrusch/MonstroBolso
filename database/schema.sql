@@ -118,6 +118,10 @@ CREATE TABLE
         -- (ex.: Pikachu vem do Pichu, da 2ª geração). Quando o pai entra,
         -- o importador preenche evolui_de_id a partir daqui.
         evolui_de_pokeapi_id INT UNSIGNED NULL,
+        -- 1 = a pré-evolução é um BEBÊ criado numa geração posterior
+        -- (Pikachu <- Pichu, Snorlax <- Munchlax). A espécie conta como básica
+        -- e o bebê não é importado junto; se ele entrar depois, ainda evolui.
+        ignora_pre_evolucao TINYINT (1) NOT NULL DEFAULT 0,
         FOREIGN KEY (tipo_id) REFERENCES tipos (id),
         FOREIGN KEY (evolui_para_id) REFERENCES especies (id) ON DELETE SET NULL,
         FOREIGN KEY (evolui_de_id) REFERENCES especies (id) ON DELETE SET NULL,

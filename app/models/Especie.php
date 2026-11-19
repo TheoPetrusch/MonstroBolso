@@ -20,7 +20,8 @@ class Especie
         private int $spDef,
         private int $velocidade,
         private ?string $spriteUrl,
-        private ?int $evoluiDeId = null
+        private ?int $evoluiDeId = null,
+        private bool $ignoraPreEvolucao = false
     ) {}
 
     public static function fromRow(array $r): self
@@ -37,7 +38,8 @@ class Especie
             (int) $r['sp_def'],
             (int) $r['velocidade'],
             $r['sprite_url'] ?? null,
-            isset($r['evolui_de_id']) ? (int) $r['evolui_de_id'] : null
+            isset($r['evolui_de_id']) ? (int) $r['evolui_de_id'] : null,
+            (bool) ($r['ignora_pre_evolucao'] ?? false)
         );
     }
 
@@ -45,10 +47,12 @@ class Especie
      * Regra de negócio: espécie BÁSICA é a que não evolui de ninguém.
      * Só ela pode entrar no time; as evoluções vêm das pedras do Poké Mart.
      * Ex.: Charmander e Eevee são básicas; Charmeleon e Vaporeon não.
+     * Exceção: se a pré-evolução é um bebê de uma geração posterior
+     * (Pikachu <- Pichu), a espécie também é básica.
      */
     public function isBasica(): bool
     {
-        return $this->evoluiDeId === null;
+        return $this->evoluiDeId === null || $this->ignoraPreEvolucao;
     }
 
     public function getId(): int

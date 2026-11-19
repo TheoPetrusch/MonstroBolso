@@ -56,15 +56,16 @@ class EspecieRepository
         $this->pdo->prepare(
             'INSERT INTO especies
                     (pokeapi_id, nome, tipo_id, hp, ataque, defesa, sp_atk, sp_def, velocidade,
-                     sprite_url, evolui_de_pokeapi_id)
+                     sprite_url, evolui_de_pokeapi_id, ignora_pre_evolucao)
              VALUES (:pid, :nome, (SELECT id FROM tipos WHERE nome = :tipo),
-                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai)
+                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai, :ignora)
              ON DUPLICATE KEY UPDATE
                     nome = VALUES(nome), tipo_id = VALUES(tipo_id), hp = VALUES(hp),
                     ataque = VALUES(ataque), defesa = VALUES(defesa), sp_atk = VALUES(sp_atk),
                     sp_def = VALUES(sp_def), velocidade = VALUES(velocidade),
                     sprite_url = VALUES(sprite_url),
-                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id)'
+                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id),
+                    ignora_pre_evolucao = VALUES(ignora_pre_evolucao)'
         )->execute([
             'pid'    => $d['pokeapi_id'],
             'nome'   => $d['nome'],
@@ -77,6 +78,7 @@ class EspecieRepository
             'vel'    => $d['velocidade'],
             'sprite' => $d['sprite_url'],
             'pai'    => $d['evolui_de'],
+            'ignora' => (int) ($d['ignora_pre_evolucao'] ?? false),
         ]);
 
         $st = $this->pdo->prepare('SELECT id FROM especies WHERE pokeapi_id = :pid');
