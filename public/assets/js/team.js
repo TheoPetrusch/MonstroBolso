@@ -265,7 +265,7 @@ class TeamBuilder {
         const todos = [...new Set(this.#especies.map(e => e.tipo))];
 
         const sugestao = this.#especies
-            .filter(e => e.disponivel && !pokes.some(p => p.especie.id === e.id))
+            .filter(e => e.disponivel && !this.#linhasNoTime().has(e.linha))
             .sort((a, b) => Number(b[fraco.campo]) - Number(a[fraco.campo]))[0];
 
         alvo.innerHTML = `
@@ -343,6 +343,7 @@ class TeamBuilder {
     #desenharCatalogo() {
         const termo = document.getElementById('busca').value.trim().toLowerCase();
         const cheio = this.#time.pokemons.length >= this.#time.maximo;
+        const linhasNoTime = this.#linhasNoTime();
         const catalogo = document.getElementById('catalogo');
         catalogo.innerHTML = '';
 
@@ -377,8 +378,11 @@ class TeamBuilder {
                     <div class="acoes">
                         <button type="button" class="sec">Detalhes</button>
                         ${e.disponivel
-                            ? `<button type="button" class="add" ${cheio ? 'disabled' : ''}
-                                       ${e.basica ? '' : 'title="Desbloqueado por evolução"'}>Adicionar</button>`
+                            ? `<button type="button" class="add"
+                                       ${cheio || linhasNoTime.has(e.linha) ? 'disabled' : ''}
+                                       ${linhasNoTime.has(e.linha)
+                                           ? 'title="Seu time já tem um Pokémon dessa linha evolutiva"'
+                                           : (e.basica ? '' : 'title="Desbloqueado por evolução"')}>Adicionar</button>`
                             : ''}
                     </div>`;
 
@@ -386,6 +390,12 @@ class TeamBuilder {
                 card.querySelector('.add')?.addEventListener('click', () => this.#adicionar(e.id));
                 catalogo.appendChild(card);
             });
+    }
+
+    /** Linhas evolutivas que já estão no time (ex.: a do Charmander). */
+    #linhasNoTime() {
+        return new Set(this.#time.pokemons.map(p =>
+            this.#especies.find(e => e.id === p.especie.id)?.linha ?? p.especie.id));
     }
 
     #aviso(texto, sucesso = false) {

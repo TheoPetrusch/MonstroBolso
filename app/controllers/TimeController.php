@@ -42,9 +42,13 @@ class TimeController extends BaseController
 
         // todas aparecem; "disponivel" diz quais podem ser adicionadas:
         // as básicas e as evoluções que o jogador já conseguiu com pedra
+        // "linha" = espécie base da linha evolutiva: a tela usa para não
+        // deixar adicionar duas da mesma linha (o back-end também confere)
         $desbloqueadas = $this->especies->idsDesbloqueados($uid);
+        $linhas = $this->especies->linhas();
         $lista = array_map(fn(Especie $e) => $e->paraArray() + [
             'disponivel' => $e->isBasica() || in_array($e->getId(), $desbloqueadas, true),
+            'linha'      => $linhas[$e->getId()] ?? $e->getId(),
         ], $this->especies->listar());
         $this->json(['ok' => true, 'especies' => $lista]);
     }

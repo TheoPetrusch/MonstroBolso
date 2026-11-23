@@ -21,8 +21,10 @@ SET time_zone = "+00:00";
 -- Banco de dados: `monstrobolso`
 --
 
--- Cria e seleciona o banco (assim a importação funciona sem escolher o banco antes).
--- Para reinstalar do zero, exclua o banco "monstrobolso" antes de importar.
+-- INSTALAÇÃO DO ZERO: apaga o banco antigo (se existir), cria e seleciona o novo.
+-- ATENÇÃO: importar este arquivo APAGA todos os dados do banco "monstrobolso"
+-- (cadastros, times, batalhas...) e volta para os dados iniciais.
+DROP DATABASE IF EXISTS `monstrobolso`;
 CREATE DATABASE IF NOT EXISTS `monstrobolso` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `monstrobolso`;
 
@@ -1261,3 +1263,61 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- =====================================================================
+-- Líderes de ginásio
+-- =====================================================================
+-- DDL: líderes, do mais fraco (ordem 1) ao mais forte (ordem 8)
+CREATE TABLE IF NOT EXISTS `lideres` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `ordem` tinyint(3) UNSIGNED NOT NULL,            -- 1 = primeiro ginásio
+  `nome` varchar(60) NOT NULL,
+  `tipo_id` tinyint(3) UNSIGNED NOT NULL,          -- tipo em que é especialista
+  `quantidade` tinyint(3) UNSIGNED NOT NULL,       -- Pokémon no time do líder
+  `forca` smallint(5) UNSIGNED NOT NULL,           -- força média (soma dos 6 atributos)
+  `premio` int(10) UNSIGNED NOT NULL,              -- Pokédollar ao vencer
+  `insignia` varchar(40) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ordem` (`ordem`),
+  KEY `tipo_id` (`tipo_id`),
+  CONSTRAINT `lideres_ibfk_1` FOREIGN KEY (`tipo_id`) REFERENCES `tipos` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- DML: os 8 líderes (o tipo é buscado pelo nome)
+INSERT INTO `lideres` (`ordem`, `nome`, `tipo_id`, `quantidade`, `forca`, `premio`, `insignia`)
+SELECT l.ordem, l.nome, t.id, l.quantidade, l.forca, l.premio, l.insignia
+FROM (
+    SELECT 1 AS ordem, 'Líder Brita' AS nome, 'Pedra' AS tipo, 2 AS quantidade, 300 AS forca, 500 AS premio, 'Insígnia Rocha' AS insignia
+    UNION ALL SELECT 2, 'Líder Marina', 'Água',     3, 330,  700, 'Insígnia Onda'
+    UNION ALL SELECT 3, 'Líder Volt',   'Elétrico', 3, 370,  900, 'Insígnia Trovão'
+    UNION ALL SELECT 4, 'Líder Flora',  'Planta',   4, 410, 1100, 'Insígnia Folha'
+    UNION ALL SELECT 5, 'Líder Toxa',   'Venenoso', 4, 450, 1300, 'Insígnia Veneno'
+    UNION ALL SELECT 6, 'Líder Sofia',  'Psíquico', 5, 490, 1500, 'Insígnia Mente'
+    UNION ALL SELECT 7, 'Líder Brasa',  'Fogo',     5, 530, 1800, 'Insígnia Chama'
+    UNION ALL SELECT 8, 'Líder Duna',   'Terra',    6, 570, 2200, 'Insígnia Terra'
+) l
+JOIN `tipos` t ON t.nome = l.tipo
+WHERE NOT EXISTS (SELECT 1 FROM `lideres` x WHERE x.ordem = l.ordem);
+
+-- DDL: cada batalha guarda contra qual líder foi (NULL = treinador comum)
+ALTER TABLE `batalhas`
+  ADD COLUMN `lider_id` int(10) UNSIGNED NULL DEFAULT NULL AFTER `usuario_id`,
+  ADD CONSTRAINT `batalhas_ibfk_lider` FOREIGN KEY (`lider_id`) REFERENCES `lideres` (`id`);
+
+-- DQL (view): progresso de cada jogador nos ginásios, calculado pelo LOG de batalhas
+--   insignias            = líderes diferentes que ele já venceu;
+--   vitorias_desde_lider = vitórias contra treinadores comuns DEPOIS da última
+--                          batalha contra um líder (ganhando ou perdendo).
+--                          Perdeu para o líder? A contagem volta a zero.
+CREATE OR REPLACE VIEW `vw_progresso_ginasio` AS
+SELECT
+    u.id AS usuario_id,
+    (SELECT COUNT(DISTINCT b.lider_id)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NOT NULL AND b.vencedor = 'jogador') AS insignias,
+    (SELECT COUNT(*)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.vencedor = 'jogador'
+        AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
+                              WHERE b2.usuario_id = u.id AND b2.lider_id IS NOT NULL), 0)) AS vitorias_desde_lider
+FROM usuarios u;

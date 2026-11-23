@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Exceptions\LinhaRepetidaException;
 use App\Exceptions\TimeCheioException;
 use InvalidArgumentException;
 use PDO;
@@ -45,9 +46,26 @@ class TimeRepository
                 throw new InvalidArgumentException('Time do usuário não encontrado.');
             }
 
-            $st = $this->pdo->prepare('SELECT posicao FROM time_pokemon WHERE time_id = :t');
+            // Regra: não pode haver Pokémon repetido nem evoluções do mesmo
+            // Pokémon no time (mesma linha evolutiva). Também fica dentro da
+            // transação, com o time travado, como o cálculo do slot livre.
+            $linhas = (new EspecieRepository($this->pdo))->linhas();
+            $st = $this->pdo->prepare(
+                'SELECT tp.posicao, p.especie_id, COALESCE(p.apelido, e.nome) AS nome
+                   FROM time_pokemon tp
+                   JOIN pokemons p ON p.id = tp.pokemon_id
+                   JOIN especies e ON e.id = p.especie_id
+                  WHERE tp.time_id = :t'
+            );
             $st->execute(['t' => $timeId]);
-            $ocupadas = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+            $noTime = $st->fetchAll();
+
+            foreach ($noTime as $p) {
+                if (($linhas[(int) $p['especie_id']] ?? 0) === ($linhas[$especie->getId()] ?? -1)) {
+                    throw new LinhaRepetidaException($p['nome'], $especie->getNome());
+                }
+            }
+            $ocupadas = array_map(fn(array $p) => (int) $p['posicao'], $noTime);
 
             // O slot livre é calculado aqui (e não no model Time) porque precisa
             // acontecer DENTRO da transação, com a linha do time travada pelo

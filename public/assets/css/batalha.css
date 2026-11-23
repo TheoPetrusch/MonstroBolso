@@ -157,3 +157,27 @@
 @media (max-width: 600px) {
     .golpes { grid-template-columns: 1fr; }
 }
+
+/* ginásios */
+.ginasio {
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+    width: 100%;
+    padding: 12px;
+    border: 3px solid var(--tinta);
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.ginasio p {
+    margin: 0;
+}
+
+.ginasio .hp {
+    max-width: 360px;
+}
+
+.ginasio .vida {
+    background: #e0bb20;
+}

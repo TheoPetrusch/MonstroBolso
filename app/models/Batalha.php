@@ -48,7 +48,8 @@ class Batalha
         private array $golpesJogador,
         private array $oponente,
         private array $golpesOponente,
-        private string $oponenteNome
+        private string $oponenteNome,
+        private ?Lider $lider = null // null = treinador comum
     ) {
         $primeiro = $this->proximoDePe($this->jogador);
         if ($primeiro === null) {
@@ -374,10 +375,21 @@ class Batalha
         return $this->turnos;
     }
 
-    /** Prêmio só para quem venceu: 150 por Pokémon do oponente (mais inimigos = mais dinheiro). */
+    public function getLider(): ?Lider
+    {
+        return $this->lider;
+    }
+
+    /**
+     * Prêmio só para quem venceu: o do líder ou, contra treinador comum,
+     * 150 por Pokémon do oponente (mais inimigos = mais dinheiro).
+     */
     public function premio(): int
     {
-        return $this->vencedor === 'jogador' ? self::PREMIO_POR_POKEMON * count($this->oponente) : 0;
+        if ($this->vencedor !== 'jogador') {
+            return 0;
+        }
+        return $this->lider?->getPremio() ?? self::PREMIO_POR_POKEMON * count($this->oponente);
     }
 
     public function paraArray(): array
@@ -401,6 +413,7 @@ class Batalha
             'vencedor'      => $this->vencedor,
             'premio'        => $this->premio(),
             'oponente_nome' => $this->oponenteNome,
+            'lider'         => $this->lider?->paraArray(),
             'jogador'  => [
                 'ativo'    => $this->ativoJogador,
                 'pokemons' => array_map($lutador, $this->jogador, array_keys($this->jogador)),

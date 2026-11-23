@@ -33,24 +33,72 @@ class EspecieRepository
     }
 
     /**
+     * EXCEÇÃO à regra da linha evolutiva: as evoluções destes Pokémon
+     * (pelo pokeapi_id) contam cada uma como uma linha própria.
+     * 133 = Eevee: Vaporeon, Jolteon, Flareon... podem ficar juntos no time.
+     */
+    private const EVOLUCOES_LIVRES = [133];
+
+    /**
+     * Linha evolutiva de cada espécie: [id da espécie => id da espécie BASE da linha].
+     * Ex.: Charmander, Charmeleon e Charizard -> todos apontam para o Charmander.
+     * Uma consulta só; depois sobe pelo evolui_de_id em PHP até achar quem
+     * não evolui de ninguém (a base). O limite de 10 passos evita laço infinito.
+     * Exceção: quem evolui de um Pokémon de EVOLUCOES_LIVRES (ex.: Vaporeon,
+     * que evolui do Eevee) para de subir ali e vira a base da própria linha.
+     * @return array<int, int>
+     */
+    public function linhas(): array
+    {
+        $pai = [];
+        $livre = []; // ids das espécies cujas evoluções são livres (o Eevee)
+        foreach ($this->pdo->query('SELECT id, pokeapi_id, evolui_de_id FROM especies')->fetchAll() as $r) {
+            $pai[(int) $r['id']] = $r['evolui_de_id'] !== null ? (int) $r['evolui_de_id'] : null;
+            if (in_array((int) $r['pokeapi_id'], self::EVOLUCOES_LIVRES, true)) {
+                $livre[(int) $r['id']] = true;
+            }
+        }
+
+        $linhas = [];
+        foreach ($pai as $id => $_) {
+            $base = $id;
+            for ($i = 0; $i < 10 && isset($pai[$base]) && !isset($livre[$pai[$base]]); $i++) {
+                $base = $pai[$base];
+            }
+            $linhas[$id] = $base;
+        }
+        return $linhas;
+    }
+
+    /**
      * Sorteia espécies para o time do computador com FORÇA PARECIDA com $forca
      * (força = soma dos 6 atributos). Quem fica até $folga de distância tem a
      * mesma chance (vale 0 no ORDER BY e o RAND() desempata); se não houver
      * espécies suficientes nessa faixa, completa com as mais próximas.
      * O CAST para SIGNED evita erro do MySQL ao subtrair números UNSIGNED.
+     * $tipo (opcional, líder especialista): ENTRE as espécies de força parecida,
+     * as desse tipo vêm primeiro. A força vem antes do tipo, para o líder
+     * nunca ficar forte demais só por causa do tipo.
      * @return Especie[]
      */
-    public function sortearParecidas(int $quantidade, int $forca, int $folga): array
+    public function sortearParecidas(int $quantidade, int $forca, int $folga, ?string $tipo = null): array
     {
+        $params = ['forca' => $forca, 'folga' => $folga];
+        $depoisOTipo = '';
+        if ($tipo !== null) {
+            $depoisOTipo = '(t.nome = :tipo) DESC, ';
+            $params['tipo'] = $tipo;
+        }
+
         $st = $this->pdo->prepare(
             self::SELECT . '
              ORDER BY GREATEST(
                         ABS(CAST(e.hp + e.ataque + e.defesa + e.sp_atk + e.sp_def + e.velocidade AS SIGNED) - :forca)
                         - :folga, 0),
-                      RAND()
+                      ' . $depoisOTipo . 'RAND()
              LIMIT ' . (int) $quantidade
         );
-        $st->execute(['forca' => $forca, 'folga' => $folga]);
+        $st->execute($params);
         return array_map([Especie::class, 'fromRow'], $st->fetchAll());
     }
 
@@ -78,16 +126,15 @@ class EspecieRepository
         $this->pdo->prepare(
             'INSERT INTO especies
                     (pokeapi_id, nome, tipo_id, hp, ataque, defesa, sp_atk, sp_def, velocidade,
-                     sprite_url, evolui_de_pokeapi_id, ignora_pre_evolucao)
+                     sprite_url, evolui_de_pokeapi_id)
              VALUES (:pid, :nome, (SELECT id FROM tipos WHERE nome = :tipo),
-                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai, :ignora)
+                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai)
              ON DUPLICATE KEY UPDATE
                     nome = VALUES(nome), tipo_id = VALUES(tipo_id), hp = VALUES(hp),
                     ataque = VALUES(ataque), defesa = VALUES(defesa), sp_atk = VALUES(sp_atk),
                     sp_def = VALUES(sp_def), velocidade = VALUES(velocidade),
                     sprite_url = VALUES(sprite_url),
-                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id),
-                    ignora_pre_evolucao = VALUES(ignora_pre_evolucao)'
+                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id)'
         )->execute([
             'pid'    => $d['pokeapi_id'],
             'nome'   => $d['nome'],
@@ -100,7 +147,6 @@ class EspecieRepository
             'vel'    => $d['velocidade'],
             'sprite' => $d['sprite_url'],
             'pai'    => $d['evolui_de'],
-            'ignora' => (int) ($d['ignora_pre_evolucao'] ?? false),
         ]);
 
         $st = $this->pdo->prepare('SELECT id FROM especies WHERE pokeapi_id = :pid');

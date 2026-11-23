@@ -10,6 +10,9 @@ class BatalhaRepository
     /** Inimigos podem ter até 15% de força a mais ou a menos que a média do seu time. */
     public const FOLGA_DE_FORCA = 0.15;
 
+    /** Pokémon do líder: até 10% de diferença da força do líder. */
+    public const FOLGA_DO_LIDER = 0.10;
+
     /** Nomes dos treinadores do computador (sorteado a cada batalha). */
     private const TREINADORES = [
         'Treinador Lucas', 'Treinadora Bia', 'Campista Rui',
@@ -24,11 +27,14 @@ class BatalhaRepository
     }
 
     /**
-     * Monta uma batalha nova, BALANCEADA pelo time do jogador:
+     * Monta uma batalha nova.
+     * Treinador comum ($lider = null): BALANCEADO pelo time do jogador:
      *   - o computador tem de 1 até a quantidade de Pokémon de pé do jogador;
      *   - cada inimigo tem força parecida com a MÉDIA de força do time do jogador.
+     * Líder de ginásio: força e quantidade FIXAS do líder (ficam mais fortes a
+     * cada ginásio), com Pokémon do tipo em que ele é especialista.
      */
-    public function nova(int $usuarioId): Batalha
+    public function nova(int $usuarioId, ?Lider $lider = null): Batalha
     {
         $golpes = new GolpeRepository($this->pdo);
 
@@ -44,16 +50,23 @@ class BatalhaRepository
                 'Nenhum Pokémon do seu time está de pé. Cure o time de graça no Centro Pokémon (Team Builder).'
             );
         }
-        $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
-        $quantidade = random_int(1, count($dePe));
+        $especies = new EspecieRepository($this->pdo);
+        if ($lider !== null) {
+            $sorteadas = $especies->sortearParecidas(
+                $lider->getQuantidade(),
+                $lider->getForca(),
+                (int) round($lider->getForca() * self::FOLGA_DO_LIDER),
+                $lider->getTipo()
+            );
+        } else {
+            $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
+            $sorteadas = $especies->sortearParecidas(
+                random_int(1, count($dePe)), $media, (int) round($media * self::FOLGA_DE_FORCA)
+            );
+        }
 
         // usuário 0 = computador; Pokémon novo nasce com o HP cheio
-        $oponente = array_map(
-            fn(Especie $e) => Pokemon::novoDaEspecie(0, $e),
-            (new EspecieRepository($this->pdo))->sortearParecidas(
-                $quantidade, $media, (int) round($media * self::FOLGA_DE_FORCA)
-            )
-        );
+        $oponente = array_map(fn(Especie $e) => Pokemon::novoDaEspecie(0, $e), $sorteadas);
         $golpesOponente = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $oponente);
 
         return new Batalha(
@@ -61,13 +74,15 @@ class BatalhaRepository
             $golpesTime,
             $oponente,
             $golpesOponente,
-            self::TREINADORES[array_rand(self::TREINADORES)]
+            $lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)],
+            $lider
         );
     }
 
     /**
      * Grava a batalha que acabou. TRANSAÇÃO (DTL): ou grava tudo, ou nada.
-     *   1) batalhas         -> o trigger trg_batalhas_premio paga o prêmio;
+     *   1) batalhas         -> o trigger trg_batalhas_premio paga o prêmio
+     *                          (lider_id diz se foi contra um líder de ginásio);
      *   2) batalha_turnos   -> o log de cada ação;
      *   3) pokemons         -> o HP e a condição com que o time saiu da batalha.
      * Devolve o id da batalha gravada.
@@ -77,10 +92,11 @@ class BatalhaRepository
         $this->pdo->beginTransaction();
         try {
             $this->pdo->prepare(
-                'INSERT INTO batalhas (usuario_id, oponente_nome, vencedor, dinheiro_ganho, total_turnos)
-                 VALUES (:u, :oponente, :vencedor, :dinheiro, :turnos)'
+                'INSERT INTO batalhas (usuario_id, lider_id, oponente_nome, vencedor, dinheiro_ganho, total_turnos)
+                 VALUES (:u, :lider, :oponente, :vencedor, :dinheiro, :turnos)'
             )->execute([
                 'u'        => $usuarioId,
+                'lider'    => $b->getLider()?->getId(), // NULL = treinador comum
                 'oponente' => $b->getOponenteNome(),
                 'vencedor' => $b->getVencedor(),
                 'dinheiro' => $b->premio(),
