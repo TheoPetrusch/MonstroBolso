@@ -404,24 +404,24 @@ INSERT INTO `itens` (`id`, `nome`, `categoria`, `descricao`, `preco`, `cura_hp`,
 (10, 'Paralyze Heal', 'cura_status', 'Cura paralisia.', 200, 0, 0, 'paralisado', 0, NULL),
 (11, 'Full Heal', 'cura_status', 'Cura todas as condições de status.', 600, 0, 0, NULL, 1, NULL),
 (12, 'Revive', 'reviver', 'Revive um Pokémon desmaiado com metade do HP. Funciona no meio da batalha.', 4000, 0, 50, NULL, 0, NULL),
-(13, 'Pedra do Fogo', 'evolucao', 'Evolui Pokémon da linha de Fogo.', 2100, 0, 0, NULL, 0, 10),
-(14, 'Pedra da Água', 'evolucao', 'Evolui Pokémon da linha de Água.', 2100, 0, 0, NULL, 0, 11),
-(15, 'Pedra da Folha', 'evolucao', 'Evolui Pokémon da linha de Planta.', 2100, 0, 0, NULL, 0, 12),
-(16, 'Pedra do Trovão', 'evolucao', 'Evolui Pokémon da linha Elétrica.', 2100, 0, 0, NULL, 0, 13),
-(17, 'Pedra Rochosa', 'evolucao', 'Evolui Pokémon da linha de Pedra.', 2100, 0, 0, NULL, 0, 6),
-(18, 'Pedra da Terra', 'evolucao', 'Evolui Pokémon da linha de Terra.', 2100, 0, 0, NULL, 0, 5),
-(19, 'Pedra do Inseto', 'evolucao', 'Evolui Pokémon da linha de Inseto.', 2100, 0, 0, NULL, 0, 7),
-(20, 'Pedra Normal', 'evolucao', 'Evolui Pokémon da linha de Normal.', 2100, 0, 0, NULL, 0, 1),
-(21, 'Pedra Venenosa', 'evolucao', 'Evolui Pokémon da linha de Venenoso.', 2100, 0, 0, NULL, 0, 4),
-(22, 'Pedra da Lua', 'evolucao', 'Evolui Pokémon da linha de Fada.', 2100, 0, 0, NULL, 0, 18),
-(23, 'Pedra da Luta', 'evolucao', 'Evolui Pokémon da linha de Lutador.', 2100, 0, 0, NULL, 0, 2),
-(24, 'Pedra Psíquica', 'evolucao', 'Evolui Pokémon da linha de Psíquico.', 2100, 0, 0, NULL, 0, 14),
-(25, 'Pedra Fantasma', 'evolucao', 'Evolui Pokémon da linha de Fantasma.', 2100, 0, 0, NULL, 0, 8),
-(26, 'Pedra do Dragão', 'evolucao', 'Evolui Pokémon da linha de Dragão.', 2100, 0, 0, NULL, 0, 16),
-(27, 'Pedra do Vento', 'evolucao', 'Evolui Pokémon da linha de Voador.', 2100, 0, 0, NULL, 0, 3),
-(28, 'Pedra do Gelo', 'evolucao', 'Evolui Pokémon da linha de Gelo.', 2100, 0, 0, NULL, 0, 15),
-(29, 'Pedra Metálica', 'evolucao', 'Evolui Pokémon da linha de Aço.', 2100, 0, 0, NULL, 0, 9),
-(30, 'Pedra Sombria', 'evolucao', 'Evolui Pokémon da linha de Sombrio.', 2100, 0, 0, NULL, 0, 17);
+(13, 'Pedra do Fogo', 'evolucao', 'Evolui Pokémon da linha de Fogo.', 2500, 0, 0, NULL, 0, 10),
+(14, 'Pedra da Água', 'evolucao', 'Evolui Pokémon da linha de Água.', 2500, 0, 0, NULL, 0, 11),
+(15, 'Pedra da Folha', 'evolucao', 'Evolui Pokémon da linha de Planta.', 2500, 0, 0, NULL, 0, 12),
+(16, 'Pedra do Trovão', 'evolucao', 'Evolui Pokémon da linha Elétrica.', 2500, 0, 0, NULL, 0, 13),
+(17, 'Pedra Rochosa', 'evolucao', 'Evolui Pokémon da linha de Pedra.', 2500, 0, 0, NULL, 0, 6),
+(18, 'Pedra da Terra', 'evolucao', 'Evolui Pokémon da linha de Terra.', 2500, 0, 0, NULL, 0, 5),
+(19, 'Pedra do Inseto', 'evolucao', 'Evolui Pokémon da linha de Inseto.', 2500, 0, 0, NULL, 0, 7),
+(20, 'Pedra Normal', 'evolucao', 'Evolui Pokémon da linha de Normal.', 2500, 0, 0, NULL, 0, 1),
+(21, 'Pedra Venenosa', 'evolucao', 'Evolui Pokémon da linha de Venenoso.', 2500, 0, 0, NULL, 0, 4),
+(22, 'Pedra da Lua', 'evolucao', 'Evolui Pokémon da linha de Fada.', 2500, 0, 0, NULL, 0, 18),
+(23, 'Pedra da Luta', 'evolucao', 'Evolui Pokémon da linha de Lutador.', 2500, 0, 0, NULL, 0, 2),
+(24, 'Pedra Psíquica', 'evolucao', 'Evolui Pokémon da linha de Psíquico.', 2500, 0, 0, NULL, 0, 14),
+(25, 'Pedra Fantasma', 'evolucao', 'Evolui Pokémon da linha de Fantasma.', 2500, 0, 0, NULL, 0, 8),
+(26, 'Pedra do Dragão', 'evolucao', 'Evolui Pokémon da linha de Dragão.', 2500, 0, 0, NULL, 0, 16),
+(27, 'Pedra do Vento', 'evolucao', 'Evolui Pokémon da linha de Voador.', 2500, 0, 0, NULL, 0, 3),
+(28, 'Pedra do Gelo', 'evolucao', 'Evolui Pokémon da linha de Gelo.', 2500, 0, 0, NULL, 0, 15),
+(29, 'Pedra Metálica', 'evolucao', 'Evolui Pokémon da linha de Aço.', 2500, 0, 0, NULL, 0, 9),
+(30, 'Pedra Sombria', 'evolucao', 'Evolui Pokémon da linha de Sombrio.', 2500, 0, 0, NULL, 0, 17);
 
 -- --------------------------------------------------------
 
@@ -1321,3 +1321,33 @@ SELECT
         AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
                               WHERE b2.usuario_id = u.id AND b2.lider_id IS NOT NULL), 0)) AS vitorias_desde_lider
 FROM usuarios u;
+
+-- =====================================================================
+-- Shinies desbloqueados
+-- =====================================================================
+-- DDL: espécies que cada jogador já conseguiu shiny (desbloqueadas para sempre)
+CREATE TABLE IF NOT EXISTS `shinies_desbloqueados` (
+  `usuario_id` int(10) UNSIGNED NOT NULL,
+  `especie_id` int(10) UNSIGNED NOT NULL,
+  `desbloqueado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`usuario_id`, `especie_id`),
+  KEY `especie_id` (`especie_id`),
+  CONSTRAINT `shinies_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `shinies_ibfk_2` FOREIGN KEY (`especie_id`) REFERENCES `especies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Triggers: sempre que um Pokémon shiny nasce ou evolui, a espécie dele fica
+-- desbloqueada. INSERT IGNORE: se já estava desbloqueada, não faz nada.
+DROP TRIGGER IF EXISTS `trg_pokemons_shiny_insert`;
+CREATE TRIGGER `trg_pokemons_shiny_insert` AFTER INSERT ON `pokemons` FOR EACH ROW
+  INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
+  SELECT NEW.usuario_id, NEW.especie_id FROM DUAL WHERE NEW.shiny = 1;
+
+DROP TRIGGER IF EXISTS `trg_pokemons_shiny_update`;
+CREATE TRIGGER `trg_pokemons_shiny_update` AFTER UPDATE ON `pokemons` FOR EACH ROW
+  INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
+  SELECT NEW.usuario_id, NEW.especie_id FROM DUAL WHERE NEW.shiny = 1;
+
+-- DML: os shinies que os jogadores JÁ têm também ficam desbloqueados
+INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
+SELECT DISTINCT usuario_id, especie_id FROM pokemons WHERE shiny = 1;

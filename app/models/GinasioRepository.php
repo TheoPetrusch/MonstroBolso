@@ -13,7 +13,7 @@ use PDO;
 class GinasioRepository
 {
     /** Vitórias contra treinadores comuns para poder desafiar o próximo líder. */
-    public const VITORIAS_NECESSARIAS = 10;
+    public const VITORIAS_NECESSARIAS = 2;
 
     private PDO $pdo;
 

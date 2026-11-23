@@ -256,6 +256,52 @@ class TimeRepository
     }
 
     /**
+     * Espécies que o jogador já conseguiu shiny (desbloqueadas para sempre).
+     * Quem preenche a tabela são os triggers trg_pokemons_shiny_insert/update.
+     * @return int[]
+     */
+    public function shiniesDesbloqueados(int $usuarioId): array
+    {
+        $st = $this->pdo->prepare('SELECT especie_id FROM shinies_desbloqueados WHERE usuario_id = :u');
+        $st->execute(['u' => $usuarioId]);
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Deixa o Pokémon shiny (ou volta ao normal). Só vale para espécies que o
+     * jogador já conseguiu shiny alguma vez. TRANSAÇÃO com o Pokémon travado.
+     */
+    public function alternarShiny(int $usuarioId, int $pokemonId): Pokemon
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $pokemon = $this->travarPokemon($usuarioId, $pokemonId);
+            $especie = $pokemon->getEspecie();
+
+            $st = $this->pdo->prepare(
+                'SELECT 1 FROM shinies_desbloqueados WHERE usuario_id = :u AND especie_id = :e'
+            );
+            $st->execute(['u' => $usuarioId, 'e' => $especie->getId()]);
+            if (!$st->fetchColumn()) {
+                throw new InvalidArgumentException(
+                    "Você ainda não conseguiu um {$especie->getNome()} shiny. Ele aparece com chance de 1 em "
+                    . Pokemon::CHANCE_SHINY . ' ao adicionar ao time.'
+                );
+            }
+
+            $pokemon->alternarShiny();
+            $this->pdo->prepare('UPDATE pokemons SET shiny = :s WHERE id = :id')
+                ->execute(['s' => (int) $pokemon->isShiny(), 'id' => $pokemonId]);
+
+            $this->pdo->commit();
+            return $pokemon;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * CENTRO POKÉMON: cura o time inteiro de graça (HP cheio, sem condição,
      * desmaiados voltam). A regra fica no model (Pokemon::restaurar);
      * aqui só grava. TRANSAÇÃO: cura todos ou nenhum.

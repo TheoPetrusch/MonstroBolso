@@ -559,3 +559,14 @@ body.time .card-poke .acoes button {
     background: #e6f6dd;
     color: #2f6b2f;
 }
+
+/* botão de shiny no slot (espécie com shiny desbloqueado) */
+body.time .slot .evolucoes button.shiny-btn {
+    border-color: #b8860b;
+    background: #fff4c2;
+    color: #7a5a00;
+}
+
+body.time .slot .evolucoes button.shiny-btn::before {
+    content: "✨ ";
+}

@@ -7,11 +7,23 @@ use PDO;
 
 class BatalhaRepository
 {
-    /** Inimigos podem ter até 15% de força a mais ou a menos que a média do seu time. */
+    /**
+     * DIFICULDADE dos treinadores comuns: a força buscada para os inimigos é a
+     * média do seu time x 1.10 (10% mais fortes). 1.00 = mesma força.
+     */
+    public const DIFICULDADE = 1.20;
+
+    /** Inimigos podem ter até 15% de força a mais ou a menos que essa força buscada. */
     public const FOLGA_DE_FORCA = 0.15;
 
     /** Pokémon do líder: até 10% de diferença da força do líder. */
     public const FOLGA_DO_LIDER = 0.10;
+
+    /**
+     * DIFICULDADE dos líderes: os Pokémon deles são "treinados" e têm uma % a
+     * mais de HP que o normal da espécie (1.00 = HP normal).
+     */
+    public const BONUS_HP_LIDER = 1.30;
 
     /** Nomes dos treinadores do computador (sorteado a cada batalha). */
     private const TREINADORES = [
@@ -30,9 +42,11 @@ class BatalhaRepository
      * Monta uma batalha nova.
      * Treinador comum ($lider = null): BALANCEADO pelo time do jogador:
      *   - o computador tem de 1 até a quantidade de Pokémon de pé do jogador;
-     *   - cada inimigo tem força parecida com a MÉDIA de força do time do jogador.
+     *   - cada inimigo tem força parecida com a MÉDIA de força do time do jogador,
+     *     um pouco acima dela (DIFICULDADE).
      * Líder de ginásio: força e quantidade FIXAS do líder (ficam mais fortes a
-     * cada ginásio), com Pokémon do tipo em que ele é especialista.
+     * cada ginásio), com Pokémon do tipo em que ele é especialista; o jogador
+     * luta com a mesma quantidade de Pokémon que o líder.
      */
     public function nova(int $usuarioId, ?Lider $lider = null): Batalha
     {
@@ -42,14 +56,20 @@ class BatalhaRepository
         if (!$time) {
             throw new \InvalidArgumentException('Seu time está vazio. Monte um time no Team Builder.');
         }
-        $golpesTime = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $time);
-
-        $dePe = array_filter($time, fn(Pokemon $p) => !$p->estaDesmaiado());
+        $dePe = array_values(array_filter($time, fn(Pokemon $p) => !$p->estaDesmaiado()));
         if (!$dePe) {
             throw new \InvalidArgumentException(
                 'Nenhum Pokémon do seu time está de pé. Cure o time de graça no Centro Pokémon (Team Builder).'
             );
         }
+
+        // Regra do ginásio: contra um líder com N Pokémon, o jogador também só
+        // usa N: os N primeiros Pokémon DE PÉ do time, na ordem dos slots.
+        // Os outros ficam fora da batalha (e não perdem HP).
+        if ($lider !== null) {
+            $time = array_slice($dePe, 0, $lider->getQuantidade());
+        }
+        $golpesTime = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $time);
         $especies = new EspecieRepository($this->pdo);
         if ($lider !== null) {
             $sorteadas = $especies->sortearParecidas(
@@ -60,13 +80,17 @@ class BatalhaRepository
             );
         } else {
             $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
+            $alvo  = (int) round($media * self::DIFICULDADE);
             $sorteadas = $especies->sortearParecidas(
-                random_int(1, count($dePe)), $media, (int) round($media * self::FOLGA_DE_FORCA)
+                random_int(1, count($dePe)), $alvo, (int) round($alvo * self::FOLGA_DE_FORCA)
             );
         }
 
         // usuário 0 = computador; Pokémon novo nasce com o HP cheio
-        $oponente = array_map(fn(Especie $e) => Pokemon::novoDaEspecie(0, $e), $sorteadas);
+        $oponente = array_map(
+            fn(Especie $e) => $lider !== null ? $this->pokemonDoLider($e) : Pokemon::novoDaEspecie(0, $e),
+            $sorteadas
+        );
         $golpesOponente = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $oponente);
 
         return new Batalha(
@@ -77,6 +101,13 @@ class BatalhaRepository
             $lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)],
             $lider
         );
+    }
+
+    /** Pokémon "treinado" do líder: HP máximo maior que o normal da espécie. */
+    private function pokemonDoLider(Especie $e): Pokemon
+    {
+        $hp = (int) round($e->getHp() * self::BONUS_HP_LIDER);
+        return new Pokemon(null, 0, $e, null, 5, $hp, $hp);
     }
 
     /**

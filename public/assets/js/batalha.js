@@ -13,6 +13,7 @@ class TelaBatalha {
 
     #api;
     #ocupado = false; // evita mandar duas ações ao mesmo tempo
+    #necessarias = 10; // vitórias para o próximo líder (vem do servidor: GinasioRepository)
 
     constructor(api) {
         this.#api = api;
@@ -72,6 +73,7 @@ class TelaBatalha {
         document.getElementById('campo').hidden = b === null;
         document.getElementById('acoes').hidden = b === null || b.encerrada;
         this.#desenharHistorico(r.historico);
+        this.#necessarias = r.progresso?.necessarias ?? this.#necessarias;
         this.#desenharGinasio(r.progresso);
 
         if (b === null) {
@@ -181,7 +183,7 @@ class TelaBatalha {
         if (b.lider && venceu) {
             texto += ` Você conquistou a ${esc(b.lider.insignia)}!`;
         } else if (b.lider) {
-            texto += ' Vença mais 10 treinadores para desafiar o líder de novo.';
+            texto += ` Vença mais ${this.#necessarias} treinadores para desafiar o líder de novo.`;
         }
         alvo.className = 'resultado ' + (venceu ? 'vitoria' : 'derrota');
         alvo.innerHTML = `
@@ -210,6 +212,8 @@ class TelaBatalha {
             <p>Próximo ginásio: <strong>${esc(p.proximo.nome)}</strong>
                <span class="chip-tipo" data-tipo="${esc(p.proximo.tipo)}">${esc(p.proximo.tipo)}</span>
                · ${Number(p.proximo.quantidade)} Pokémon · prêmio $ ${Number(p.proximo.premio)}</p>
+            <p class="dica">Contra o líder, lutam só os ${Number(p.proximo.quantidade)} primeiros Pokémon
+               de pé do seu time (na ordem dos slots).</p>
             <div class="hp">
                 <span>Vitórias</span>
                 <div class="trilho"><span class="vida" style="width:${pct}%"></span></div>
