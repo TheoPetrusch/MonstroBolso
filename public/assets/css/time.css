@@ -102,12 +102,26 @@ body.time h2 {
     color: #c25700;
 }
 
+/* cores dos 18 tipos: borda/barra, fundo do chip e texto sobre o fundo */
 [data-tipo] { --cor-tipo: #9fb3ff; --fundo-tipo: #e8edf8; --texto-tipo: #2d3a5a; }
-[data-tipo="Planta"]   { --cor-tipo: #7cc96b; --fundo-tipo: #dff3d6; --texto-tipo: #2f6b2f; }
-[data-tipo="Fogo"]     { --cor-tipo: #ff8a50; --fundo-tipo: #ffe3d3; --texto-tipo: #9a3a0c; }
-[data-tipo="Água"]     { --cor-tipo: #5aa7f0; --fundo-tipo: #dcecff; --texto-tipo: #1f4f8f; }
-[data-tipo="Elétrico"] { --cor-tipo: #e0bb20; --fundo-tipo: #fff4c2; --texto-tipo: #7a5a00; }
-[data-tipo="Pedra"]    { --cor-tipo: #b8a26a; --fundo-tipo: #efe6d2; --texto-tipo: #5f5338; }
+[data-tipo="Normal"]      { --cor-tipo: #a8a77a; --fundo-tipo: #eeeede; --texto-tipo: #57563a; }
+[data-tipo="Lutador"]     { --cor-tipo: #c22e28; --fundo-tipo: #f6dcda; --texto-tipo: #7a1c18; }
+[data-tipo="Voador"]      { --cor-tipo: #a98ff3; --fundo-tipo: #ece6fd; --texto-tipo: #4b3a8f; }
+[data-tipo="Venenoso"]    { --cor-tipo: #a33ea1; --fundo-tipo: #f1dcf0; --texto-tipo: #6a2368; }
+[data-tipo="Terra"]       { --cor-tipo: #e2bf65; --fundo-tipo: #f7ecd0; --texto-tipo: #7a5f1c; }
+[data-tipo="Pedra"]       { --cor-tipo: #b8a26a; --fundo-tipo: #efe6d2; --texto-tipo: #5f5338; }
+[data-tipo="Inseto"]      { --cor-tipo: #a6b91a; --fundo-tipo: #eef3cf; --texto-tipo: #5a6510; }
+[data-tipo="Fantasma"]    { --cor-tipo: #735797; --fundo-tipo: #e7e0f0; --texto-tipo: #45325e; }
+[data-tipo="Aço"]         { --cor-tipo: #9a9ab8; --fundo-tipo: #ececf3; --texto-tipo: #4c4c66; }
+[data-tipo="Fogo"]        { --cor-tipo: #ff8a50; --fundo-tipo: #ffe3d3; --texto-tipo: #9a3a0c; }
+[data-tipo="Água"]        { --cor-tipo: #5aa7f0; --fundo-tipo: #dcecff; --texto-tipo: #1f4f8f; }
+[data-tipo="Planta"]      { --cor-tipo: #7cc96b; --fundo-tipo: #dff3d6; --texto-tipo: #2f6b2f; }
+[data-tipo="Elétrico"]    { --cor-tipo: #e0bb20; --fundo-tipo: #fff4c2; --texto-tipo: #7a5a00; }
+[data-tipo="Psíquico"]    { --cor-tipo: #f95587; --fundo-tipo: #fde0ea; --texto-tipo: #9c1c45; }
+[data-tipo="Gelo"]        { --cor-tipo: #6cc9c5; --fundo-tipo: #e2f6f5; --texto-tipo: #2a6e6b; }
+[data-tipo="Dragão"]      { --cor-tipo: #6f35fc; --fundo-tipo: #e5dbfe; --texto-tipo: #3a1590; }
+[data-tipo="Sombrio"]     { --cor-tipo: #705746; --fundo-tipo: #e9e1dc; --texto-tipo: #3f2f25; }
+[data-tipo="Fada"]        { --cor-tipo: #d685ad; --fundo-tipo: #f8e5ef; --texto-tipo: #8a3463; }
 
 .chip-tipo {
     display: inline-block;
