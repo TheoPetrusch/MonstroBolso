@@ -27,6 +27,7 @@ SELECT
     e.pokeapi_id,
     e.nome AS especie,
     e.evolui_de_id, -- NULL = espécie básica
+    e.ignora_pre_evolucao, -- 1 = também é básica (pré-evolução é bebê de geração futura)
     ti.nome AS tipo,
     e.hp,
     e.ataque,

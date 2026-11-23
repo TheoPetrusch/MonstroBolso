@@ -151,7 +151,7 @@ class TeamBuilder {
             alvo.innerHTML = `
                 <img class="arte" src="${esc(d.arte)}" alt="${esc(especie.nome)}">
                 <div class="info">
-                    <div>${d.tipos.map(t => `<span class="chip-tipo">${esc(t)}</span>`).join(' ')}</div>
+                    <div>${d.tipos.map(t => `<span class="chip-tipo" data-tipo="${esc(t)}">${esc(t)}</span>`).join(' ')}</div>
                     <p>Altura: <strong>${d.altura} m</strong> &middot; Peso: <strong>${d.peso} kg</strong></p>
                     <p>Habilidades: <strong>${esc(d.habilidades.join(', '))}</strong></p>
                     ${stats.map(([nome, valor]) => `

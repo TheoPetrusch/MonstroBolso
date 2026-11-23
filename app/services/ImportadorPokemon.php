@@ -23,6 +23,9 @@ class ImportadorPokemon
     private EspecieRepository $especies;
     private GolpeRepository $golpes;
 
+    /** @var array<int, bool> pokeapi_id => é bebê? (evita consultar a API duas vezes) */
+    private array $bebes = [];
+
     public function __construct(?PokeApiService $api = null, ?PDO $pdo = null)
     {
         $this->pdo      = $pdo ?? Database::getConnection();
@@ -67,9 +70,10 @@ class ImportadorPokemon
         }
 
         // Pré-evoluções de outra geração vêm junto, se ainda não estão no banco
-        // (ex.: importar a 1ª traz o Pichu, da 2ª, para o Pikachu ter de onde
+        // (ex.: importar a 4ª traz o Magmar, da 1ª, para o Magmortar ter de onde
         // evoluir). Repete até não faltar ninguém, porque a pré-evolução pode
-        // ter outra antes dela (Magmortar <- Magmar <- Magby).
+        // ter outra antes dela. Exceção: bebês de geração futura (Pichu para o
+        // Pikachu, Magby para o Magmar) não vêm: veja preEvolucaoEhBebeFuturo().
         $noBanco = array_flip($this->especies->pokeapiIds());
         $preEvolucoes = [];
         while ($faltando = self::paisFaltando($dados, $noBanco)) {
@@ -125,7 +129,39 @@ class ImportadorPokemon
     {
         $pokemon = $this->api->buscar("pokemon/{$id}");          // stats, tipos, sprite
         $especie = $this->api->buscar("pokemon-species/{$id}");  // nome e pré-evolução
-        return self::montarDados($pokemon, $especie);
+        $this->bebes[$id] = (bool) ($especie['is_baby'] ?? false);
+
+        $d = self::montarDados($pokemon, $especie);
+        $d['ignora_pre_evolucao'] = $this->preEvolucaoEhBebeFuturo($d);
+        return $d;
+    }
+
+    /**
+     * Exceção dos bebês: a pré-evolução é um bebê criado numa geração
+     * POSTERIOR à da espécie (Pikachu é da 1ª, Pichu da 2ª). Nesse caso a
+     * espécie não precisa dele: conta como básica e ele não vem junto.
+     * Só consulta a PokéAPI (para saber se o pai é bebê) quando a geração do
+     * pai é maior, o que acontece com poucas espécies.
+     */
+    private function preEvolucaoEhBebeFuturo(array $d): bool
+    {
+        $pai = $d['evolui_de'];
+        if ($pai === null || self::geracaoDe($pai) <= self::geracaoDe($d['pokeapi_id'])) {
+            return false;
+        }
+        $this->bebes[$pai] ??= (bool) ($this->api->buscar("pokemon-species/{$pai}")['is_baby'] ?? false);
+        return $this->bebes[$pai];
+    }
+
+    /** Geração de um pokeapi_id pela tabela GERACOES (ex.: 25 -> 1, 172 -> 2). */
+    public static function geracaoDe(int $pokeapiId): int
+    {
+        foreach (self::GERACOES as $geracao => [$de, $ate]) {
+            if ($pokeapiId >= $de && $pokeapiId <= $ate) {
+                return $geracao;
+            }
+        }
+        return PHP_INT_MAX; // fora das 9 gerações: trata como "mais nova"
     }
 
     /**
@@ -139,6 +175,9 @@ class ImportadorPokemon
     {
         $faltando = [];
         foreach ($dados as $d) {
+            if (!empty($d['ignora_pre_evolucao'])) {
+                continue; // bebê de geração futura: não precisa vir junto
+            }
             $pai = $d['evolui_de'];
             if ($pai !== null && !isset($dados[$pai]) && !isset($noBanco[$pai])) {
                 $faltando[$pai] = $pai; // chave evita repetir (Eevee teria 3 filhos pedindo)

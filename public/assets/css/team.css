@@ -28,11 +28,24 @@ body.pagina::before {
     --cor-tipo: #9fb3ff;                   
 }
 
-.card-poke[data-tipo="Planta"]   { --cor-tipo: #5dca65; }
-.card-poke[data-tipo="Fogo"]     { --cor-tipo: #ff7a3d; }
-.card-poke[data-tipo="Água"]     { --cor-tipo: #4aa8ff; }
-.card-poke[data-tipo="Elétrico"] { --cor-tipo: #f5d33a; }
-.card-poke[data-tipo="Pedra"]    { --cor-tipo: #b8a26a; }
+.card-poke[data-tipo="Normal"]       { --cor-tipo: #a8a77a; }
+.card-poke[data-tipo="Lutador"]      { --cor-tipo: #c22e28; }
+.card-poke[data-tipo="Voador"]       { --cor-tipo: #a98ff3; }
+.card-poke[data-tipo="Venenoso"]     { --cor-tipo: #a33ea1; }
+.card-poke[data-tipo="Terra"]        { --cor-tipo: #e2bf65; }
+.card-poke[data-tipo="Pedra"]        { --cor-tipo: #b8a26a; }
+.card-poke[data-tipo="Inseto"]       { --cor-tipo: #a6b91a; }
+.card-poke[data-tipo="Fantasma"]     { --cor-tipo: #735797; }
+.card-poke[data-tipo="Aço"]          { --cor-tipo: #9a9ab8; }
+.card-poke[data-tipo="Fogo"]         { --cor-tipo: #ff8a50; }
+.card-poke[data-tipo="Água"]         { --cor-tipo: #5aa7f0; }
+.card-poke[data-tipo="Planta"]       { --cor-tipo: #7cc96b; }
+.card-poke[data-tipo="Elétrico"]     { --cor-tipo: #e0bb20; }
+.card-poke[data-tipo="Psíquico"]     { --cor-tipo: #f95587; }
+.card-poke[data-tipo="Gelo"]         { --cor-tipo: #6cc9c5; }
+.card-poke[data-tipo="Dragão"]       { --cor-tipo: #6f35fc; }
+.card-poke[data-tipo="Sombrio"]      { --cor-tipo: #705746; }
+.card-poke[data-tipo="Fada"]         { --cor-tipo: #d685ad; }
 
 
 .card-poke:hover {
