@@ -12,7 +12,7 @@ use InvalidArgumentException;
 class Pokemon
 {
     /** Chance de nascer shiny: 1 em CHANCE_SHINY. */
-    public const CHANCE_SHINY = 64;
+    public const CHANCE_SHINY = 32;
 
     private int $hpAtual;
 
@@ -191,6 +191,12 @@ class Pokemon
             throw new InvalidArgumentException("Condição inválida: {$status}");
         }
         $this->status = $status;
+    }
+
+    /** Liga/desliga a cor shiny (quem confere se está desbloqueado é o TimeRepository). */
+    public function alternarShiny(): void
+    {
+        $this->shiny = !$this->shiny;
     }
 
     /** Centro Pokémon: HP cheio, sem condição e de pé de novo (inclusive desmaiados). */

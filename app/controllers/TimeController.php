@@ -152,6 +152,20 @@ class TimeController extends BaseController
         }
     }
 
+    /** Deixa um Pokémon do time shiny (ou volta ao normal), se a espécie estiver desbloqueada. */
+    public function alternarShiny(): void
+    {
+        $uid = $this->exigirLoginApi();
+        if ($uid === null) return;
+
+        try {
+            $p = $this->times->alternarShiny($uid, (int) ($this->corpoJson()['pokemon_id'] ?? 0));
+            $this->json($this->respostaTime($uid) + ['shiny' => $p->isShiny()]);
+        } catch (InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
+        }
+    }
+
     /**
      * Centro Pokémon: cura o time de graça. Não vale no meio de uma batalha
      * (lá dentro, só o item Revive revive).
@@ -183,6 +197,7 @@ class TimeController extends BaseController
             'time'      => $this->times->carregar($uid)->paraArray(),
             'evolucoes' => $this->times->opcoesDeEvolucao($uid),
             'mochila'   => $mochila,
+            'shinies'   => $this->times->shiniesDesbloqueados($uid), // espécies com shiny liberado
         ];
     }
 }

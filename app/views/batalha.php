@@ -24,7 +24,7 @@
             <div id="inicio" class="inicio">
                 <p>Enfrente um treinador com 1 a 6 Pokémon de força parecida com a do seu time.
                    Vencer dá <strong>150 Pokédollar por Pokémon</strong> derrotado.
-                   A cada <strong>10 vitórias</strong>, você pode desafiar o próximo líder de ginásio.</p>
+                   A cada <strong><?= \App\Models\GinasioRepository::VITORIAS_NECESSARIAS ?> vitórias</strong>, você pode desafiar o próximo líder de ginásio.</p>
                 <button type="button" id="btn-iniciar">Começar batalha</button>
                 <button type="button" id="btn-centro" class="sec">Curar time no Centro Pokémon (grátis)</button>
 
