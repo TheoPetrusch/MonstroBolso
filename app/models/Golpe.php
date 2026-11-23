@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Tipos\Tipo;
+
 /** Golpe que uma espécie pode usar em batalha. Imutável: só getters. */
 class Golpe
 {
@@ -49,6 +51,12 @@ class Golpe
     public function getCategoria(): string
     {
         return $this->categoria;
+    }
+
+    /** O tipo do golpe como OBJETO: é ele que calcula a vantagem na batalha. */
+    public function tipo(): Tipo
+    {
+        return Tipo::criar($this->tipo);
     }
 
     public function paraArray(): array

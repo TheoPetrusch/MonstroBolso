@@ -18,6 +18,8 @@ class TeamBuilder {
             .addEventListener('input', () => this.#desenharCatalogo());
         document.getElementById('btn-limpar')
             .addEventListener('click', () => this.#limpar());
+        document.getElementById('btn-centro')
+            .addEventListener('click', () => this.#centroPokemon());
         document.getElementById('fechar-detalhes')
             .addEventListener('click', () => document.getElementById('janela-detalhes').close());
     }
@@ -77,6 +79,22 @@ class TeamBuilder {
             this.#mochila = r.mochila;
             this.#desenharTudo();
             this.#aviso(`Time limpo: ${r.removidos} Pokémon removidos.`, true);
+        } catch (e) {
+            this.#aviso(e.message);
+        }
+    }
+
+    /** Centro Pokémon: cura o time inteiro de graça. */
+    async #centroPokemon() {
+        try {
+            const r = await this.#api.post('/api/centro-pokemon');
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            this.#desenharTudo();
+            this.#aviso(r.curados > 0
+                ? `Centro Pokémon: ${r.curados} Pokémon curados!`
+                : 'Seu time já estava 100%.', true);
         } catch (e) {
             this.#aviso(e.message);
         }

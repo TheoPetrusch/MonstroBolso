@@ -43,6 +43,25 @@ class ItemRepository
         return $st->fetchAll();
     }
 
+    /** O jogador tem pelo menos 1 desse item na mochila? */
+    public function temNaMochila(int $usuarioId, int $itemId): bool
+    {
+        $st = $this->pdo->prepare(
+            'SELECT quantidade FROM inventario WHERE usuario_id = :u AND item_id = :i'
+        );
+        $st->execute(['u' => $usuarioId, 'i' => $itemId]);
+        return (int) $st->fetchColumn() > 0;
+    }
+
+    /** Tira 1 unidade do item da mochila ("quantidade > 0" impede ficar negativo). */
+    public function gastarUm(int $usuarioId, int $itemId): void
+    {
+        $this->pdo->prepare(
+            'UPDATE inventario SET quantidade = quantidade - 1
+              WHERE usuario_id = :u AND item_id = :i AND quantidade > 0'
+        )->execute(['u' => $usuarioId, 'i' => $itemId]);
+    }
+
     /**
      * Compra pela PROCEDURE sp_comprar_item (triggers.sql). Ela faz tudo numa
      * TRANSAÇÃO: confere o saldo, debita, coloca na mochila e grava o log.

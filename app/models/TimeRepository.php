@@ -238,6 +238,40 @@ class TimeRepository
     }
 
     /**
+     * CENTRO POKÉMON: cura o time inteiro de graça (HP cheio, sem condição,
+     * desmaiados voltam). A regra fica no model (Pokemon::restaurar);
+     * aqui só grava. TRANSAÇÃO: cura todos ou nenhum.
+     * @return int quantos Pokémon precisavam de cura
+     */
+    public function centroPokemon(int $usuarioId): int
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $st = $this->pdo->prepare(
+                'UPDATE pokemons SET hp_atual = :hp, status = :status WHERE id = :id AND usuario_id = :u'
+            );
+            $curados = 0;
+            foreach ($this->carregar($usuarioId)->getPokemons() as $p) {
+                if ($p->getHpAtual() < $p->getHpMax() || $p->getStatus() !== 'normal') {
+                    $curados++;
+                }
+                $p->restaurar();
+                $st->execute([
+                    'hp'     => $p->getHpAtual(),
+                    'status' => $p->getStatus(),
+                    'id'     => $p->getId(),
+                    'u'      => $usuarioId,
+                ]);
+            }
+            $this->pdo->commit();
+            return $curados;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
      * Limpa o time inteiro: apaga todos os Pokémon do jogador.
      * ON DELETE CASCADE limpa os slots; os desbloqueios (especies_desbloqueadas)
      * continuam, então as evoluções conseguidas podem ser pegas de novo.

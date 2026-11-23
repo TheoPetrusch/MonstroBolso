@@ -7,6 +7,7 @@ require __DIR__ . '/../vendor/autoload.php';
 use App\Core\Router;
 use App\Controllers\PingController;
 use App\Controllers\AuthController;
+use App\Controllers\BatalhaController;
 use App\Controllers\HomeController;
 use App\Controllers\ImportadorController;
 use App\Controllers\LojaController;
@@ -25,6 +26,7 @@ $router->get('/',     [AuthController::class, 'paginaLogin']);
 $router->get('/home', [HomeController::class, 'pagina']);
 $router->get('/time', [TimeController::class, 'pagina']);
 $router->get('/loja', [LojaController::class, 'pagina']);
+$router->get('/batalha', [BatalhaController::class, 'pagina']);
 
 // API de autenticação
 $router->post('/api/login',          [AuthController::class, 'login']);
@@ -41,10 +43,17 @@ $router->post('/api/time/remover',   [TimeController::class, 'remover']);
 $router->post('/api/time/limpar',    [TimeController::class, 'limpar']);
 $router->post('/api/time/evoluir',   [TimeController::class, 'evoluir']);
 $router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
+$router->post('/api/centro-pokemon', [TimeController::class, 'centroPokemon']);
 
 // API do Poké Mart
 $router->get('/api/loja',             [LojaController::class, 'dados']);
 $router->post('/api/loja/comprar',    [LojaController::class, 'comprar']);
+
+// API da Batalha
+$router->get('/api/batalha',          [BatalhaController::class, 'estado']);
+$router->post('/api/batalha/iniciar', [BatalhaController::class, 'iniciar']);
+$router->post('/api/batalha/acao',    [BatalhaController::class, 'acao']);
+$router->post('/api/batalha/fugir',   [BatalhaController::class, 'fugir']);
 
 // Importação de Pokémon da PokéAPI (qualquer usuário logado)
 $router->post('/api/importar', [ImportadorController::class, 'importar']);

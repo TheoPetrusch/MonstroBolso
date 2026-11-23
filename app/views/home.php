@@ -23,7 +23,7 @@
 
         <nav class="menu">
             <a class="botao azul" href="<?= $base ?>/time">Team Builder</a>
-            <span class="botao desativado">Batalha (em breve)</span>
+            <a class="botao vermelho" href="<?= $base ?>/batalha">Batalha</a>
             <a class="botao laranja" href="<?= $base ?>/loja">Poké Mart</a>
         </nav>
 

@@ -26,6 +26,35 @@ class GolpeRepository
     }
 
     /**
+     * Os golpes que uma espécie conhece (tabela especie_golpes).
+     * Se a espécie não tiver nenhum cadastrado, usa o Tackle, para a
+     * batalha nunca ficar sem golpe.
+     * @return Golpe[]
+     */
+    public function daEspecie(int $especieId): array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT g.*, t.nome AS tipo
+               FROM especie_golpes eg
+               JOIN golpes g ON g.id = eg.golpe_id
+               JOIN tipos t ON t.id = g.tipo_id
+              WHERE eg.especie_id = :e
+              ORDER BY g.poder'
+        );
+        $st->execute(['e' => $especieId]);
+        $linhas = $st->fetchAll();
+
+        if (!$linhas) {
+            $linhas = $this->pdo->query(
+                "SELECT g.*, t.nome AS tipo
+                   FROM golpes g JOIN tipos t ON t.id = g.tipo_id
+                  WHERE g.nome = 'Tackle'"
+            )->fetchAll();
+        }
+        return array_map([Golpe::class, 'fromRow'], $linhas);
+    }
+
+    /**
      * Troca os golpes de uma espécie pelos informados.
      * Deve ser chamado dentro de uma transação (o importador abre uma).
      * @param Golpe[] $golpes

@@ -33,6 +33,28 @@ class EspecieRepository
     }
 
     /**
+     * Sorteia espécies para o time do computador com FORÇA PARECIDA com $forca
+     * (força = soma dos 6 atributos). Quem fica até $folga de distância tem a
+     * mesma chance (vale 0 no ORDER BY e o RAND() desempata); se não houver
+     * espécies suficientes nessa faixa, completa com as mais próximas.
+     * O CAST para SIGNED evita erro do MySQL ao subtrair números UNSIGNED.
+     * @return Especie[]
+     */
+    public function sortearParecidas(int $quantidade, int $forca, int $folga): array
+    {
+        $st = $this->pdo->prepare(
+            self::SELECT . '
+             ORDER BY GREATEST(
+                        ABS(CAST(e.hp + e.ataque + e.defesa + e.sp_atk + e.sp_def + e.velocidade AS SIGNED) - :forca)
+                        - :folga, 0),
+                      RAND()
+             LIMIT ' . (int) $quantidade
+        );
+        $st->execute(['forca' => $forca, 'folga' => $folga]);
+        return array_map([Especie::class, 'fromRow'], $st->fetchAll());
+    }
+
+    /**
      * Ids das espécies evoluídas que o jogador já desbloqueou (evoluindo
      * um Pokémon com pedra). O trigger trg_pokemons_desbloqueia preenche a tabela.
      * @return int[]
