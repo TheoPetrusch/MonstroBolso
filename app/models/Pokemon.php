@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Tipos\Tipo;
 use InvalidArgumentException;
 
 /**
@@ -178,6 +179,31 @@ class Pokemon
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    /** Condições possíveis (iguais ao ENUM da coluna pokemons.status). */
+    public const STATUS = ['normal', 'veneno', 'queimado', 'congelado', 'dormindo', 'paralisado'];
+
+    /** Muda a condição (encapsulamento: só aceita valores da lista). */
+    public function setStatus(string $status): void
+    {
+        if (!in_array($status, self::STATUS, true)) {
+            throw new InvalidArgumentException("Condição inválida: {$status}");
+        }
+        $this->status = $status;
+    }
+
+    /** Centro Pokémon: HP cheio, sem condição e de pé de novo (inclusive desmaiados). */
+    public function restaurar(): void
+    {
+        $this->status = 'normal';
+        $this->setHpAtual($this->hpMax); // setHpAtual também tira o "desmaiado"
+    }
+
+    /** O Pokémon tem o tipo da sua espécie (Pokémon -> Espécie -> Tipo). */
+    public function tipo(): Tipo
+    {
+        return $this->especie->tipo();
     }
 
     /** HP nunca fica fora de 0..hpMax (encapsulamento). */

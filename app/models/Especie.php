@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Tipos\Tipo;
+
 /**
  * Espécie = dados base de um Pokémon (stats da PokéAPI).
  * Imutável: só getters.
@@ -78,6 +80,38 @@ class Especie
     public function getVelocidade(): int
     {
         return $this->velocidade;
+    }
+    public function getAtaque(): int
+    {
+        return $this->ataque;
+    }
+    public function getDefesa(): int
+    {
+        return $this->defesa;
+    }
+    public function getSpAtk(): int
+    {
+        return $this->spAtk;
+    }
+    public function getSpDef(): int
+    {
+        return $this->spDef;
+    }
+    public function getSpriteUrl(): ?string
+    {
+        return $this->spriteUrl;
+    }
+
+    /** Força = soma dos 6 atributos (usada para sortear inimigos parecidos). */
+    public function forca(): int
+    {
+        return $this->hp + $this->ataque + $this->defesa + $this->spAtk + $this->spDef + $this->velocidade;
+    }
+
+    /** O tipo como OBJETO (Fogo, Agua...), usado na batalha. */
+    public function tipo(): Tipo
+    {
+        return Tipo::criar($this->tipo);
     }
 
     public function paraArray(): array

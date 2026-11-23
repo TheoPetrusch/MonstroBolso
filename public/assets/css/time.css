@@ -535,3 +535,13 @@ body.time .card-poke .acoes button {
     padding: 6px 10px;
     font-size: .8rem;
 }
+
+/* Centro Pokémon (cura de graça) */
+#btn-centro {
+    padding: 6px 12px;
+    font-size: .8rem;
+    font-weight: 800;
+    border: 2px solid #2f6b2f;
+    background: #e6f6dd;
+    color: #2f6b2f;
+}

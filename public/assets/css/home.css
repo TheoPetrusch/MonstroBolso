@@ -133,6 +133,11 @@ body.home .botao.laranja {
     box-shadow: 0 6px 0 #8a3e00;
 }
 
+body.home .botao.vermelho {
+    background: #c92e0c;
+    box-shadow: 0 6px 0 #8a1f07;
+}
+
 body.home .botao.desativado {
     background: #e4eef8;
     border: 2px dashed #a9bfd6;

@@ -148,6 +148,23 @@ class TimeController extends BaseController
         }
     }
 
+    /**
+     * Centro Pokémon: cura o time de graça. Não vale no meio de uma batalha
+     * (lá dentro, só o item Revive revive).
+     */
+    public function centroPokemon(): void
+    {
+        $uid = $this->exigirLoginApi();
+        if ($uid === null) return;
+
+        if (isset($_SESSION['batalha'])) {
+            $this->json(['ok' => false, 'erro' => 'Termine a batalha antes de ir ao Centro Pokémon.'], 409);
+            return;
+        }
+        $curados = $this->times->centroPokemon($uid);
+        $this->json($this->respostaTime($uid) + ['curados' => $curados]);
+    }
+
     /** Time + evoluções + itens de cura: o que a tela precisa depois de qualquer ação. */
     private function respostaTime(int $uid): array
     {
