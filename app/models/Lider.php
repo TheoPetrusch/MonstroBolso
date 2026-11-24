@@ -10,10 +10,10 @@ class Lider
         private int $ordem,        // 1 = mais fraco ... 8 = mais forte
         private string $nome,
         private string $tipo,      // tipo em que é especialista
-        private int $quantidade,   // Pokémon no time
-        private int $forca,        // força média dos Pokémon (soma dos 6 atributos)
+        private int $quantidade,   // Pokémon no time fixo (tabela lider_pokemons)
         private int $premio,
-        private string $insignia
+        private string $insignia,
+        private float $bonusHp     // dificuldade: HP dos Pokémon do líder x bonusHp
     ) {}
 
     public static function fromRow(array $r): self
@@ -24,9 +24,9 @@ class Lider
             $r['nome'],
             $r['tipo'],
             (int) $r['quantidade'],
-            (int) $r['forca'],
             (int) $r['premio'],
-            $r['insignia']
+            $r['insignia'],
+            (float) $r['bonus_hp']
         );
     }
 
@@ -46,9 +46,9 @@ class Lider
     {
         return $this->quantidade;
     }
-    public function getForca(): int
+    public function getBonusHp(): float
     {
-        return $this->forca;
+        return $this->bonusHp;
     }
     public function getPremio(): int
     {

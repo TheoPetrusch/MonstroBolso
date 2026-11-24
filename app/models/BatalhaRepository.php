@@ -16,14 +16,6 @@ class BatalhaRepository
     /** Inimigos podem ter até 15% de força a mais ou a menos que essa força buscada. */
     public const FOLGA_DE_FORCA = 0.15;
 
-    /** Pokémon do líder: até 10% de diferença da força do líder. */
-    public const FOLGA_DO_LIDER = 0.10;
-
-    /**
-     * DIFICULDADE dos líderes: os Pokémon deles são "treinados" e têm uma % a
-     * mais de HP que o normal da espécie (1.00 = HP normal).
-     */
-    public const BONUS_HP_LIDER = 1.30;
 
     /** Nomes dos treinadores do computador (sorteado a cada batalha). */
     private const TREINADORES = [
@@ -44,9 +36,9 @@ class BatalhaRepository
      *   - o computador tem de 1 até a quantidade de Pokémon de pé do jogador;
      *   - cada inimigo tem força parecida com a MÉDIA de força do time do jogador,
      *     um pouco acima dela (DIFICULDADE).
-     * Líder de ginásio: força e quantidade FIXAS do líder (ficam mais fortes a
-     * cada ginásio), com Pokémon do tipo em que ele é especialista; o jogador
-     * luta com a mesma quantidade de Pokémon que o líder.
+     * Líder de ginásio: time FIXO (tabela lider_pokemons), com o HP multiplicado
+     * pela dificuldade do líder (coluna bonus_hp); o jogador luta com a mesma
+     * quantidade de Pokémon que o líder.
      */
     public function nova(int $usuarioId, ?Lider $lider = null): Batalha
     {
@@ -72,12 +64,10 @@ class BatalhaRepository
         $golpesTime = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $time);
         $especies = new EspecieRepository($this->pdo);
         if ($lider !== null) {
-            $sorteadas = $especies->sortearParecidas(
-                $lider->getQuantidade(),
-                $lider->getForca(),
-                (int) round($lider->getForca() * self::FOLGA_DO_LIDER),
-                $lider->getTipo()
-            );
+            $sorteadas = $especies->doLider($lider->getId());
+            if (!$sorteadas) {
+                throw new \InvalidArgumentException('Esse líder ainda não tem time cadastrado no banco.');
+            }
         } else {
             $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
             $alvo  = (int) round($media * self::DIFICULDADE);
@@ -88,7 +78,7 @@ class BatalhaRepository
 
         // usuário 0 = computador; Pokémon novo nasce com o HP cheio
         $oponente = array_map(
-            fn(Especie $e) => $lider !== null ? $this->pokemonDoLider($e) : Pokemon::novoDaEspecie(0, $e),
+            fn(Especie $e) => $lider !== null ? $this->pokemonDoLider($e, $lider) : Pokemon::novoDaEspecie(0, $e),
             $sorteadas
         );
         $golpesOponente = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $oponente);
@@ -103,10 +93,10 @@ class BatalhaRepository
         );
     }
 
-    /** Pokémon "treinado" do líder: HP máximo maior que o normal da espécie. */
-    private function pokemonDoLider(Especie $e): Pokemon
+    /** Pokémon "treinado" do líder: HP máximo = HP da espécie x dificuldade do líder. */
+    private function pokemonDoLider(Especie $e, Lider $lider): Pokemon
     {
-        $hp = (int) round($e->getHp() * self::BONUS_HP_LIDER);
+        $hp = (int) round($e->getHp() * $lider->getBonusHp());
         return new Pokemon(null, 0, $e, null, 5, $hp, $hp);
     }
 
