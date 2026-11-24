@@ -51,7 +51,10 @@ class Router
 
             $this->erro(404, 'Rota não encontrada');
         } catch (Throwable $e) {
-            $this->erro(500, $e->getMessage());
+            // SEGURANÇA: o detalhe do erro (SQL, caminho de arquivo...) não vai
+            // para o navegador; fica no log do Apache (xampp/apache/logs/error.log).
+            error_log('[MonstroBolso] ' . $e);
+            $this->erro(500, 'Erro interno no servidor. Tente de novo.');
         }
     }
 

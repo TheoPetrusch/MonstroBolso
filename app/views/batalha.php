@@ -20,10 +20,13 @@
 
     <div class="layout">
         <section class="painel-time arena">
-            <!-- antes de começar -->
+            <!-- resultado da batalha que acabou de terminar -->
+            <div id="resultado" class="resultado" hidden></div>
+
+            <!-- antes de começar e depois que a batalha termina -->
             <div id="inicio" class="inicio">
                 <p>Enfrente um treinador com 1 a 6 Pokémon de força parecida com a do seu time.
-                   Vencer dá <strong>150 Pokédollar por Pokémon</strong> derrotado.
+                   Vencer dá <strong>200 Pokédollar por Pokémon</strong> derrotado.
                    A cada <strong><?= \App\Models\GinasioRepository::VITORIAS_NECESSARIAS ?> vitórias</strong>, você pode desafiar o próximo líder de ginásio.</p>
                 <button type="button" id="btn-iniciar">Começar batalha</button>
                 <button type="button" id="btn-centro" class="sec">Curar time no Centro Pokémon (grátis)</button>
@@ -37,8 +40,6 @@
                 <div id="lado-oponente" class="lado oponente"></div>
                 <div id="lado-jogador" class="lado jogador"></div>
             </div>
-
-            <div id="resultado" class="resultado" hidden></div>
 
             <div id="acoes" class="acoes-batalha" hidden>
                 <h2>Golpes</h2>

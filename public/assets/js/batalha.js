@@ -13,6 +13,7 @@ class TelaBatalha {
 
     #api;
     #ocupado = false; // evita mandar duas ações ao mesmo tempo
+    #ultimoItem = null; // último item usado: já vem selecionado na próxima vez
     #necessarias = 10; // vitórias para o próximo líder (vem do servidor: GinasioRepository)
 
     constructor(api) {
@@ -22,11 +23,14 @@ class TelaBatalha {
         document.getElementById('btn-fugir').addEventListener('click', () => {
             if (confirm('Fugir conta como derrota. Tem certeza?')) this.#enviar('/api/batalha/fugir');
         });
-        document.getElementById('btn-usar').addEventListener('click', () => this.#acao({
-            tipo: 'item',
-            id: Number(document.getElementById('item').value),
-            alvo_id: Number(document.getElementById('alvo').value),
-        }));
+        document.getElementById('btn-usar').addEventListener('click', () => {
+            this.#ultimoItem = Number(document.getElementById('item').value);
+            this.#acao({
+                tipo: 'item',
+                id: this.#ultimoItem,
+                alvo_id: Number(document.getElementById('alvo').value),
+            });
+        });
     }
 
     async iniciar() {
@@ -69,7 +73,9 @@ class TelaBatalha {
 
     #desenhar(r) {
         const b = r.batalha;
-        document.getElementById('inicio').hidden = b !== null;
+        // o bloco de início (nova batalha, Centro Pokémon, ginásio) aparece
+        // antes de começar E depois que a batalha termina
+        document.getElementById('inicio').hidden = b !== null && !b.encerrada;
         document.getElementById('campo').hidden = b === null;
         document.getElementById('acoes').hidden = b === null || b.encerrada;
         this.#desenharHistorico(r.historico);
@@ -95,7 +101,7 @@ class TelaBatalha {
         this.#desenharResultado(b);
         if (!b.encerrada) {
             this.#desenharGolpes(b.golpes);
-            this.#desenharMochila(r.mochila, b.jogador.pokemons);
+            this.#desenharMochila(r.mochila, b.jogador.pokemons, meu);
             this.#desenharReservas(b.jogador);
         }
     }
@@ -136,7 +142,11 @@ class TelaBatalha {
         });
     }
 
-    #desenharMochila(mochila, pokemons) {
+    /**
+     * Já deixa selecionados o Pokémon que está lutando e o último item usado
+     * (se ainda tiver na mochila), para não precisar escolher toda vez.
+     */
+    #desenharMochila(mochila, pokemons, ativo) {
         const item = document.getElementById('item');
         const alvo = document.getElementById('alvo');
         item.innerHTML = mochila.length
@@ -145,7 +155,10 @@ class TelaBatalha {
         alvo.innerHTML = pokemons
             .map(p => `<option value="${p.id}">${esc(p.nome)} (${p.hp_atual}/${p.hp_max})</option>`)
             .join('');
-        alvo.value = pokemons.find(p => !p.desmaiado)?.id ?? '';
+        alvo.value = ativo.id;
+        if (mochila.some(i => Number(i.item_id) === this.#ultimoItem)) {
+            item.value = this.#ultimoItem;
+        }
         document.getElementById('btn-usar').disabled = mochila.length === 0;
     }
 
@@ -188,13 +201,7 @@ class TelaBatalha {
         alvo.className = 'resultado ' + (venceu ? 'vitoria' : 'derrota');
         alvo.innerHTML = `
             <span>${texto}</span>
-            <span>Seus Pokémon saem com o HP que sobrou: cure de graça no Centro Pokémon antes da próxima.</span>
-            <span>
-                <button type="button" class="nova">Nova batalha</button>
-                <button type="button" class="sec centro">Centro Pokémon (grátis)</button>
-            </span>`;
-        alvo.querySelector('.nova').addEventListener('click', () => this.#enviar('/api/batalha/iniciar'));
-        alvo.querySelector('.centro').addEventListener('click', () => this.#centroPokemon());
+            <span>Seus Pokémon saem com o HP que sobrou: cure de graça no Centro Pokémon antes da próxima.</span>`;
     }
 
     /** Insígnias, vitórias até o próximo líder e o botão de desafiar. */
