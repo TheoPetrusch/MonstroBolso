@@ -12,7 +12,7 @@ use InvalidArgumentException;
 class Pokemon
 {
     /** Chance de nascer shiny: 1 em CHANCE_SHINY. */
-    public const CHANCE_SHINY = 32;
+    public const CHANCE_SHINY = 2;
 
     private int $hpAtual;
 
