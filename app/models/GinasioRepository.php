@@ -51,7 +51,10 @@ class GinasioRepository
     private function liderDaOrdem(int $ordem): ?Lider
     {
         $st = $this->pdo->prepare(
-            'SELECT l.*, t.nome AS tipo FROM lideres l JOIN tipos t ON t.id = l.tipo_id WHERE l.ordem = :o'
+            'SELECT l.*, t.nome AS tipo,
+                    (SELECT COUNT(*) FROM lider_pokemons lp WHERE lp.lider_id = l.id) AS quantidade
+               FROM lideres l JOIN tipos t ON t.id = l.tipo_id
+              WHERE l.ordem = :o'
         );
         $st->execute(['o' => $ordem]);
         $linha = $st->fetch();

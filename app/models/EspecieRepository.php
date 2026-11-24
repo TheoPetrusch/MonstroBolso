@@ -76,29 +76,34 @@ class EspecieRepository
      * mesma chance (vale 0 no ORDER BY e o RAND() desempata); se não houver
      * espécies suficientes nessa faixa, completa com as mais próximas.
      * O CAST para SIGNED evita erro do MySQL ao subtrair números UNSIGNED.
-     * $tipo (opcional, líder especialista): ENTRE as espécies de força parecida,
-     * as desse tipo vêm primeiro. A força vem antes do tipo, para o líder
-     * nunca ficar forte demais só por causa do tipo.
      * @return Especie[]
      */
-    public function sortearParecidas(int $quantidade, int $forca, int $folga, ?string $tipo = null): array
+    public function sortearParecidas(int $quantidade, int $forca, int $folga): array
     {
-        $params = ['forca' => $forca, 'folga' => $folga];
-        $depoisOTipo = '';
-        if ($tipo !== null) {
-            $depoisOTipo = '(t.nome = :tipo) DESC, ';
-            $params['tipo'] = $tipo;
-        }
-
         $st = $this->pdo->prepare(
             self::SELECT . '
              ORDER BY GREATEST(
                         ABS(CAST(e.hp + e.ataque + e.defesa + e.sp_atk + e.sp_def + e.velocidade AS SIGNED) - :forca)
                         - :folga, 0),
-                      ' . $depoisOTipo . 'RAND()
+                      RAND()
              LIMIT ' . (int) $quantidade
         );
-        $st->execute($params);
+        $st->execute(['forca' => $forca, 'folga' => $folga]);
+        return array_map([Especie::class, 'fromRow'], $st->fetchAll());
+    }
+
+    /** Time FIXO de um líder de ginásio (tabela lider_pokemons), na ordem de entrada. @return Especie[] */
+    public function doLider(int $liderId): array
+    {
+        $st = $this->pdo->prepare(
+            'SELECT e.*, t.nome AS tipo
+               FROM lider_pokemons lp
+               JOIN especies e ON e.id = lp.especie_id
+               JOIN tipos t ON t.id = e.tipo_id
+              WHERE lp.lider_id = :l
+              ORDER BY lp.posicao'
+        );
+        $st->execute(['l' => $liderId]);
         return array_map([Especie::class, 'fromRow'], $st->fetchAll());
     }
 
