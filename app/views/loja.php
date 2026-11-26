@@ -1,3 +1,9 @@
+<?php
+/**
+ * VIEW do Poké Mart: mochila e itens à venda são preenchidos pelo loja.js.
+ * $base = caminho do site (ex.: /MonstroBolso/public), usado nos links.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -6,7 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Poké Mart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/mart.css">
@@ -41,6 +48,7 @@
 
     <p id="mensagem" role="alert" class="toast"></p>
 
+    <!-- passa o caminho do site para o JavaScript (o ApiClient usa nas URLs) -->
     <script>
         window.BASE = <?= json_encode($base) ?>;
     </script>

@@ -22,6 +22,7 @@ class Time
         }
     }
 
+    /** Regra dos 6 Pokémon: o 7º lança a exceção customizada TimeCheioException. */
     public function adicionar(Pokemon $p): void
     {
         if ($this->estaCheio()) {
@@ -55,7 +56,7 @@ class Time
     public function paraArray(): array
     {
         return [
-            'maximo'   => self::MAXIMO,
+            'maximo' => self::MAXIMO,
             'pokemons' => array_map(fn(Pokemon $p) => $p->paraArray(), $this->pokemons),
         ];
     }

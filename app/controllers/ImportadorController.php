@@ -12,7 +12,8 @@ class ImportadorController extends BaseController
 {
     public function importar(): void
     {
-        if ($this->exigirLoginApi() === null) return;
+        if ($this->exigirLoginApi() === null)
+            return;
 
         $geracao = (int) ($this->corpoJson()['geracao'] ?? 0);
         if (!isset(ImportadorPokemon::GERACOES[$geracao])) {

@@ -16,6 +16,11 @@ class Pokemon
 
     private int $hpAtual;
 
+    /**
+     * PROMOÇÃO DE PROPRIEDADES (PHP 8): "private ?int $id" no construtor já
+     * cria o atributo e guarda o valor. O hpAtual fica de fora porque passa
+     * pelo setter (que valida e controla o desmaio).
+     */
     public function __construct(
         private ?int $id,
         private int $usuarioId,
@@ -35,7 +40,7 @@ class Pokemon
     /**
      * Regra de negócio: um Pokémon novo nasce no nível 5,
      * com HP máximo e atual iguais ao HP base da espécie,
-     * e tem 1 chance em 64 de ser shiny (cor rara; continua shiny ao evoluir).
+     * e tem 1 chance em CHANCE_SHINY de ser shiny (cor rara; continua shiny ao evoluir).
      */
     public static function novoDaEspecie(int $usuarioId, Especie $especie): self
     {
@@ -56,7 +61,7 @@ class Pokemon
     {
         // a view usa "especie_id" e "especie"; a Especie espera "id" e "nome"
         $especie = Especie::fromRow(array_merge($r, [
-            'id'   => $r['especie_id'],
+            'id' => $r['especie_id'],
             'nome' => $r['especie'],
         ]));
 
@@ -129,7 +134,7 @@ class Pokemon
         }
         $ganho = max(0, $nova->getHp() - $this->hpMax);
         $this->especie = $nova;
-        $this->hpMax   = $nova->getHp();
+        $this->hpMax = $nova->getHp();
         $this->setHpAtual($this->hpAtual + $ganho);
     }
 
@@ -219,19 +224,20 @@ class Pokemon
         $this->desmaiado = $this->hpAtual === 0;
     }
 
+    /** Para o JSON do Team Builder e da batalha (inclui a espécie inteira). */
     public function paraArray(): array
     {
         return [
-            'id'        => $this->id,
-            'nome'      => $this->getNomeExibicao(),
-            'posicao'   => $this->posicao,
-            'nivel'     => $this->nivel,
-            'hp_atual'  => $this->hpAtual,
-            'hp_max'    => $this->hpMax,
-            'status'    => $this->status,
+            'id' => $this->id,
+            'nome' => $this->getNomeExibicao(),
+            'posicao' => $this->posicao,
+            'nivel' => $this->nivel,
+            'hp_atual' => $this->hpAtual,
+            'hp_max' => $this->hpMax,
+            'status' => $this->status,
             'desmaiado' => $this->desmaiado,
-            'shiny'     => $this->shiny,
-            'especie'   => $this->especie->paraArray(),
+            'shiny' => $this->shiny,
+            'especie' => $this->especie->paraArray(),
         ];
     }
 }

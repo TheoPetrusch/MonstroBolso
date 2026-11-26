@@ -4,14 +4,25 @@ namespace App\Core;
 
 use PDO;
 
+/**
+ * Conexão com o MySQL via PDO (padrão SINGLETON).
+ * Só existe UMA conexão por requisição: a primeira chamada a getConnection()
+ * cria o PDO, as próximas devolvem o mesmo objeto. Todos os Repository usam ela.
+ */
 class Database
 {
+    /** A única conexão (static = pertence à classe, não a um objeto). */
     private static ?PDO $instance = null;
-    private function __construct() {}
+
+    /** Construtor privado: ninguém faz "new Database()", só getConnection(). */
+    private function __construct()
+    {
+    }
 
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
+            // dados do banco: do arquivo .env (se existir) ou o padrão do XAMPP
             $env = self::loadEnv();
 
             $dsn = sprintf(
@@ -21,15 +32,19 @@ class Database
             );
 
             self::$instance = new PDO($dsn, $env['DB_USER'] ?? 'root', $env['DB_PASS'] ?? '', [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                    // erro de SQL vira PDOException (dá para usar try/catch)
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    // fetch() devolve array com o nome das colunas: $linha['nome']
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
+                    // prepared statements de verdade no MySQL (proteção contra SQL Injection)
+                PDO::ATTR_EMULATE_PREPARES => false,
             ]);
         }
 
         return self::$instance;
     }
 
+    /** Lê o .env da raiz do projeto (DB_HOST=..., DB_USER=...) como array. */
     private static function loadEnv(): array
     {
         $arquivo = dirname(__DIR__, 2) . '/.env';

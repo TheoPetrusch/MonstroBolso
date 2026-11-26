@@ -21,6 +21,9 @@ DROP TRIGGER IF EXISTS trg_usuarios_log_perfil;
 DROP TRIGGER IF EXISTS trg_log_loja_valida;
 DROP TRIGGER IF EXISTS trg_time_pokemon_dono;
 DROP TRIGGER IF EXISTS trg_pokemons_desbloqueia;
+DROP TRIGGER IF EXISTS trg_pokemons_shiny_insert;
+DROP TRIGGER IF EXISTS trg_pokemons_shiny_update;
+DROP TRIGGER IF EXISTS trg_batalhas_lendario;
 DROP PROCEDURE IF EXISTS sp_comprar_item;
 
 DELIMITER $$
@@ -115,6 +118,54 @@ BEGIN
     IF NEW.especie_id <> OLD.especie_id THEN
         INSERT IGNORE INTO especies_desbloqueadas (usuario_id, especie_id)
         VALUES (NEW.usuario_id, NEW.especie_id);
+    END IF;
+END$$
+
+-- 8) AFTER INSERT em pokemons: nasceu shiny? A espécie fica com o shiny
+--    desbloqueado para sempre (tabela shinies_desbloqueados).
+CREATE TRIGGER trg_pokemons_shiny_insert
+AFTER INSERT ON pokemons
+FOR EACH ROW
+BEGIN
+    IF NEW.shiny = 1 THEN
+        INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
+        VALUES (NEW.usuario_id, NEW.especie_id);
+    END IF;
+END$$
+
+-- 9) AFTER UPDATE em pokemons: um shiny que evoluiu desbloqueia o shiny
+--    da nova espécie também.
+CREATE TRIGGER trg_pokemons_shiny_update
+AFTER UPDATE ON pokemons
+FOR EACH ROW
+BEGIN
+    IF NEW.shiny = 1 THEN
+        INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
+        VALUES (NEW.usuario_id, NEW.especie_id);
+    END IF;
+END$$
+
+-- 10) AFTER INSERT em batalhas: venceu a batalha lendária? A BASE da linha
+--     do lendário fica desbloqueada: venceu o Urshifu, ganha o Kubfu (e evolui
+--     com pedra no Team Builder); lendário sem evolução (Mewtwo) é ele mesmo.
+CREATE TRIGGER trg_batalhas_lendario
+AFTER INSERT ON batalhas
+FOR EACH ROW
+BEGIN
+    DECLARE v_base INT UNSIGNED;
+    DECLARE v_pai  INT UNSIGNED;
+
+    IF NEW.lendario_id IS NOT NULL AND NEW.vencedor = 'jogador' THEN
+        -- sobe pela linha evolutiva até a base (Urshifu -> Kubfu)
+        SET v_base = NEW.lendario_id;
+        SET v_pai  = (SELECT evolui_de_id FROM especies WHERE id = v_base);
+        WHILE v_pai IS NOT NULL DO
+            SET v_base = v_pai;
+            SET v_pai  = (SELECT evolui_de_id FROM especies WHERE id = v_base);
+        END WHILE;
+
+        INSERT IGNORE INTO especies_desbloqueadas (usuario_id, especie_id)
+        VALUES (NEW.usuario_id, v_base);
     END IF;
 END$$
 

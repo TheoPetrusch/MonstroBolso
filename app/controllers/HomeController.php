@@ -15,10 +15,11 @@ class HomeController extends BaseController
         $this->repo = new UsuarioRepository();
     }
 
+    /** GET /home: menu com Team Builder, Batalha, Poké Mart e a importação de gerações. */
     public function pagina(): void
     {
         $id = $this->usuarioIdLogado();
-        $u  = $id !== null ? $this->repo->buscarPorId($id) : null;
+        $u = $id !== null ? $this->repo->buscarPorId($id) : null;
 
         if (!$u) {
             // sessão aponta para um usuário que não existe mais (ex.: o banco

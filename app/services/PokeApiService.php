@@ -16,11 +16,24 @@ class PokeApiService
 
     /** Nomes dos tipos da PokéAPI em português (iguais aos da tabela "tipos"). */
     public const TIPOS = [
-        'normal' => 'Normal', 'fighting' => 'Lutador', 'flying' => 'Voador', 'poison' => 'Venenoso',
-        'ground' => 'Terra', 'rock' => 'Pedra', 'bug' => 'Inseto', 'ghost' => 'Fantasma',
-        'steel' => 'Aço', 'fire' => 'Fogo', 'water' => 'Água', 'grass' => 'Planta',
-        'electric' => 'Elétrico', 'psychic' => 'Psíquico', 'ice' => 'Gelo', 'dragon' => 'Dragão',
-        'dark' => 'Sombrio', 'fairy' => 'Fada',
+        'normal' => 'Normal',
+        'fighting' => 'Lutador',
+        'flying' => 'Voador',
+        'poison' => 'Venenoso',
+        'ground' => 'Terra',
+        'rock' => 'Pedra',
+        'bug' => 'Inseto',
+        'ghost' => 'Fantasma',
+        'steel' => 'Aço',
+        'fire' => 'Fogo',
+        'water' => 'Água',
+        'grass' => 'Planta',
+        'electric' => 'Elétrico',
+        'psychic' => 'Psíquico',
+        'ice' => 'Gelo',
+        'dragon' => 'Dragão',
+        'dark' => 'Sombrio',
+        'fairy' => 'Fada',
     ];
 
     /** Busca um caminho da API (ex.: "pokemon/25") e devolve o JSON como array. */
@@ -30,7 +43,7 @@ class PokeApiService
         $contexto = stream_context_create([
             'http' => [
                 'timeout' => self::TIMEOUT,
-                'header'  => "User-Agent: MonstroBolso (trabalho escolar)\r\n",
+                'header' => "User-Agent: MonstroBolso (trabalho escolar)\r\n",
             ],
         ]);
 

@@ -147,7 +147,9 @@ CREATE TABLE `especies` (
   `evolui_para_id` int(10) UNSIGNED DEFAULT NULL,
   `item_evolucao_id` int(10) UNSIGNED DEFAULT NULL,
   `evolui_de_id` int(10) UNSIGNED DEFAULT NULL,
-  `evolui_de_pokeapi_id` int(10) UNSIGNED DEFAULT NULL
+  `evolui_de_pokeapi_id` int(10) UNSIGNED DEFAULT NULL,
+  `ignora_pre_evolucao` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = a pré-evolução é bebê de geração futura (Pikachu <- Pichu): conta como básica',
+  `lendario` tinyint(1) NOT NULL DEFAULT 0 COMMENT '1 = lendário, mítico, paradoxo lendário ou Ultra Beast: bloqueado até vencer a batalha lendária'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -894,6 +896,7 @@ CREATE TABLE `vw_time_completo` (
 ,`pokeapi_id` int(10) unsigned
 ,`especie` varchar(40)
 ,`evolui_de_id` int(10) unsigned
+,`ignora_pre_evolucao` tinyint(1)
 ,`tipo` varchar(20)
 ,`hp` smallint(5) unsigned
 ,`ataque` smallint(5) unsigned
@@ -1159,7 +1162,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_time_completo`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_time_completo`  AS SELECT `t`.`usuario_id` AS `usuario_id`, `tp`.`posicao` AS `posicao`, `p`.`id` AS `pokemon_id`, `p`.`apelido` AS `apelido`, coalesce(`p`.`apelido`,`e`.`nome`) AS `nome_exibicao`, `p`.`nivel` AS `nivel`, `p`.`hp_atual` AS `hp_atual`, `p`.`hp_max` AS `hp_max`, `p`.`status` AS `status`, `p`.`desmaiado` AS `desmaiado`, `p`.`shiny` AS `shiny`, `e`.`id` AS `especie_id`, `e`.`pokeapi_id` AS `pokeapi_id`, `e`.`nome` AS `especie`, `e`.`evolui_de_id` AS `evolui_de_id`, `ti`.`nome` AS `tipo`, `e`.`hp` AS `hp`, `e`.`ataque` AS `ataque`, `e`.`defesa` AS `defesa`, `e`.`sp_atk` AS `sp_atk`, `e`.`sp_def` AS `sp_def`, `e`.`velocidade` AS `velocidade`, `e`.`sprite_url` AS `sprite_url` FROM ((((`time_pokemon` `tp` join `times` `t` on(`t`.`id` = `tp`.`time_id`)) join `pokemons` `p` on(`p`.`id` = `tp`.`pokemon_id`)) join `especies` `e` on(`e`.`id` = `p`.`especie_id`)) join `tipos` `ti` on(`ti`.`id` = `e`.`tipo_id`)) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_time_completo`  AS SELECT `t`.`usuario_id` AS `usuario_id`, `tp`.`posicao` AS `posicao`, `p`.`id` AS `pokemon_id`, `p`.`apelido` AS `apelido`, coalesce(`p`.`apelido`,`e`.`nome`) AS `nome_exibicao`, `p`.`nivel` AS `nivel`, `p`.`hp_atual` AS `hp_atual`, `p`.`hp_max` AS `hp_max`, `p`.`status` AS `status`, `p`.`desmaiado` AS `desmaiado`, `p`.`shiny` AS `shiny`, `e`.`id` AS `especie_id`, `e`.`pokeapi_id` AS `pokeapi_id`, `e`.`nome` AS `especie`, `e`.`evolui_de_id` AS `evolui_de_id`, `e`.`ignora_pre_evolucao` AS `ignora_pre_evolucao`, `ti`.`nome` AS `tipo`, `e`.`hp` AS `hp`, `e`.`ataque` AS `ataque`, `e`.`defesa` AS `defesa`, `e`.`sp_atk` AS `sp_atk`, `e`.`sp_def` AS `sp_def`, `e`.`velocidade` AS `velocidade`, `e`.`sprite_url` AS `sprite_url` FROM ((((`time_pokemon` `tp` join `times` `t` on(`t`.`id` = `tp`.`time_id`)) join `pokemons` `p` on(`p`.`id` = `tp`.`pokemon_id`)) join `especies` `e` on(`e`.`id` = `p`.`especie_id`)) join `tipos` `ti` on(`ti`.`id` = `e`.`tipo_id`)) ;
 
 --
 -- Restrições para tabelas despejadas
@@ -1300,57 +1303,77 @@ FROM (
 JOIN `tipos` t ON t.nome = l.tipo
 WHERE NOT EXISTS (SELECT 1 FROM `lideres` x WHERE x.ordem = l.ordem);
 
--- DML: espécies dos times dos líderes + a linha evolutiva inteira delas
--- (INSERT IGNORE: se já foram importadas da PokéAPI, ficam como estão)
+-- DML: espécies dos times dos líderes + a linha evolutiva delas
+-- (Pokémon de várias gerações; INSERT IGNORE: se já foram importadas da
+-- PokéAPI, ficam como estão)
 INSERT IGNORE INTO `especies` (`pokeapi_id`, `nome`, `tipo_id`, `hp`, `ataque`, `defesa`, `sp_atk`, `sp_def`, `velocidade`, `sprite_url`, `evolui_de_pokeapi_id`)
 SELECT s.pid, s.nome, t.id, s.hp, s.atk, s.def, s.spa, s.spd, s.vel,
        CONCAT('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/', s.pid, '.png'), s.pai
 FROM (
-    SELECT 23 AS pid, 'Ekans' AS nome, 'Venenoso' AS tipo, 35 AS hp, 60 AS atk, 44 AS def, 40 AS spa, 54 AS spd, 55 AS vel, NULL AS pai
-    UNION ALL SELECT  24, 'Arbok'     , 'Venenoso' ,  60,  95,  69,  65,  79,  80, 23
-    UNION ALL SELECT  25, 'Pikachu'   , 'Elétrico' ,  35,  55,  40,  50,  50,  90, NULL
-    UNION ALL SELECT  26, 'Raichu'    , 'Elétrico' ,  60,  90,  55,  90,  80, 110, 25
-    UNION ALL SELECT  27, 'Sandshrew' , 'Terra'    ,  50,  75,  85,  20,  30,  40, NULL
-    UNION ALL SELECT  28, 'Sandslash' , 'Terra'    ,  75, 100, 110,  45,  55,  65, 27
-    UNION ALL SELECT  37, 'Vulpix'    , 'Fogo'     ,  38,  41,  40,  50,  65,  65, NULL
-    UNION ALL SELECT  38, 'Ninetales' , 'Fogo'     ,  73,  76,  75,  81, 100, 100, 37
-    UNION ALL SELECT  43, 'Oddish'    , 'Planta'   ,  45,  50,  55,  75,  65,  30, NULL
-    UNION ALL SELECT  44, 'Gloom'     , 'Planta'   ,  60,  65,  70,  85,  75,  40, 43
-    UNION ALL SELECT  45, 'Vileplume' , 'Planta'   ,  75,  80,  85, 110,  90,  50, 44
-    UNION ALL SELECT  50, 'Diglett'   , 'Terra'    ,  10,  55,  25,  35,  45,  95, NULL
-    UNION ALL SELECT  51, 'Dugtrio'   , 'Terra'    ,  35, 100,  50,  50,  70, 120, 50
-    UNION ALL SELECT  54, 'Psyduck'   , 'Água'     ,  50,  52,  48,  65,  50,  55, NULL
-    UNION ALL SELECT  55, 'Golduck'   , 'Água'     ,  80,  82,  78,  95,  80,  85, 54
-    UNION ALL SELECT  58, 'Growlithe' , 'Fogo'     ,  55,  70,  45,  70,  50,  60, NULL
-    UNION ALL SELECT  59, 'Arcanine'  , 'Fogo'     ,  90, 110,  80, 100,  80,  95, 58
-    UNION ALL SELECT  63, 'Abra'      , 'Psíquico' ,  25,  20,  15, 105,  55,  90, NULL
-    UNION ALL SELECT  64, 'Kadabra'   , 'Psíquico' ,  40,  35,  30, 120,  70, 105, 63
-    UNION ALL SELECT  65, 'Alakazam'  , 'Psíquico' ,  55,  50,  45, 135,  95, 120, 64
-    UNION ALL SELECT  69, 'Bellsprout', 'Planta'   ,  50,  75,  35,  70,  30,  40, NULL
-    UNION ALL SELECT  70, 'Weepinbell', 'Planta'   ,  65,  90,  50,  85,  45,  55, 69
-    UNION ALL SELECT  71, 'Victreebel', 'Planta'   ,  80, 105,  65, 100,  70,  70, 70
-    UNION ALL SELECT  74, 'Geodude'   , 'Pedra'    ,  40,  80, 100,  30,  30,  20, NULL
-    UNION ALL SELECT  75, 'Graveler'  , 'Pedra'    ,  55,  95, 115,  45,  45,  35, 74
-    UNION ALL SELECT  76, 'Golem'     , 'Pedra'    ,  80, 120, 130,  55,  65,  45, 75
-    UNION ALL SELECT  77, 'Ponyta'    , 'Fogo'     ,  50,  85,  55,  65,  65,  90, NULL
-    UNION ALL SELECT  78, 'Rapidash'  , 'Fogo'     ,  65, 100,  70,  80,  80, 105, 77
-    UNION ALL SELECT  88, 'Grimer'    , 'Venenoso' ,  80,  80,  50,  40,  50,  25, NULL
-    UNION ALL SELECT  89, 'Muk'       , 'Venenoso' , 105, 105,  75,  65, 100,  50, 88
-    UNION ALL SELECT  95, 'Onix'      , 'Pedra'    ,  35,  45, 160,  30,  45,  70, NULL
-    UNION ALL SELECT  96, 'Drowzee'   , 'Psíquico' ,  60,  48,  45,  43,  90,  42, NULL
-    UNION ALL SELECT  97, 'Hypno'     , 'Psíquico' ,  85,  73,  70,  73, 115,  67, 96
-    UNION ALL SELECT 100, 'Voltorb'   , 'Elétrico' ,  40,  30,  50,  55,  55, 100, NULL
-    UNION ALL SELECT 101, 'Electrode' , 'Elétrico' ,  60,  50,  70,  80,  80, 150, 100
-    UNION ALL SELECT 104, 'Cubone'    , 'Terra'    ,  50,  50,  95,  40,  50,  35, NULL
-    UNION ALL SELECT 105, 'Marowak'   , 'Terra'    ,  60,  80, 110,  50,  80,  45, 104
-    UNION ALL SELECT 109, 'Koffing'   , 'Venenoso' ,  40,  65,  95,  60,  45,  35, NULL
-    UNION ALL SELECT 110, 'Weezing'   , 'Venenoso' ,  65,  90, 120,  85,  70,  60, 109
-    UNION ALL SELECT 111, 'Rhyhorn'   , 'Terra'    ,  80,  85,  95,  30,  30,  25, NULL
-    UNION ALL SELECT 112, 'Rhydon'    , 'Terra'    , 105, 130, 120,  45,  45,  40, 111
-    UNION ALL SELECT 114, 'Tangela'   , 'Planta'   ,  65,  55, 115, 100,  40,  60, NULL
-    UNION ALL SELECT 120, 'Staryu'    , 'Água'     ,  30,  45,  55,  70,  55,  85, NULL
-    UNION ALL SELECT 121, 'Starmie'   , 'Água'     ,  60,  75,  85, 100,  85, 115, 120
-    UNION ALL SELECT 122, 'Mr. Mime'  , 'Psíquico' ,  40,  45,  65, 100, 120,  90, NULL
+    SELECT 43 AS pid, 'Oddish' AS nome, 'Planta' AS tipo, 45 AS hp, 50 AS atk, 55 AS def, 75 AS spa, 65 AS spd, 30 AS vel, NULL AS pai
+    UNION ALL SELECT   44, 'Gloom'     , 'Planta'   ,  60,  65,  70,  85,  75,  40, 43
+    UNION ALL SELECT   45, 'Vileplume' , 'Planta'   ,  75,  80,  85, 110,  90,  50, 44
+    UNION ALL SELECT   50, 'Diglett'   , 'Terra'    ,  10,  55,  25,  35,  45,  95, NULL
+    UNION ALL SELECT   51, 'Dugtrio'   , 'Terra'    ,  35, 100,  50,  50,  70, 120, 50
+    UNION ALL SELECT   58, 'Growlithe' , 'Fogo'     ,  55,  70,  45,  70,  50,  60, NULL
+    UNION ALL SELECT   59, 'Arcanine'  , 'Fogo'     ,  90, 110,  80, 100,  80,  95, 58
+    UNION ALL SELECT   63, 'Abra'      , 'Psíquico' ,  25,  20,  15, 105,  55,  90, NULL
+    UNION ALL SELECT   64, 'Kadabra'   , 'Psíquico' ,  40,  35,  30, 120,  70, 105, 63
+    UNION ALL SELECT   65, 'Alakazam'  , 'Psíquico' ,  55,  50,  45, 135,  95, 120, 64
+    UNION ALL SELECT   81, 'Magnemite' , 'Elétrico' ,  25,  35,  70,  95,  55,  45, NULL
+    UNION ALL SELECT   82, 'Magneton'  , 'Elétrico' ,  50,  60,  95, 120,  70,  70, 81
+    UNION ALL SELECT   96, 'Drowzee'   , 'Psíquico' ,  60,  48,  45,  43,  90,  42, NULL
+    UNION ALL SELECT   97, 'Hypno'     , 'Psíquico' ,  85,  73,  70,  73, 115,  67, 96
+    UNION ALL SELECT  109, 'Koffing'   , 'Venenoso' ,  40,  65,  95,  60,  45,  35, NULL
+    UNION ALL SELECT  110, 'Weezing'   , 'Venenoso' ,  65,  90, 120,  85,  70,  60, 109
+    UNION ALL SELECT  111, 'Rhyhorn'   , 'Terra'    ,  80,  85,  95,  30,  30,  25, NULL
+    UNION ALL SELECT  112, 'Rhydon'    , 'Terra'    , 105, 130, 120,  45,  45,  40, 111
+    UNION ALL SELECT  114, 'Tangela'   , 'Planta'   ,  65,  55, 115, 100,  40,  60, NULL
+    UNION ALL SELECT  120, 'Staryu'    , 'Água'     ,  30,  45,  55,  70,  55,  85, NULL
+    UNION ALL SELECT  121, 'Starmie'   , 'Água'     ,  60,  75,  85, 100,  85, 115, 120
+    UNION ALL SELECT  177, 'Natu'      , 'Psíquico' ,  40,  50,  45,  70,  45,  70, NULL
+    UNION ALL SELECT  178, 'Xatu'      , 'Psíquico' ,  65,  75,  70,  95,  70,  95, 177
+    UNION ALL SELECT  179, 'Mareep'    , 'Elétrico' ,  55,  40,  40,  65,  45,  35, NULL
+    UNION ALL SELECT  180, 'Flaaffy'   , 'Elétrico' ,  70,  55,  55,  80,  60,  45, 179
+    UNION ALL SELECT  181, 'Ampharos'  , 'Elétrico' ,  90,  75,  85, 115,  90,  55, 180
+    UNION ALL SELECT  207, 'Gligar'    , 'Terra'    ,  65,  75, 105,  35,  65,  85, NULL
+    UNION ALL SELECT  252, 'Treecko'   , 'Planta'   ,  40,  45,  35,  65,  55,  70, NULL
+    UNION ALL SELECT  253, 'Grovyle'   , 'Planta'   ,  50,  65,  45,  85,  65,  95, 252
+    UNION ALL SELECT  254, 'Sceptile'  , 'Planta'   ,  70,  85,  65, 105,  85, 120, 253
+    UNION ALL SELECT  280, 'Ralts'     , 'Psíquico' ,  28,  25,  25,  45,  35,  40, NULL
+    UNION ALL SELECT  281, 'Kirlia'    , 'Psíquico' ,  38,  35,  35,  65,  55,  50, 280
+    UNION ALL SELECT  282, 'Gardevoir' , 'Psíquico' ,  68,  65,  65, 125, 115,  80, 281
+    UNION ALL SELECT  299, 'Nosepass'  , 'Pedra'    ,  30,  45, 135,  45,  90,  30, NULL
+    UNION ALL SELECT  324, 'Torkoal'   , 'Fogo'     ,  70,  85, 140,  85,  70,  20, NULL
+    UNION ALL SELECT  390, 'Chimchar'  , 'Fogo'     ,  44,  58,  44,  58,  44,  61, NULL
+    UNION ALL SELECT  391, 'Monferno'  , 'Fogo'     ,  64,  78,  52,  78,  52,  81, 390
+    UNION ALL SELECT  392, 'Infernape' , 'Fogo'     ,  76, 104,  71, 104,  71, 108, 391
+    UNION ALL SELECT  418, 'Buizel'    , 'Água'     ,  55,  65,  35,  60,  30,  85, NULL
+    UNION ALL SELECT  419, 'Floatzel'  , 'Água'     ,  85, 105,  55,  85,  50, 115, 418
+    UNION ALL SELECT  449, 'Hippopotas', 'Terra'    ,  68,  72,  78,  38,  42,  32, NULL
+    UNION ALL SELECT  450, 'Hippowdon' , 'Terra'    , 108, 112, 118,  68,  72,  47, 449
+    UNION ALL SELECT  451, 'Skorupi'   , 'Venenoso' ,  40,  50,  90,  30,  55,  65, NULL
+    UNION ALL SELECT  452, 'Drapion'   , 'Venenoso' ,  70,  90, 110,  60,  75,  95, 451
+    UNION ALL SELECT  453, 'Croagunk'  , 'Venenoso' ,  48,  61,  40,  61,  40,  50, NULL
+    UNION ALL SELECT  454, 'Toxicroak' , 'Venenoso' ,  83, 106,  65,  86,  65,  85, 453
+    UNION ALL SELECT  524, 'Roggenrola', 'Pedra'    ,  55,  75,  85,  25,  25,  15, NULL
+    UNION ALL SELECT  525, 'Boldore'   , 'Pedra'    ,  70, 105, 105,  50,  40,  20, 524
+    UNION ALL SELECT  526, 'Gigalith'  , 'Pedra'    ,  85, 135, 130,  60,  80,  25, 525
+    UNION ALL SELECT  529, 'Drilbur'   , 'Terra'    ,  60,  85,  40,  30,  45,  68, NULL
+    UNION ALL SELECT  530, 'Excadrill' , 'Terra'    , 110, 135,  60,  50,  65,  88, 529
+    UNION ALL SELECT  548, 'Petilil'   , 'Planta'   ,  45,  35,  50,  70,  50,  30, NULL
+    UNION ALL SELECT  549, 'Lilligant' , 'Planta'   ,  70,  60,  75, 110,  75,  90, 548
+    UNION ALL SELECT  568, 'Trubbish'  , 'Venenoso' ,  50,  50,  62,  40,  62,  65, NULL
+    UNION ALL SELECT  569, 'Garbodor'  , 'Venenoso' ,  80,  95,  82,  60,  82,  75, 568
+    UNION ALL SELECT  656, 'Froakie'   , 'Água'     ,  41,  56,  40,  62,  44,  71, NULL
+    UNION ALL SELECT  657, 'Frogadier' , 'Água'     ,  54,  63,  52,  83,  56,  97, 656
+    UNION ALL SELECT  658, 'Greninja'  , 'Água'     ,  72,  95,  67, 103,  71, 122, 657
+    UNION ALL SELECT  667, 'Litleo'    , 'Fogo'     ,  62,  50,  58,  73,  54,  72, NULL
+    UNION ALL SELECT  668, 'Pyroar'    , 'Fogo'     ,  86,  68,  72, 109,  66, 106, 667
+    UNION ALL SELECT  677, 'Espurr'    , 'Psíquico' ,  62,  48,  54,  63,  60,  68, NULL
+    UNION ALL SELECT  678, 'Meowstic'  , 'Psíquico' ,  74,  48,  76,  83,  81, 104, 677
+    UNION ALL SELECT  749, 'Mudbray'   , 'Terra'    ,  70, 100,  70,  45,  55,  45, NULL
+    UNION ALL SELECT  750, 'Mudsdale'  , 'Terra'    , 100, 125, 100,  55,  85,  35, 749
 ) s
 JOIN `tipos` t ON t.nome = s.tipo;
 
@@ -1365,154 +1388,62 @@ UPDATE `especies` filho
 INSERT INTO `especie_golpes` (`especie_id`, `golpe_id`)
 SELECT e.id, g.id
 FROM (
-    SELECT 23 AS pid, 'Poison Fang' AS golpe
-    UNION ALL SELECT  23, 'Tackle'
-    UNION ALL SELECT  23, 'Bite'
-    UNION ALL SELECT  23, 'Quick Attack'
-    UNION ALL SELECT  24, 'Poison Fang'
-    UNION ALL SELECT  24, 'Poison Jab'
-    UNION ALL SELECT  24, 'Crunch'
-    UNION ALL SELECT  24, 'Body Slam'
-    UNION ALL SELECT  25, 'Spark'
-    UNION ALL SELECT  25, 'Quick Attack'
-    UNION ALL SELECT  25, 'Metal Claw'
-    UNION ALL SELECT  25, 'Tackle'
-    UNION ALL SELECT  26, 'Spark'
-    UNION ALL SELECT  26, 'Thunder Punch'
-    UNION ALL SELECT  26, 'Iron Head'
-    UNION ALL SELECT  26, 'Body Slam'
-    UNION ALL SELECT  27, 'Bone Club'
-    UNION ALL SELECT  27, 'Tackle'
-    UNION ALL SELECT  27, 'Rock Throw'
-    UNION ALL SELECT  27, 'Quick Attack'
-    UNION ALL SELECT  28, 'Bone Club'
-    UNION ALL SELECT  28, 'Earthquake'
-    UNION ALL SELECT  28, 'Rock Slide'
-    UNION ALL SELECT  28, 'Body Slam'
-    UNION ALL SELECT  37, 'Ember'
-    UNION ALL SELECT  37, 'Quick Attack'
-    UNION ALL SELECT  37, 'Mud Shot'
-    UNION ALL SELECT  37, 'Tackle'
-    UNION ALL SELECT  38, 'Ember'
-    UNION ALL SELECT  38, 'Flamethrower'
-    UNION ALL SELECT  38, 'Earth Power'
-    UNION ALL SELECT  38, 'Hyper Voice'
-    UNION ALL SELECT  43, 'Mega Drain'
-    UNION ALL SELECT  43, 'Tackle'
-    UNION ALL SELECT  43, 'Acid'
-    UNION ALL SELECT  43, 'Quick Attack'
-    UNION ALL SELECT  44, 'Mega Drain'
-    UNION ALL SELECT  44, 'Energy Ball'
-    UNION ALL SELECT  44, 'Sludge Bomb'
-    UNION ALL SELECT  44, 'Hyper Voice'
-    UNION ALL SELECT  45, 'Mega Drain'
-    UNION ALL SELECT  45, 'Energy Ball'
-    UNION ALL SELECT  45, 'Sludge Bomb'
-    UNION ALL SELECT  45, 'Hyper Voice'
-    UNION ALL SELECT  50, 'Bone Club'
-    UNION ALL SELECT  50, 'Quick Attack'
-    UNION ALL SELECT  50, 'Rock Throw'
-    UNION ALL SELECT  50, 'Tackle'
-    UNION ALL SELECT  51, 'Bone Club'
-    UNION ALL SELECT  51, 'Earthquake'
-    UNION ALL SELECT  51, 'Rock Slide'
-    UNION ALL SELECT  51, 'Body Slam'
-    UNION ALL SELECT  54, 'Water Gun'
-    UNION ALL SELECT  54, 'Tackle'
-    UNION ALL SELECT  54, 'Powder Snow'
-    UNION ALL SELECT  54, 'Quick Attack'
-    UNION ALL SELECT  55, 'Water Gun'
-    UNION ALL SELECT  55, 'Surf'
-    UNION ALL SELECT  55, 'Ice Beam'
-    UNION ALL SELECT  55, 'Hyper Voice'
-    UNION ALL SELECT  58, 'Fire Fang'
-    UNION ALL SELECT  58, 'Quick Attack'
-    UNION ALL SELECT  58, 'Bone Club'
-    UNION ALL SELECT  58, 'Tackle'
-    UNION ALL SELECT  59, 'Fire Fang'
-    UNION ALL SELECT  59, 'Fire Punch'
-    UNION ALL SELECT  59, 'Earthquake'
-    UNION ALL SELECT  59, 'Body Slam'
-    UNION ALL SELECT  63, 'Confusion'
-    UNION ALL SELECT  63, 'Quick Attack'
-    UNION ALL SELECT  63, 'Fairy Wind'
-    UNION ALL SELECT  63, 'Tackle'
-    UNION ALL SELECT  64, 'Confusion'
-    UNION ALL SELECT  64, 'Psychic'
-    UNION ALL SELECT  64, 'Moonblast'
-    UNION ALL SELECT  64, 'Hyper Voice'
-    UNION ALL SELECT  65, 'Confusion'
-    UNION ALL SELECT  65, 'Psychic'
-    UNION ALL SELECT  65, 'Moonblast'
-    UNION ALL SELECT  65, 'Hyper Voice'
-    UNION ALL SELECT  69, 'Vine Whip'
-    UNION ALL SELECT  69, 'Tackle'
-    UNION ALL SELECT  69, 'Poison Fang'
-    UNION ALL SELECT  69, 'Quick Attack'
-    UNION ALL SELECT  70, 'Vine Whip'
-    UNION ALL SELECT  70, 'Razor Leaf'
-    UNION ALL SELECT  70, 'Poison Jab'
-    UNION ALL SELECT  70, 'Body Slam'
-    UNION ALL SELECT  71, 'Vine Whip'
-    UNION ALL SELECT  71, 'Razor Leaf'
-    UNION ALL SELECT  71, 'Poison Jab'
-    UNION ALL SELECT  71, 'Body Slam'
-    UNION ALL SELECT  74, 'Rock Throw'
-    UNION ALL SELECT  74, 'Tackle'
-    UNION ALL SELECT  74, 'Bone Club'
-    UNION ALL SELECT  74, 'Quick Attack'
-    UNION ALL SELECT  75, 'Rock Throw'
-    UNION ALL SELECT  75, 'Rock Slide'
-    UNION ALL SELECT  75, 'Earthquake'
-    UNION ALL SELECT  75, 'Body Slam'
-    UNION ALL SELECT  76, 'Rock Throw'
-    UNION ALL SELECT  76, 'Rock Slide'
-    UNION ALL SELECT  76, 'Earthquake'
-    UNION ALL SELECT  76, 'Body Slam'
-    UNION ALL SELECT  77, 'Fire Fang'
-    UNION ALL SELECT  77, 'Quick Attack'
-    UNION ALL SELECT  77, 'Bone Club'
-    UNION ALL SELECT  77, 'Tackle'
-    UNION ALL SELECT  78, 'Fire Fang'
-    UNION ALL SELECT  78, 'Fire Punch'
-    UNION ALL SELECT  78, 'Earthquake'
-    UNION ALL SELECT  78, 'Body Slam'
-    UNION ALL SELECT  88, 'Poison Fang'
-    UNION ALL SELECT  88, 'Tackle'
-    UNION ALL SELECT  88, 'Bite'
-    UNION ALL SELECT  88, 'Quick Attack'
-    UNION ALL SELECT  89, 'Poison Fang'
-    UNION ALL SELECT  89, 'Poison Jab'
-    UNION ALL SELECT  89, 'Crunch'
-    UNION ALL SELECT  89, 'Body Slam'
-    UNION ALL SELECT  95, 'Rock Throw'
-    UNION ALL SELECT  95, 'Rock Slide'
-    UNION ALL SELECT  95, 'Earthquake'
-    UNION ALL SELECT  95, 'Body Slam'
-    UNION ALL SELECT  96, 'Psycho Cut'
-    UNION ALL SELECT  96, 'Tackle'
-    UNION ALL SELECT  96, 'Play Rough'
-    UNION ALL SELECT  96, 'Quick Attack'
-    UNION ALL SELECT  97, 'Psycho Cut'
-    UNION ALL SELECT  97, 'Zen Headbutt'
-    UNION ALL SELECT  97, 'Play Rough'
-    UNION ALL SELECT  97, 'Body Slam'
-    UNION ALL SELECT 100, 'Thunder Shock'
-    UNION ALL SELECT 100, 'Quick Attack'
-    UNION ALL SELECT 100, 'Mirror Shot'
-    UNION ALL SELECT 100, 'Tackle'
-    UNION ALL SELECT 101, 'Thunder Shock'
-    UNION ALL SELECT 101, 'Thunderbolt'
-    UNION ALL SELECT 101, 'Flash Cannon'
-    UNION ALL SELECT 101, 'Hyper Voice'
-    UNION ALL SELECT 104, 'Bone Club'
-    UNION ALL SELECT 104, 'Tackle'
-    UNION ALL SELECT 104, 'Rock Throw'
-    UNION ALL SELECT 104, 'Quick Attack'
-    UNION ALL SELECT 105, 'Bone Club'
-    UNION ALL SELECT 105, 'Earthquake'
-    UNION ALL SELECT 105, 'Rock Slide'
-    UNION ALL SELECT 105, 'Body Slam'
+    SELECT 43 AS pid, 'Mega Drain' AS golpe
+    UNION ALL SELECT 43, 'Tackle'
+    UNION ALL SELECT 43, 'Acid'
+    UNION ALL SELECT 43, 'Quick Attack'
+    UNION ALL SELECT 44, 'Mega Drain'
+    UNION ALL SELECT 44, 'Energy Ball'
+    UNION ALL SELECT 44, 'Sludge Bomb'
+    UNION ALL SELECT 44, 'Hyper Voice'
+    UNION ALL SELECT 45, 'Mega Drain'
+    UNION ALL SELECT 45, 'Energy Ball'
+    UNION ALL SELECT 45, 'Sludge Bomb'
+    UNION ALL SELECT 45, 'Hyper Voice'
+    UNION ALL SELECT 50, 'Bone Club'
+    UNION ALL SELECT 50, 'Quick Attack'
+    UNION ALL SELECT 50, 'Rock Throw'
+    UNION ALL SELECT 50, 'Tackle'
+    UNION ALL SELECT 51, 'Bone Club'
+    UNION ALL SELECT 51, 'Earthquake'
+    UNION ALL SELECT 51, 'Rock Slide'
+    UNION ALL SELECT 51, 'Body Slam'
+    UNION ALL SELECT 58, 'Fire Fang'
+    UNION ALL SELECT 58, 'Quick Attack'
+    UNION ALL SELECT 58, 'Bone Club'
+    UNION ALL SELECT 58, 'Tackle'
+    UNION ALL SELECT 59, 'Fire Fang'
+    UNION ALL SELECT 59, 'Fire Punch'
+    UNION ALL SELECT 59, 'Earthquake'
+    UNION ALL SELECT 59, 'Body Slam'
+    UNION ALL SELECT 63, 'Confusion'
+    UNION ALL SELECT 63, 'Quick Attack'
+    UNION ALL SELECT 63, 'Fairy Wind'
+    UNION ALL SELECT 63, 'Tackle'
+    UNION ALL SELECT 64, 'Confusion'
+    UNION ALL SELECT 64, 'Psychic'
+    UNION ALL SELECT 64, 'Moonblast'
+    UNION ALL SELECT 64, 'Hyper Voice'
+    UNION ALL SELECT 65, 'Confusion'
+    UNION ALL SELECT 65, 'Psychic'
+    UNION ALL SELECT 65, 'Moonblast'
+    UNION ALL SELECT 65, 'Hyper Voice'
+    UNION ALL SELECT 81, 'Thunder Shock'
+    UNION ALL SELECT 81, 'Tackle'
+    UNION ALL SELECT 81, 'Mirror Shot'
+    UNION ALL SELECT 81, 'Quick Attack'
+    UNION ALL SELECT 82, 'Thunder Shock'
+    UNION ALL SELECT 82, 'Thunderbolt'
+    UNION ALL SELECT 82, 'Flash Cannon'
+    UNION ALL SELECT 82, 'Hyper Voice'
+    UNION ALL SELECT 96, 'Psycho Cut'
+    UNION ALL SELECT 96, 'Tackle'
+    UNION ALL SELECT 96, 'Play Rough'
+    UNION ALL SELECT 96, 'Quick Attack'
+    UNION ALL SELECT 97, 'Psycho Cut'
+    UNION ALL SELECT 97, 'Zen Headbutt'
+    UNION ALL SELECT 97, 'Play Rough'
+    UNION ALL SELECT 97, 'Body Slam'
     UNION ALL SELECT 109, 'Poison Fang'
     UNION ALL SELECT 109, 'Tackle'
     UNION ALL SELECT 109, 'Bite'
@@ -1541,10 +1472,178 @@ FROM (
     UNION ALL SELECT 121, 'Surf'
     UNION ALL SELECT 121, 'Psychic'
     UNION ALL SELECT 121, 'Hyper Voice'
-    UNION ALL SELECT 122, 'Confusion'
-    UNION ALL SELECT 122, 'Psychic'
-    UNION ALL SELECT 122, 'Moonblast'
-    UNION ALL SELECT 122, 'Hyper Voice'
+    UNION ALL SELECT 177, 'Confusion'
+    UNION ALL SELECT 177, 'Quick Attack'
+    UNION ALL SELECT 177, 'Gust'
+    UNION ALL SELECT 177, 'Tackle'
+    UNION ALL SELECT 178, 'Confusion'
+    UNION ALL SELECT 178, 'Psychic'
+    UNION ALL SELECT 178, 'Air Slash'
+    UNION ALL SELECT 178, 'Hyper Voice'
+    UNION ALL SELECT 179, 'Thunder Shock'
+    UNION ALL SELECT 179, 'Tackle'
+    UNION ALL SELECT 179, 'Mirror Shot'
+    UNION ALL SELECT 179, 'Quick Attack'
+    UNION ALL SELECT 180, 'Thunder Shock'
+    UNION ALL SELECT 180, 'Thunderbolt'
+    UNION ALL SELECT 180, 'Flash Cannon'
+    UNION ALL SELECT 180, 'Hyper Voice'
+    UNION ALL SELECT 181, 'Thunder Shock'
+    UNION ALL SELECT 181, 'Thunderbolt'
+    UNION ALL SELECT 181, 'Flash Cannon'
+    UNION ALL SELECT 181, 'Hyper Voice'
+    UNION ALL SELECT 207, 'Bone Club'
+    UNION ALL SELECT 207, 'Earthquake'
+    UNION ALL SELECT 207, 'Drill Peck'
+    UNION ALL SELECT 207, 'Body Slam'
+    UNION ALL SELECT 252, 'Mega Drain'
+    UNION ALL SELECT 252, 'Quick Attack'
+    UNION ALL SELECT 252, 'Acid'
+    UNION ALL SELECT 252, 'Tackle'
+    UNION ALL SELECT 253, 'Mega Drain'
+    UNION ALL SELECT 253, 'Energy Ball'
+    UNION ALL SELECT 253, 'Sludge Bomb'
+    UNION ALL SELECT 253, 'Hyper Voice'
+    UNION ALL SELECT 254, 'Mega Drain'
+    UNION ALL SELECT 254, 'Energy Ball'
+    UNION ALL SELECT 254, 'Sludge Bomb'
+    UNION ALL SELECT 254, 'Hyper Voice'
+    UNION ALL SELECT 280, 'Confusion'
+    UNION ALL SELECT 280, 'Tackle'
+    UNION ALL SELECT 280, 'Fairy Wind'
+    UNION ALL SELECT 280, 'Quick Attack'
+    UNION ALL SELECT 281, 'Confusion'
+    UNION ALL SELECT 281, 'Psychic'
+    UNION ALL SELECT 281, 'Moonblast'
+    UNION ALL SELECT 281, 'Hyper Voice'
+    UNION ALL SELECT 282, 'Confusion'
+    UNION ALL SELECT 282, 'Psychic'
+    UNION ALL SELECT 282, 'Moonblast'
+    UNION ALL SELECT 282, 'Hyper Voice'
+    UNION ALL SELECT 299, 'Rock Throw'
+    UNION ALL SELECT 299, 'Rock Slide'
+    UNION ALL SELECT 299, 'Earthquake'
+    UNION ALL SELECT 299, 'Body Slam'
+    UNION ALL SELECT 324, 'Fire Fang'
+    UNION ALL SELECT 324, 'Fire Punch'
+    UNION ALL SELECT 324, 'Earthquake'
+    UNION ALL SELECT 324, 'Body Slam'
+    UNION ALL SELECT 390, 'Fire Fang'
+    UNION ALL SELECT 390, 'Quick Attack'
+    UNION ALL SELECT 390, 'Bone Club'
+    UNION ALL SELECT 390, 'Tackle'
+    UNION ALL SELECT 391, 'Fire Fang'
+    UNION ALL SELECT 391, 'Fire Punch'
+    UNION ALL SELECT 391, 'Submission'
+    UNION ALL SELECT 391, 'Body Slam'
+    UNION ALL SELECT 392, 'Fire Fang'
+    UNION ALL SELECT 392, 'Fire Punch'
+    UNION ALL SELECT 392, 'Submission'
+    UNION ALL SELECT 392, 'Body Slam'
+    UNION ALL SELECT 418, 'Aqua Jet'
+    UNION ALL SELECT 418, 'Quick Attack'
+    UNION ALL SELECT 418, 'Ice Shard'
+    UNION ALL SELECT 418, 'Tackle'
+    UNION ALL SELECT 419, 'Aqua Jet'
+    UNION ALL SELECT 419, 'Waterfall'
+    UNION ALL SELECT 419, 'Ice Punch'
+    UNION ALL SELECT 419, 'Body Slam'
+    UNION ALL SELECT 449, 'Bone Club'
+    UNION ALL SELECT 449, 'Tackle'
+    UNION ALL SELECT 449, 'Rock Throw'
+    UNION ALL SELECT 449, 'Quick Attack'
+    UNION ALL SELECT 450, 'Bone Club'
+    UNION ALL SELECT 450, 'Earthquake'
+    UNION ALL SELECT 450, 'Rock Slide'
+    UNION ALL SELECT 450, 'Body Slam'
+    UNION ALL SELECT 451, 'Poison Fang'
+    UNION ALL SELECT 451, 'Quick Attack'
+    UNION ALL SELECT 451, 'Fury Cutter'
+    UNION ALL SELECT 451, 'Tackle'
+    UNION ALL SELECT 452, 'Poison Fang'
+    UNION ALL SELECT 452, 'Poison Jab'
+    UNION ALL SELECT 452, 'Crunch'
+    UNION ALL SELECT 452, 'Body Slam'
+    UNION ALL SELECT 453, 'Poison Fang'
+    UNION ALL SELECT 453, 'Tackle'
+    UNION ALL SELECT 453, 'Karate Chop'
+    UNION ALL SELECT 453, 'Quick Attack'
+    UNION ALL SELECT 454, 'Poison Fang'
+    UNION ALL SELECT 454, 'Poison Jab'
+    UNION ALL SELECT 454, 'Submission'
+    UNION ALL SELECT 454, 'Body Slam'
+    UNION ALL SELECT 524, 'Rock Throw'
+    UNION ALL SELECT 524, 'Tackle'
+    UNION ALL SELECT 524, 'Bone Club'
+    UNION ALL SELECT 524, 'Quick Attack'
+    UNION ALL SELECT 525, 'Rock Throw'
+    UNION ALL SELECT 525, 'Rock Slide'
+    UNION ALL SELECT 525, 'Earthquake'
+    UNION ALL SELECT 525, 'Body Slam'
+    UNION ALL SELECT 526, 'Rock Throw'
+    UNION ALL SELECT 526, 'Rock Slide'
+    UNION ALL SELECT 526, 'Earthquake'
+    UNION ALL SELECT 526, 'Body Slam'
+    UNION ALL SELECT 529, 'Bone Club'
+    UNION ALL SELECT 529, 'Quick Attack'
+    UNION ALL SELECT 529, 'Rock Throw'
+    UNION ALL SELECT 529, 'Tackle'
+    UNION ALL SELECT 530, 'Bone Club'
+    UNION ALL SELECT 530, 'Earthquake'
+    UNION ALL SELECT 530, 'Iron Head'
+    UNION ALL SELECT 530, 'Body Slam'
+    UNION ALL SELECT 548, 'Mega Drain'
+    UNION ALL SELECT 548, 'Tackle'
+    UNION ALL SELECT 548, 'Acid'
+    UNION ALL SELECT 548, 'Quick Attack'
+    UNION ALL SELECT 549, 'Mega Drain'
+    UNION ALL SELECT 549, 'Energy Ball'
+    UNION ALL SELECT 549, 'Sludge Bomb'
+    UNION ALL SELECT 549, 'Hyper Voice'
+    UNION ALL SELECT 568, 'Poison Fang'
+    UNION ALL SELECT 568, 'Quick Attack'
+    UNION ALL SELECT 568, 'Bite'
+    UNION ALL SELECT 568, 'Tackle'
+    UNION ALL SELECT 569, 'Poison Fang'
+    UNION ALL SELECT 569, 'Poison Jab'
+    UNION ALL SELECT 569, 'Crunch'
+    UNION ALL SELECT 569, 'Body Slam'
+    UNION ALL SELECT 656, 'Water Gun'
+    UNION ALL SELECT 656, 'Quick Attack'
+    UNION ALL SELECT 656, 'Powder Snow'
+    UNION ALL SELECT 656, 'Tackle'
+    UNION ALL SELECT 657, 'Water Gun'
+    UNION ALL SELECT 657, 'Surf'
+    UNION ALL SELECT 657, 'Ice Beam'
+    UNION ALL SELECT 657, 'Hyper Voice'
+    UNION ALL SELECT 658, 'Water Gun'
+    UNION ALL SELECT 658, 'Surf'
+    UNION ALL SELECT 658, 'Dark Pulse'
+    UNION ALL SELECT 658, 'Hyper Voice'
+    UNION ALL SELECT 667, 'Ember'
+    UNION ALL SELECT 667, 'Quick Attack'
+    UNION ALL SELECT 667, 'Swift'
+    UNION ALL SELECT 667, 'Tackle'
+    UNION ALL SELECT 668, 'Ember'
+    UNION ALL SELECT 668, 'Flamethrower'
+    UNION ALL SELECT 668, 'Hyper Voice'
+    UNION ALL SELECT 668, 'Quick Attack'
+    UNION ALL SELECT 677, 'Confusion'
+    UNION ALL SELECT 677, 'Quick Attack'
+    UNION ALL SELECT 677, 'Fairy Wind'
+    UNION ALL SELECT 677, 'Tackle'
+    UNION ALL SELECT 678, 'Confusion'
+    UNION ALL SELECT 678, 'Psychic'
+    UNION ALL SELECT 678, 'Moonblast'
+    UNION ALL SELECT 678, 'Hyper Voice'
+    UNION ALL SELECT 749, 'Bone Club'
+    UNION ALL SELECT 749, 'Tackle'
+    UNION ALL SELECT 749, 'Rock Throw'
+    UNION ALL SELECT 749, 'Quick Attack'
+    UNION ALL SELECT 750, 'Bone Club'
+    UNION ALL SELECT 750, 'Earthquake'
+    UNION ALL SELECT 750, 'Rock Slide'
+    UNION ALL SELECT 750, 'Body Slam'
 ) m
 JOIN `especies` e ON e.pokeapi_id = m.pid
 JOIN `golpes` g ON g.nome = m.golpe
@@ -1561,42 +1660,45 @@ CREATE TABLE IF NOT EXISTS `lider_pokemons` (
   CONSTRAINT `lider_pokemons_ibfk_2` FOREIGN KEY (`especie_id`) REFERENCES `especies` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- DML: os times (pela ordem do líder e pelo número da PokéAPI)
+-- DML: os times (pela ordem do líder e pelo número da PokéAPI).
+-- Times variados, misturando gerações (a geração está no comentário).
+-- O DELETE deixa rodar de novo para trocar os times de um banco que já existe.
+DELETE FROM `lider_pokemons`;
 INSERT IGNORE INTO `lider_pokemons` (`lider_id`, `posicao`, `especie_id`)
 SELECT l.id, m.posicao, e.id
 FROM (
-    SELECT 1 AS ordem, 1 AS posicao, 74 AS pid  -- Geodude
-    UNION ALL SELECT 1, 2,  95  -- Onix
-    UNION ALL SELECT 2, 1, 120  -- Staryu
-    UNION ALL SELECT 2, 2,  54  -- Psyduck
-    UNION ALL SELECT 2, 3, 121  -- Starmie
-    UNION ALL SELECT 3, 1, 100  -- Voltorb
-    UNION ALL SELECT 3, 2,  25  -- Pikachu
-    UNION ALL SELECT 3, 3,  26  -- Raichu
-    UNION ALL SELECT 4, 1, 114  -- Tangela
-    UNION ALL SELECT 4, 2,  70  -- Weepinbell
-    UNION ALL SELECT 4, 3,  44  -- Gloom
-    UNION ALL SELECT 4, 4,  45  -- Vileplume
-    UNION ALL SELECT 5, 1, 109  -- Koffing
-    UNION ALL SELECT 5, 2,  24  -- Arbok
-    UNION ALL SELECT 5, 3,  89  -- Muk
-    UNION ALL SELECT 5, 4, 110  -- Weezing
-    UNION ALL SELECT 6, 1,  64  -- Kadabra
-    UNION ALL SELECT 6, 2,  96  -- Drowzee
-    UNION ALL SELECT 6, 3, 122  -- Mr. Mime
-    UNION ALL SELECT 6, 4,  97  -- Hypno
-    UNION ALL SELECT 6, 5,  65  -- Alakazam
-    UNION ALL SELECT 7, 1,  58  -- Growlithe
-    UNION ALL SELECT 7, 2,  77  -- Ponyta
-    UNION ALL SELECT 7, 3,  38  -- Ninetales
-    UNION ALL SELECT 7, 4,  78  -- Rapidash
-    UNION ALL SELECT 7, 5,  59  -- Arcanine
-    UNION ALL SELECT 8, 1,  51  -- Dugtrio
-    UNION ALL SELECT 8, 2,  28  -- Sandslash
-    UNION ALL SELECT 8, 3, 105  -- Marowak
-    UNION ALL SELECT 8, 4, 111  -- Rhyhorn
-    UNION ALL SELECT 8, 5,  76  -- Golem
-    UNION ALL SELECT 8, 6, 112  -- Rhydon
+    SELECT 1 AS ordem, 1 AS posicao, 524 AS pid  -- Roggenrola (5ª geração)
+    UNION ALL SELECT 1, 2, 299  -- Nosepass (3ª geração)
+    UNION ALL SELECT 2, 1, 418  -- Buizel (4ª geração)
+    UNION ALL SELECT 2, 2, 656  -- Froakie (6ª geração)
+    UNION ALL SELECT 2, 3, 121  -- Starmie (1ª geração)
+    UNION ALL SELECT 3, 1,  81  -- Magnemite (1ª geração)
+    UNION ALL SELECT 3, 2, 180  -- Flaaffy (2ª geração)
+    UNION ALL SELECT 3, 3, 181  -- Ampharos (2ª geração)
+    UNION ALL SELECT 4, 1, 114  -- Tangela (1ª geração)
+    UNION ALL SELECT 4, 2, 253  -- Grovyle (3ª geração)
+    UNION ALL SELECT 4, 3,  44  -- Gloom (1ª geração)
+    UNION ALL SELECT 4, 4, 549  -- Lilligant (5ª geração)
+    UNION ALL SELECT 5, 1, 109  -- Koffing (1ª geração)
+    UNION ALL SELECT 5, 2, 569  -- Garbodor (5ª geração)
+    UNION ALL SELECT 5, 3, 452  -- Drapion (4ª geração)
+    UNION ALL SELECT 5, 4, 454  -- Toxicroak (4ª geração)
+    UNION ALL SELECT 6, 1, 177  -- Natu (2ª geração)
+    UNION ALL SELECT 6, 2,  64  -- Kadabra (1ª geração)
+    UNION ALL SELECT 6, 3, 678  -- Meowstic (6ª geração)
+    UNION ALL SELECT 6, 4,  97  -- Hypno (1ª geração)
+    UNION ALL SELECT 6, 5, 282  -- Gardevoir (3ª geração)
+    UNION ALL SELECT 7, 1,  58  -- Growlithe (1ª geração)
+    UNION ALL SELECT 7, 2, 391  -- Monferno (4ª geração)
+    UNION ALL SELECT 7, 3, 668  -- Pyroar (6ª geração)
+    UNION ALL SELECT 7, 4, 324  -- Torkoal (3ª geração)
+    UNION ALL SELECT 7, 5,  59  -- Arcanine (1ª geração)
+    UNION ALL SELECT 8, 1,  51  -- Dugtrio (1ª geração)
+    UNION ALL SELECT 8, 2, 207  -- Gligar (2ª geração)
+    UNION ALL SELECT 8, 3, 749  -- Mudbray (7ª geração)
+    UNION ALL SELECT 8, 4, 449  -- Hippopotas (4ª geração)
+    UNION ALL SELECT 8, 5, 530  -- Excadrill (5ª geração)
+    UNION ALL SELECT 8, 6, 112  -- Rhydon (1ª geração)
 ) m
 JOIN `lideres` l ON l.ordem = m.ordem
 JOIN `especies` e ON e.pokeapi_id = m.pid;
@@ -1606,11 +1708,40 @@ ALTER TABLE `batalhas`
   ADD COLUMN `lider_id` int(10) UNSIGNED NULL DEFAULT NULL AFTER `usuario_id`,
   ADD CONSTRAINT `batalhas_ibfk_lider` FOREIGN KEY (`lider_id`) REFERENCES `lideres` (`id`);
 
+-- =====================================================================
+-- Lendários
+-- =====================================================================
+-- DDL: cada batalha guarda contra qual lendário foi (NULL = não foi lendária)
+ALTER TABLE `batalhas`
+  ADD COLUMN `lendario_id` int(10) UNSIGNED NULL DEFAULT NULL AFTER `lider_id`,
+  ADD CONSTRAINT `batalhas_ibfk_lendario` FOREIGN KEY (`lendario_id`) REFERENCES `especies` (`id`) ON DELETE SET NULL;
+
+-- DML: marca os lendários e míticos de todas as gerações (pelo número da PokéAPI).
+-- O importador também marca (is_legendary / is_mythical da PokéAPI); este UPDATE
+-- serve para espécies que já estavam no banco.
+-- Inclui os paradoxos lendários (Gouging Fire, Raging Bolt...) e as Ultra
+-- Beasts (Nihilego, Buzzwole...), que a PokéAPI não marca como lendários (ImportadorPokemon::PARADOXOS_LENDARIOS).
+UPDATE especies SET lendario = 1
+ WHERE pokeapi_id IN (
+    144, 145, 146, 150, 243, 244, 245, 249, 250, 377, 378, 379,
+    380, 381, 382, 383, 384, 480, 481, 482, 483, 484, 485, 486,
+    487, 488, 638, 639, 640, 641, 642, 643, 644, 645, 646, 716,
+    717, 718, 772, 773, 785, 786, 787, 788, 789, 790, 791, 792,
+    800, 888, 889, 890, 891, 892, 894, 895, 896, 897, 898, 905,
+    1001, 1002, 1003, 1004, 1007, 1008, 1014, 1015, 1016, 1017, 1024,
+    1009, 1010, 1020, 1021, 1022, 1023, -- paradoxos lendários
+    151, 251, 385, 386, 489, 490, 491, 492, 493, 494, 647, 648,
+    649, 719, 720, 721, 801, 802, 807, 808, 809, 893, 1025, -- míticos
+    793, 794, 795, 796, 797, 798, 799, 803, 804, 805, 806 -- Ultra Beasts
+ );
+
 -- DQL (view): progresso de cada jogador nos ginásios, calculado pelo LOG de batalhas
 --   insignias            = líderes diferentes que ele já venceu;
 --   vitorias_desde_lider = vitórias contra treinadores comuns DEPOIS da última
 --                          batalha contra um líder (ganhando ou perdendo).
 --                          Perdeu para o líder? A contagem volta a zero.
+--   vitorias_desde_lendario = vitórias contra treinadores comuns DEPOIS da
+--                          última batalha lendária (ganhando ou perdendo).
 CREATE OR REPLACE VIEW `vw_progresso_ginasio` AS
 SELECT
     u.id AS usuario_id,
@@ -1619,9 +1750,14 @@ SELECT
       WHERE b.usuario_id = u.id AND b.lider_id IS NOT NULL AND b.vencedor = 'jogador') AS insignias,
     (SELECT COUNT(*)
        FROM batalhas b
-      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.vencedor = 'jogador'
+      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.lendario_id IS NULL AND b.vencedor = 'jogador'
         AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
-                              WHERE b2.usuario_id = u.id AND b2.lider_id IS NOT NULL), 0)) AS vitorias_desde_lider
+                              WHERE b2.usuario_id = u.id AND b2.lider_id IS NOT NULL), 0)) AS vitorias_desde_lider,
+    (SELECT COUNT(*)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.lendario_id IS NULL AND b.vencedor = 'jogador'
+        AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
+                              WHERE b2.usuario_id = u.id AND b2.lendario_id IS NOT NULL), 0)) AS vitorias_desde_lendario
 FROM usuarios u;
 
 -- =====================================================================
@@ -1653,3 +1789,30 @@ CREATE TRIGGER `trg_pokemons_shiny_update` AFTER UPDATE ON `pokemons` FOR EACH R
 -- DML: os shinies que os jogadores JÁ têm também ficam desbloqueados
 INSERT IGNORE INTO shinies_desbloqueados (usuario_id, especie_id)
 SELECT DISTINCT usuario_id, especie_id FROM pokemons WHERE shiny = 1;
+
+-- Trigger: venceu a batalha lendária? A BASE da linha do lendário fica
+-- desbloqueada para o jogador: venceu o Urshifu, ganha o Kubfu (e evolui com
+-- pedra); lendário sem evolução (Mewtwo) é ele mesmo.
+-- INSERT IGNORE: se já estava desbloqueada, não faz nada.
+DROP TRIGGER IF EXISTS `trg_batalhas_lendario`;
+DELIMITER $$
+CREATE TRIGGER `trg_batalhas_lendario` AFTER INSERT ON `batalhas` FOR EACH ROW
+BEGIN
+    DECLARE v_base INT UNSIGNED;
+    DECLARE v_pai  INT UNSIGNED;
+
+    IF NEW.lendario_id IS NOT NULL AND NEW.vencedor = 'jogador' THEN
+        -- sobe pela linha evolutiva até a base (Urshifu -> Kubfu)
+        SET v_base = NEW.lendario_id;
+        SET v_pai  = (SELECT evolui_de_id FROM especies WHERE id = v_base);
+        WHILE v_pai IS NOT NULL DO
+            SET v_base = v_pai;
+            SET v_pai  = (SELECT evolui_de_id FROM especies WHERE id = v_base);
+        END WHILE;
+
+        INSERT IGNORE INTO especies_desbloqueadas (usuario_id, especie_id)
+        VALUES (NEW.usuario_id, v_base);
+    END IF;
+END
+$$
+DELIMITER ;

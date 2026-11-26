@@ -19,14 +19,15 @@ use InvalidArgumentException;
 class Batalha
 {
     public const PREMIO_POR_POKEMON = 150; // Pokédollar por Pokémon do oponente
-    public const CHANCE_CONDICAO   = 10;  // % de um golpe causar condição
+    public const PREMIO_LENDARIO = 3000; // Pokédollar por vencer um lendário
+    public const CHANCE_CONDICAO = 10;  // % de um golpe causar condição
 
     /** Como cada condição aparece nas mensagens. */
     private const TEXTO_STATUS = [
-        'veneno'     => 'envenenado',
-        'queimado'   => 'queimado',
-        'congelado'  => 'congelado',
-        'dormindo'   => 'dormindo',
+        'veneno' => 'envenenado',
+        'queimado' => 'queimado',
+        'congelado' => 'congelado',
+        'dormindo' => 'dormindo',
         'paralisado' => 'paralisado',
     ];
 
@@ -49,7 +50,9 @@ class Batalha
         private array $oponente,
         private array $golpesOponente,
         private string $oponenteNome,
-        private ?Lider $lider = null // null = treinador comum
+        private ?Lider $lider = null, // null = treinador comum
+        private ?Especie $lendario = null, // batalha lendária: a espécie do lendário
+        private ?Especie $lendarioBase = null // quem é desbloqueado ao vencer (Kubfu p/ Urshifu)
     ) {
         $primeiro = $this->proximoDePe($this->jogador);
         if ($primeiro === null) {
@@ -76,8 +79,8 @@ class Batalha
             throw new InvalidArgumentException('Essa batalha já acabou.');
         }
 
-        $meu       = $this->ativoDoJogador();
-        $dele      = $this->ativoDoOponente();
+        $meu = $this->ativoDoJogador();
+        $dele = $this->ativoDoOponente();
         $golpeDele = $this->golpeAleatorioDoOponente();
 
         if ($acao instanceof Golpe) {
@@ -95,8 +98,13 @@ class Batalha
             $this->indiceDoJogador($alvo);   // confere se o alvo é do jogador
             $alvo->usarItem($acao);          // regra do Pokemon: lança exceção se não tiver efeito
             $this->numero++;
-            $this->registrar('jogador', $acao->getNome(), 0, $alvo->getHpAtual(),
-                "Você usou {$acao->getNome()} em {$alvo->getNomeExibicao()}.");
+            $this->registrar(
+                'jogador',
+                $acao->getNome(),
+                0,
+                $alvo->getHpAtual(),
+                "Você usou {$acao->getNome()} em {$alvo->getNomeExibicao()}."
+            );
             $this->atacar($dele, $meu, $golpeDele, 'oponente');
         } else {
             $indice = $this->indiceDoJogador($acao);
@@ -108,8 +116,13 @@ class Batalha
             }
             $this->numero++;
             $this->ativoJogador = $indice;
-            $this->registrar('jogador', 'Troca', 0, $acao->getHpAtual(),
-                "Volte, {$meu->getNomeExibicao()}! Vai, {$acao->getNomeExibicao()}!");
+            $this->registrar(
+                'jogador',
+                'Troca',
+                0,
+                $acao->getHpAtual(),
+                "Volte, {$meu->getNomeExibicao()}! Vai, {$acao->getNomeExibicao()}!"
+            );
             $this->atacar($dele, $acao, $golpeDele, 'oponente');
         }
 
@@ -151,8 +164,13 @@ class Batalha
         $alvo = $this->nome($defensor, $ator === 'jogador' ? 'oponente' : 'jogador');
 
         if (random_int(1, 100) > $golpe->getPrecisao()) {
-            $this->registrar($ator, $golpe->getNome(), 0, $defensor->getHpAtual(),
-                "{$quem} usou {$golpe->getNome()}, mas errou!");
+            $this->registrar(
+                $ator,
+                $golpe->getNome(),
+                0,
+                $defensor->getHpAtual(),
+                "{$quem} usou {$golpe->getNome()}, mas errou!"
+            );
             return;
         }
 
@@ -175,8 +193,10 @@ class Batalha
 
         // chance de causar condição (o tipo do golpe diz qual: Fogo queima...)
         $condicao = $golpe->tipo()->condicaoQueCausa();
-        if ($condicao !== null && $dano > 0 && !$defensor->estaDesmaiado()
-            && $defensor->getStatus() === 'normal' && random_int(1, 100) <= self::CHANCE_CONDICAO) {
+        if (
+            $condicao !== null && $dano > 0 && !$defensor->estaDesmaiado()
+            && $defensor->getStatus() === 'normal' && random_int(1, 100) <= self::CHANCE_CONDICAO
+        ) {
             $defensor->setStatus($condicao);
             $msg .= " {$alvo} ficou " . self::TEXTO_STATUS[$condicao] . '!';
         }
@@ -224,13 +244,23 @@ class Batalha
         }
         if ($status === 'dormindo' || $status === 'congelado') {
             if (random_int(1, 100) <= 50) {
-                $this->registrar($ator, 'Perdeu a vez', 0, $p->getHpAtual(),
-                    "{$nome} está " . self::TEXTO_STATUS[$status] . ' e não pode agir.');
+                $this->registrar(
+                    $ator,
+                    'Perdeu a vez',
+                    0,
+                    $p->getHpAtual(),
+                    "{$nome} está " . self::TEXTO_STATUS[$status] . ' e não pode agir.'
+                );
                 return false;
             }
             $p->setStatus('normal');
-            $this->registrar($ator, $status === 'dormindo' ? 'Acordou' : 'Descongelou', 0, $p->getHpAtual(),
-                $status === 'dormindo' ? "{$nome} acordou!" : "{$nome} descongelou!");
+            $this->registrar(
+                $ator,
+                $status === 'dormindo' ? 'Acordou' : 'Descongelou',
+                0,
+                $p->getHpAtual(),
+                $status === 'dormindo' ? "{$nome} acordou!" : "{$nome} descongelou!"
+            );
         }
         return true;
     }
@@ -259,8 +289,13 @@ class Batalha
             }
             $this->ativoOponente = $proximo;
             $novo = $this->ativoDoOponente();
-            $this->registrar('oponente', 'Troca', 0, $novo->getHpAtual(),
-                "{$this->oponenteNome} enviou {$novo->getNomeExibicao()}!");
+            $this->registrar(
+                'oponente',
+                'Troca',
+                0,
+                $novo->getHpAtual(),
+                "{$this->oponenteNome} enviou {$novo->getNomeExibicao()}!"
+            );
         }
 
         if ($this->ativoDoJogador()->estaDesmaiado()) {
@@ -380,6 +415,11 @@ class Batalha
         return $this->lider;
     }
 
+    public function getLendario(): ?Especie
+    {
+        return $this->lendario;
+    }
+
     /**
      * Prêmio só para quem venceu: o do líder ou, contra treinador comum,
      * 150 por Pokémon do oponente (mais inimigos = mais dinheiro).
@@ -389,41 +429,46 @@ class Batalha
         if ($this->vencedor !== 'jogador') {
             return 0;
         }
+        if ($this->lendario !== null) {
+            return self::PREMIO_LENDARIO;
+        }
         return $this->lider?->getPremio() ?? self::PREMIO_POR_POKEMON * count($this->oponente);
     }
 
     public function paraArray(): array
     {
         $lutador = fn(Pokemon $p, int $i) => [
-            'indice'     => $i,
-            'id'         => $p->getId(),
-            'nome'       => $p->getNomeExibicao(),
-            'tipo'       => $p->getEspecie()->getTipo(),
+            'indice' => $i,
+            'id' => $p->getId(),
+            'nome' => $p->getNomeExibicao(),
+            'tipo' => $p->getEspecie()->getTipo(),
             'pokeapi_id' => $p->getEspecie()->getPokeapiId(),
-            'hp_atual'   => $p->getHpAtual(),
-            'hp_max'     => $p->getHpMax(),
-            'status'     => $p->getStatus(),
-            'desmaiado'  => $p->estaDesmaiado(),
-            'shiny'      => $p->isShiny(),
+            'hp_atual' => $p->getHpAtual(),
+            'hp_max' => $p->getHpMax(),
+            'status' => $p->getStatus(),
+            'desmaiado' => $p->estaDesmaiado(),
+            'shiny' => $p->isShiny(),
         ];
 
         return [
-            'turno'         => $this->numero,
-            'encerrada'     => $this->encerrada(),
-            'vencedor'      => $this->vencedor,
-            'premio'        => $this->premio(),
+            'turno' => $this->numero,
+            'encerrada' => $this->encerrada(),
+            'vencedor' => $this->vencedor,
+            'premio' => $this->premio(),
             'oponente_nome' => $this->oponenteNome,
-            'lider'         => $this->lider?->paraArray(),
-            'jogador'  => [
-                'ativo'    => $this->ativoJogador,
+            'lider' => $this->lider?->paraArray(),
+            'lendario' => $this->lendario?->getNome(), // null = não é batalha lendária
+            'lendario_desbloqueia' => ($this->lendarioBase ?? $this->lendario)?->getNome(),
+            'jogador' => [
+                'ativo' => $this->ativoJogador,
                 'pokemons' => array_map($lutador, $this->jogador, array_keys($this->jogador)),
             ],
             'oponente' => [
-                'ativo'    => $this->ativoOponente,
+                'ativo' => $this->ativoOponente,
                 'pokemons' => array_map($lutador, $this->oponente, array_keys($this->oponente)),
             ],
             'golpes' => array_map(fn(Golpe $g) => $g->paraArray(), $this->golpesJogador[$this->ativoJogador]),
-            'log'    => array_map(fn(Turno $t) => $t->paraArray(), $this->turnos),
+            'log' => array_map(fn(Turno $t) => $t->paraArray(), $this->turnos),
         ];
     }
 }

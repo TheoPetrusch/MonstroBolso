@@ -16,7 +16,8 @@ class Turno
         private int $dano,
         private int $hpRestante,    // HP de quem recebeu a ação
         private string $mensagem    // texto mostrado na tela
-    ) {}
+    ) {
+    }
 
     public function getNumero(): int
     {
@@ -42,8 +43,8 @@ class Turno
     public function paraArray(): array
     {
         return [
-            'turno'    => $this->numero,
-            'ator'     => $this->ator,
+            'turno' => $this->numero,
+            'ator' => $this->ator,
             'mensagem' => $this->mensagem,
         ];
     }

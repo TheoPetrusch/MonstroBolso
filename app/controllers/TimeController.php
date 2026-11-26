@@ -10,6 +10,12 @@ use App\Models\ItemRepository;
 use App\Models\TimeRepository;
 use InvalidArgumentException;
 
+/**
+ * Team Builder: catálogo de espécies, montar o time (até 6), remover,
+ * evoluir com pedra, usar itens, shiny e Centro Pokémon.
+ * Todas as ações da API respondem com o time inteiro atualizado (respostaTime),
+ * e o JavaScript redesenha a tela com ele.
+ */
 class TimeController extends BaseController
 {
     private TimeRepository $times;
@@ -18,9 +24,9 @@ class TimeController extends BaseController
 
     public function __construct()
     {
-        $this->times    = new TimeRepository();
+        $this->times = new TimeRepository();
         $this->especies = new EspecieRepository();
-        $this->itens    = new ItemRepository();
+        $this->itens = new ItemRepository();
     }
 
     // ---------- página ----------
@@ -35,10 +41,12 @@ class TimeController extends BaseController
 
     // ---------- API (JSON) ----------
 
+    /** GET /api/especies: todas as espécies, dizendo quais o jogador pode adicionar. */
     public function listarEspecies(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         // todas aparecem; "disponivel" diz quais podem ser adicionadas:
         // as básicas e as evoluções que o jogador já conseguiu com pedra
@@ -47,24 +55,31 @@ class TimeController extends BaseController
         $desbloqueadas = $this->especies->idsDesbloqueados($uid);
         $linhas = $this->especies->linhas();
         $lista = array_map(fn(Especie $e) => $e->paraArray() + [
-            'disponivel' => $e->isBasica() || in_array($e->getId(), $desbloqueadas, true),
-            'linha'      => $linhas[$e->getId()] ?? $e->getId(),
+            'disponivel' => $e->isLivre() || in_array($e->getId(), $desbloqueadas, true),
+            'linha' => $linhas[$e->getId()] ?? $e->getId(),
         ], $this->especies->listar());
         $this->json(['ok' => true, 'especies' => $lista]);
     }
 
+    /** GET /api/time: o time do jogador logado. */
     public function meuTime(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $this->json($this->respostaTime($uid));
     }
 
+    /**
+     * POST /api/time/adicionar  corpo JSON: { "especie_id": 4 }
+     * Pode lançar TimeCheioException (409) e LinhaRepetidaException (422).
+     */
     public function adicionar(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         try {
             $id = (int) ($this->corpoJson()['especie_id'] ?? 0);
@@ -74,26 +89,30 @@ class TimeController extends BaseController
             }
             // confere no back-end também: não basta esconder no catálogo,
             // alguém poderia mandar o especie_id de um Charizard direto pela API
-            if (!$especie->isBasica()
-                && !in_array($especie->getId(), $this->especies->idsDesbloqueados($uid), true)) {
-                throw new InvalidArgumentException(
-                    'Essa evolução ainda está bloqueada. Evolua um Pokémon com pedra para desbloqueá-la.'
-                );
+            if (
+                !$especie->isLivre()
+                && !in_array($especie->getId(), $this->especies->idsDesbloqueados($uid), true)
+            ) {
+                throw new InvalidArgumentException($especie->isLendario()
+                    ? 'Esse lendário ainda está bloqueado. Vença-o numa batalha lendária para desbloqueá-lo.'
+                    : 'Essa evolução ainda está bloqueada. Evolua um Pokémon com pedra para desbloqueá-la.');
             }
 
             $novo = $this->times->adicionarEspecie($uid, $especie);
             $this->json($this->respostaTime($uid) + ['shiny' => $novo->isShiny()], 201);
-        } catch (TimeCheioException $e) {
+        } catch (TimeCheioException $e) { // exceção customizada: 7º Pokémon
             $this->json(['ok' => false, 'erro' => $e->getMessage()], $e->getCode());
         } catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
         }
     }
 
+    /** POST /api/time/remover  corpo JSON: { "pokemon_id": 12 } */
     public function remover(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $id = (int) ($this->corpoJson()['pokemon_id'] ?? 0);
         if (!$this->times->remover($uid, $id)) {
@@ -107,7 +126,8 @@ class TimeController extends BaseController
     public function limpar(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $removidos = $this->times->limpar($uid);
         $this->json($this->respostaTime($uid) + ['removidos' => $removidos]);
@@ -117,7 +137,8 @@ class TimeController extends BaseController
     public function evoluir(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         try {
             $d = $this->corpoJson();
@@ -137,7 +158,8 @@ class TimeController extends BaseController
     public function usarItem(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         try {
             $d = $this->corpoJson();
@@ -156,7 +178,8 @@ class TimeController extends BaseController
     public function alternarShiny(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         try {
             $p = $this->times->alternarShiny($uid, (int) ($this->corpoJson()['pokemon_id'] ?? 0));
@@ -173,7 +196,8 @@ class TimeController extends BaseController
     public function centroPokemon(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         if (isset($_SESSION['batalha'])) {
             $this->json(['ok' => false, 'erro' => 'Termine a batalha antes de ir ao Centro Pokémon.'], 409);
@@ -193,11 +217,11 @@ class TimeController extends BaseController
         ));
 
         return [
-            'ok'        => true,
-            'time'      => $this->times->carregar($uid)->paraArray(),
+            'ok' => true,
+            'time' => $this->times->carregar($uid)->paraArray(),
             'evolucoes' => $this->times->opcoesDeEvolucao($uid),
-            'mochila'   => $mochila,
-            'shinies'   => $this->times->shiniesDesbloqueados($uid), // espécies com shiny liberado
+            'mochila' => $mochila,
+            'shinies' => $this->times->shiniesDesbloqueados($uid), // espécies com shiny liberado
         ];
     }
 }

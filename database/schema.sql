@@ -3,6 +3,7 @@
 -- Compatível com MariaDB 10.4 / MySQL 8 (XAMPP)
 -- Decisões: 1 tipo por espécie; golpes ligados à espécie.
 -- Ordem de execução: schema.sql -> seed.sql -> views.sql -> triggers.sql
+-- (ou importe só o database/monstrobolso.sql, que já tem tudo junto)
 -- =====================================================================
 CREATE DATABASE IF NOT EXISTS monstrobolso CHARACTER
 SET
@@ -15,6 +16,9 @@ SET
 
 DROP TABLE IF EXISTS batalha_turnos,
 batalhas,
+lider_pokemons,
+lideres,
+shinies_desbloqueados,
 log_loja,
 log_perfis,
 inventario,
@@ -122,6 +126,10 @@ CREATE TABLE
         -- (Pikachu <- Pichu, Snorlax <- Munchlax). A espécie conta como básica
         -- e o bebê não é importado junto; se ele entrar depois, ainda evolui.
         ignora_pre_evolucao TINYINT (1) NOT NULL DEFAULT 0,
+        -- 1 = lendário ou mítico (is_legendary / is_mythical da PokéAPI),
+        -- paradoxo lendário ou Ultra Beast: começa bloqueado e só é
+        -- desbloqueado vencendo a batalha lendária
+        lendario TINYINT (1) NOT NULL DEFAULT 0,
         FOREIGN KEY (tipo_id) REFERENCES tipos (id),
         FOREIGN KEY (evolui_para_id) REFERENCES especies (id) ON DELETE SET NULL,
         FOREIGN KEY (evolui_de_id) REFERENCES especies (id) ON DELETE SET NULL,
@@ -169,7 +177,7 @@ CREATE TABLE
             'paralisado'
         ) NOT NULL DEFAULT 'normal',
         desmaiado TINYINT (1) NOT NULL DEFAULT 0,
-        shiny TINYINT (1) NOT NULL DEFAULT 0, -- 1 chance em 64 ao entrar no time
+        shiny TINYINT (1) NOT NULL DEFAULT 0, -- 1 chance em Pokemon::CHANCE_SHINY ao entrar no time
         criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
         FOREIGN KEY (especie_id) REFERENCES especies (id)
@@ -213,6 +221,21 @@ CREATE TABLE
     ) ENGINE = InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Espécies que cada jogador já conseguiu SHINY (desbloqueadas para sempre):
+-- no Team Builder ele pode deixar qualquer Pokémon dessa espécie shiny.
+-- Preenchida pelos triggers trg_pokemons_shiny_insert/update (triggers.sql).
+-- ---------------------------------------------------------------------
+CREATE TABLE
+    shinies_desbloqueados (
+        usuario_id INT UNSIGNED NOT NULL,
+        especie_id INT UNSIGNED NOT NULL,
+        desbloqueado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (usuario_id, especie_id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+        FOREIGN KEY (especie_id) REFERENCES especies (id) ON DELETE CASCADE
+    ) ENGINE = InnoDB;
+
+-- ---------------------------------------------------------------------
 -- Inventário
 -- ---------------------------------------------------------------------
 CREATE TABLE
@@ -226,18 +249,50 @@ CREATE TABLE
     ) ENGINE = InnoDB;
 
 -- ---------------------------------------------------------------------
+-- Líderes de ginásio: do mais fraco (ordem 1) ao mais forte (ordem 8).
+-- bonus_hp = dificuldade de cada líder: os Pokémon dele têm o HP
+-- multiplicado por esse valor.
+-- ---------------------------------------------------------------------
+CREATE TABLE
+    lideres (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        ordem TINYINT UNSIGNED NOT NULL UNIQUE,
+        nome VARCHAR(60) NOT NULL,
+        tipo_id TINYINT UNSIGNED NOT NULL,
+        premio INT UNSIGNED NOT NULL,
+        insignia VARCHAR(40) NOT NULL,
+        bonus_hp DECIMAL(3, 2) NOT NULL DEFAULT 1.00,
+        FOREIGN KEY (tipo_id) REFERENCES tipos (id)
+    ) ENGINE = InnoDB;
+
+-- Time FIXO de cada líder (posicao = ordem em que os Pokémon entram)
+CREATE TABLE
+    lider_pokemons (
+        lider_id INT UNSIGNED NOT NULL,
+        posicao TINYINT UNSIGNED NOT NULL,
+        especie_id INT UNSIGNED NOT NULL,
+        PRIMARY KEY (lider_id, posicao),
+        FOREIGN KEY (lider_id) REFERENCES lideres (id) ON DELETE CASCADE,
+        FOREIGN KEY (especie_id) REFERENCES especies (id)
+    ) ENGINE = InnoDB;
+
+-- ---------------------------------------------------------------------
 -- LOGS: batalhas, turnos, loja e perfis
 -- ---------------------------------------------------------------------
 CREATE TABLE
     batalhas (
         id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         usuario_id INT UNSIGNED NOT NULL,
+        lider_id INT UNSIGNED NULL, -- contra qual líder foi (NULL = treinador comum)
+        lendario_id INT UNSIGNED NULL, -- contra qual lendário foi (NULL = não foi lendária)
         oponente_nome VARCHAR(60) NOT NULL,
         vencedor ENUM ('jogador', 'oponente') NOT NULL,
         dinheiro_ganho INT UNSIGNED NOT NULL DEFAULT 0,
         total_turnos SMALLINT UNSIGNED NOT NULL DEFAULT 0,
         data_batalha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+        FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+        FOREIGN KEY (lider_id) REFERENCES lideres (id),
+        FOREIGN KEY (lendario_id) REFERENCES especies (id) ON DELETE SET NULL
     ) ENGINE = InnoDB;
 
 CREATE TABLE

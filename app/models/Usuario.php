@@ -4,8 +4,15 @@ namespace App\Models;
 
 use InvalidArgumentException;
 
+/**
+ * Usuário do jogo (tabela usuarios).
+ * ENCAPSULAMENTO: atributos private; nome, e-mail e perfil só mudam pelos
+ * setters, que validam o valor (lançam InvalidArgumentException se for inválido).
+ * A senha nunca fica guardada pura: só o hash (password_hash).
+ */
 class Usuario
 {
+    /** Perfis possíveis (iguais ao ENUM da coluna usuarios.perfil). */
     public const PERFIS = ['jogador', 'admin'];
 
     private ?int $id;
@@ -31,6 +38,7 @@ class Usuario
         $this->pokedollar = $pokedollar;
     }
 
+    /** Monta o usuário a partir de uma linha da tabela usuarios. */
     public static function fromRow(array $r): self
     {
         return new self(
@@ -43,6 +51,7 @@ class Usuario
         );
     }
 
+    /** Cadastro: valida a senha (mín. 6) e guarda só o HASH dela. */
     public static function novo(string $nome, string $email, string $senha): self
     {
         if (strlen($senha) < 6) {
@@ -51,6 +60,7 @@ class Usuario
         return new self(null, $nome, $email, password_hash($senha, PASSWORD_DEFAULT));
     }
 
+    /** Login: compara a senha digitada com o hash salvo. */
     public function verificarSenha(string $senha): bool
     {
         return password_verify($senha, $this->senhaHash);
@@ -113,13 +123,14 @@ class Usuario
         $this->perfil = $perfil;
     }
 
+    /** Dados que podem ir para o navegador (SEM o hash da senha). */
     public function paraArray(): array
     {
         return [
-            'id'         => $this->id,
-            'nome'       => $this->nome,
-            'email'      => $this->email,
-            'perfil'     => $this->perfil,
+            'id' => $this->id,
+            'nome' => $this->nome,
+            'email' => $this->email,
+            'perfil' => $this->perfil,
             'pokedollar' => $this->pokedollar,
         ];
     }

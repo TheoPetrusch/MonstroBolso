@@ -5,6 +5,11 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/**
+ * REPOSITORY da batalha: monta uma batalha nova (escolhe os oponentes) e,
+ * quando ela acaba, grava tudo nas tabelas de LOG (batalhas e batalha_turnos)
+ * numa transação. Também lê o histórico pela view vw_historico_batalhas.
+ */
 class BatalhaRepository
 {
     /**
@@ -19,8 +24,12 @@ class BatalhaRepository
 
     /** Nomes dos treinadores do computador (sorteado a cada batalha). */
     private const TREINADORES = [
-        'Treinador Lucas', 'Treinadora Bia', 'Campista Rui',
-        'Pescador Tião', 'Escoteira Ana', 'Montanhista Leo',
+        'Treinador Lucas',
+        'Treinadora Bia',
+        'Campista Rui',
+        'Pescador Tião',
+        'Escoteira Ana',
+        'Montanhista Leo',
     ];
 
     private PDO $pdo;
@@ -39,9 +48,16 @@ class BatalhaRepository
      * Líder de ginásio: time FIXO (tabela lider_pokemons), com o HP multiplicado
      * pela dificuldade do líder (coluna bonus_hp); o jogador luta com a mesma
      * quantidade de Pokémon que o líder.
+     * Lendário ($lendario): só ele do outro lado, com o HP x LendarioRepository::BONUS_HP,
+     * contra o time inteiro do jogador. $lendarioBase = quem é desbloqueado se
+     * o jogador vencer (a base da linha: Kubfu na batalha contra o Urshifu).
      */
-    public function nova(int $usuarioId, ?Lider $lider = null): Batalha
-    {
+    public function nova(
+        int $usuarioId,
+        ?Lider $lider = null,
+        ?Especie $lendario = null,
+        ?Especie $lendarioBase = null
+    ): Batalha {
         $golpes = new GolpeRepository($this->pdo);
 
         $time = (new TimeRepository($this->pdo))->carregar($usuarioId)->getPokemons();
@@ -63,22 +79,30 @@ class BatalhaRepository
         }
         $golpesTime = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $time);
         $especies = new EspecieRepository($this->pdo);
-        if ($lider !== null) {
+        if ($lendario !== null) {
+            $sorteadas = [$lendario]; // batalha lendária: o lendário sozinho contra o time todo
+        } elseif ($lider !== null) {
             $sorteadas = $especies->doLider($lider->getId());
             if (!$sorteadas) {
                 throw new \InvalidArgumentException('Esse líder ainda não tem time cadastrado no banco.');
             }
         } else {
             $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
-            $alvo  = (int) round($media * self::DIFICULDADE);
+            $alvo = (int) round($media * self::DIFICULDADE);
             $sorteadas = $especies->sortearParecidas(
-                random_int(1, count($dePe)), $alvo, (int) round($alvo * self::FOLGA_DE_FORCA)
+                random_int(1, count($dePe)),
+                $alvo,
+                (int) round($alvo * self::FOLGA_DE_FORCA)
             );
         }
 
         // usuário 0 = computador; Pokémon novo nasce com o HP cheio
         $oponente = array_map(
-            fn(Especie $e) => $lider !== null ? $this->pokemonDoLider($e, $lider) : Pokemon::novoDaEspecie(0, $e),
+            fn(Especie $e) => match (true) {
+                $lendario !== null => $this->pokemonComHpExtra($e, LendarioRepository::BONUS_HP),
+                $lider !== null => $this->pokemonComHpExtra($e, $lider->getBonusHp()),
+                default => Pokemon::novoDaEspecie(0, $e),
+            },
             $sorteadas
         );
         $golpesOponente = array_map(fn(Pokemon $p) => $golpes->daEspecie($p->getEspecie()->getId()), $oponente);
@@ -88,15 +112,19 @@ class BatalhaRepository
             $golpesTime,
             $oponente,
             $golpesOponente,
-            $lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)],
-            $lider
+            $lendario !== null
+            ? 'Lendário ' . $lendario->getNome()
+            : ($lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)]),
+            $lider,
+            $lendario,
+            $lendarioBase
         );
     }
 
-    /** Pokémon "treinado" do líder: HP máximo = HP da espécie x dificuldade do líder. */
-    private function pokemonDoLider(Especie $e, Lider $lider): Pokemon
+    /** Pokémon mais forte (líder ou lendário): HP máximo = HP da espécie x bônus. */
+    private function pokemonComHpExtra(Especie $e, float $bonusHp): Pokemon
     {
-        $hp = (int) round($e->getHp() * $lider->getBonusHp());
+        $hp = (int) round($e->getHp() * $bonusHp);
         return new Pokemon(null, 0, $e, null, 5, $hp, $hp);
     }
 
@@ -104,6 +132,8 @@ class BatalhaRepository
      * Grava a batalha que acabou. TRANSAÇÃO (DTL): ou grava tudo, ou nada.
      *   1) batalhas         -> o trigger trg_batalhas_premio paga o prêmio
      *                          (lider_id diz se foi contra um líder de ginásio);
+     *                          o trigger trg_batalhas_lendario desbloqueia o lendário vencido
+     *                          (lendario_id diz se foi uma batalha lendária);
      *   2) batalha_turnos   -> o log de cada ação;
      *   3) pokemons         -> o HP e a condição com que o time saiu da batalha.
      * Devolve o id da batalha gravada.
@@ -113,16 +143,17 @@ class BatalhaRepository
         $this->pdo->beginTransaction();
         try {
             $this->pdo->prepare(
-                'INSERT INTO batalhas (usuario_id, lider_id, oponente_nome, vencedor, dinheiro_ganho, total_turnos)
-                 VALUES (:u, :lider, :oponente, :vencedor, :dinheiro, :turnos)'
+                'INSERT INTO batalhas (usuario_id, lider_id, lendario_id, oponente_nome, vencedor, dinheiro_ganho, total_turnos)
+                 VALUES (:u, :lider, :lendario, :oponente, :vencedor, :dinheiro, :turnos)'
             )->execute([
-                'u'        => $usuarioId,
-                'lider'    => $b->getLider()?->getId(), // NULL = treinador comum
-                'oponente' => $b->getOponenteNome(),
-                'vencedor' => $b->getVencedor(),
-                'dinheiro' => $b->premio(),
-                'turnos'   => $b->getNumero(),
-            ]);
+                        'u' => $usuarioId,
+                        'lider' => $b->getLider()?->getId(), // NULL = treinador comum
+                        'lendario' => $b->getLendario()?->getId(), // vitória: o trigger trg_batalhas_lendario desbloqueia
+                        'oponente' => $b->getOponenteNome(),
+                        'vencedor' => $b->getVencedor(),
+                        'dinheiro' => $b->premio(),
+                        'turnos' => $b->getNumero(),
+                    ]);
             $batalhaId = (int) $this->pdo->lastInsertId();
 
             $st = $this->pdo->prepare(
@@ -131,12 +162,12 @@ class BatalhaRepository
             );
             foreach ($b->getTurnos() as $t) {
                 $st->execute([
-                    'b'     => $batalhaId,
+                    'b' => $batalhaId,
                     'turno' => $t->getNumero(),
-                    'ator'  => $t->getAtor(),
-                    'acao'  => $t->getAcao(),
-                    'dano'  => $t->getDano(),
-                    'hp'    => $t->getHpRestante(),
+                    'ator' => $t->getAtor(),
+                    'acao' => $t->getAcao(),
+                    'dano' => $t->getDano(),
+                    'hp' => $t->getHpRestante(),
                 ]);
             }
 
@@ -146,10 +177,10 @@ class BatalhaRepository
             );
             foreach ($b->getJogador() as $p) {
                 $st->execute([
-                    'hp'     => $p->getHpAtual(),
+                    'hp' => $p->getHpAtual(),
                     'status' => $p->getStatus(),
-                    'id'     => $p->getId(),
-                    'u'      => $usuarioId,
+                    'id' => $p->getId(),
+                    'u' => $usuarioId,
                 ]);
             }
 

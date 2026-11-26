@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/** REPOSITORY dos itens: loja (vw_loja), mochila (vw_inventario) e compra (procedure). */
 class ItemRepository
 {
     private PDO $pdo;

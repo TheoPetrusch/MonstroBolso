@@ -9,6 +9,11 @@ use App\Models\UsuarioRepository;
 use InvalidArgumentException;
 use PDOException;
 
+/**
+ * CONTROLE DE USUÁRIO: tela de login, cadastro, login, logout.
+ * Quem está logado fica guardado na SESSÃO ($_SESSION['usuario_id']);
+ * cada jogador tem o próprio time, dinheiro e mochila.
+ */
 class AuthController extends BaseController
 {
     private UsuarioRepository $repo;
@@ -20,6 +25,7 @@ class AuthController extends BaseController
 
     // paginas html
 
+    /** GET / : já logado vai direto para a Home; senão mostra o login. */
     public function paginaLogin(): void
     {
         if (isset($_SESSION['usuario_id'])) {
@@ -31,6 +37,7 @@ class AuthController extends BaseController
 
     // API json
 
+    /** POST /api/login  corpo JSON: { "email": "...", "senha": "..." } */
     public function login(): void
     {
         try {
@@ -42,26 +49,33 @@ class AuthController extends BaseController
                 throw new InvalidArgumentException('Informe e-mail e senha.');
             }
 
+            // mesma mensagem para e-mail inexistente e senha errada:
+            // assim ninguém descobre quais e-mails têm conta
             $u = $this->repo->buscarPorEmail($email);
-            if (!$u || !$u->verificarSenha($senha)) {
-                throw new CredenciaisInvalidasException();
+            if (!$u || !$u->verificarSenha($senha)) { // verificarSenha usa password_verify
+                throw new CredenciaisInvalidasException(); // exceção customizada
             }
 
+            // SEGURANÇA: novo id de sessão no login (evita "session fixation")
             session_regenerate_id(true);
             $_SESSION['usuario_id'] = $u->getId();
 
             $this->json(['ok' => true, 'usuario' => $u->paraArray()]);
         } catch (CredenciaisInvalidasException $e) {
+            // getCode() = 401, definido dentro da exceção
             $this->json(['ok' => false, 'erro' => $e->getMessage()], $e->getCode());
         } catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
         }
     }
 
+    /** POST /api/registrar  corpo JSON: { "nome", "email", "senha" }. Já entra logado. */
     public function registrar(): void
     {
         try {
             $d = $this->corpoJson();
+            // Usuario::novo valida nome, e-mail e senha (lança InvalidArgumentException)
+            // e guarda a senha com password_hash (nunca a senha pura)
             $u = Usuario::novo(
                 (string) ($d['nome'] ?? ''),
                 (string) ($d['email'] ?? ''),
@@ -72,7 +86,7 @@ class AuthController extends BaseController
                 throw new InvalidArgumentException('Este e-mail já está cadastrado.');
             }
 
-            $u = $this->repo->criar($u);
+            $u = $this->repo->criar($u); // cria o usuário e o time dele (transação)
             session_regenerate_id(true);
             $_SESSION['usuario_id'] = $u->getId();
 
@@ -90,6 +104,7 @@ class AuthController extends BaseController
         }
     }
 
+    /** POST /api/logout: apaga a sessão (o jogador sai). */
     public function logout(): void
     {
         $_SESSION = [];
@@ -97,6 +112,7 @@ class AuthController extends BaseController
         $this->json(['ok' => true]);
     }
 
+    /** GET /api/eu: dados de quem está logado (ou 401). */
     public function eu(): void
     {
         $u = $this->usuarioLogado();

@@ -18,7 +18,7 @@ class LojaController extends BaseController
 
     public function __construct()
     {
-        $this->itens    = new ItemRepository();
+        $this->itens = new ItemRepository();
         $this->usuarios = new UsuarioRepository();
     }
 
@@ -38,18 +38,21 @@ class LojaController extends BaseController
     public function dados(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $this->json($this->montarResposta($uid));
     }
 
+    /** POST /api/loja/comprar  corpo JSON: { "item_id": 1, "quantidade": 3 } */
     public function comprar(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
-        $d          = $this->corpoJson();
-        $itemId     = (int) ($d['item_id'] ?? 0);
+        $d = $this->corpoJson();
+        $itemId = (int) ($d['item_id'] ?? 0);
         $quantidade = (int) ($d['quantidade'] ?? 1);
 
         if ($quantidade < 1 || $quantidade > self::MAXIMO_POR_COMPRA) {
@@ -58,6 +61,8 @@ class LojaController extends BaseController
         }
 
         try {
+            // a compra é feita pela procedure sp_comprar_item (banco), numa
+            // TRANSAÇÃO: debita o saldo, põe na mochila e grava o log_loja
             $this->itens->comprar($uid, $itemId, $quantidade);
             $this->json($this->montarResposta($uid));
         } catch (PDOException $e) {
@@ -71,14 +76,15 @@ class LojaController extends BaseController
         }
     }
 
+    /** Saldo atualizado, catálogo e mochila: a tela redesenha tudo com isso. */
     private function montarResposta(int $uid): array
     {
         $usuario = $this->usuarios->buscarPorId($uid);
 
         return [
-            'ok'         => true,
-            'saldo'      => $usuario ? $usuario->getPokedollar() : 0,
-            'itens'      => array_map(fn(Item $i) => $i->paraArray(), $this->itens->listarLoja()),
+            'ok' => true,
+            'saldo' => $usuario ? $usuario->getPokedollar() : 0,
+            'itens' => array_map(fn(Item $i) => $i->paraArray(), $this->itens->listarLoja()),
             'inventario' => $this->itens->inventario($uid),
         ];
     }

@@ -2,8 +2,14 @@
 
 namespace App\Core;
 
+/**
+ * Classe ABSTRATA (não dá para instanciar) com o que todo controller usa.
+ * Os controllers HERDAM dela (class TimeController extends BaseController).
+ * Métodos protected: só a própria classe e as filhas podem chamar.
+ */
 abstract class BaseController
 {
+    /** Responde em JSON (transporte de dados com o JavaScript) com o status HTTP. */
     protected function json(mixed $dados, int $status = 200): void
     {
         http_response_code($status);
@@ -11,6 +17,11 @@ abstract class BaseController
         echo json_encode($dados, JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * Mostra uma tela (o "V" do MVC): app/views/{nome}.php.
+     * extract() transforma ['usuario' => ...] na variável $usuario dentro da view;
+     * $base (caminho do site) vai para todas as views.
+     */
     protected function view(string $nome, array $dados = []): void
     {
         $dados['base'] = $this->basePath();
@@ -31,6 +42,7 @@ abstract class BaseController
         return rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
     }
 
+    /** Manda o navegador para outra página (ex.: sem login, volta para o login). */
     protected function redirecionar(string $rota): void
     {
         header('Location: ' . $this->basePath() . $rota);

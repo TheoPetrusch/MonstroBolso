@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
-/** Líder de ginásio (tabela lideres). Imutável: só getters. */
+/**
+ * Líder de ginásio (tabela lideres). Imutável: só getters.
+ * O time dele é fixo (tabela lider_pokemons) e o HP dos Pokémon é
+ * multiplicado por bonusHp (BatalhaRepository::pokemonComHpExtra).
+ */
 class Lider
 {
     public function __construct(
@@ -14,7 +18,8 @@ class Lider
         private int $premio,
         private string $insignia,
         private float $bonusHp     // dificuldade: HP dos Pokémon do líder x bonusHp
-    ) {}
+    ) {
+    }
 
     public static function fromRow(array $r): self
     {
@@ -58,13 +63,13 @@ class Lider
     public function paraArray(): array
     {
         return [
-            'id'         => $this->id,
-            'ordem'      => $this->ordem,
-            'nome'       => $this->nome,
-            'tipo'       => $this->tipo,
+            'id' => $this->id,
+            'ordem' => $this->ordem,
+            'nome' => $this->nome,
+            'tipo' => $this->tipo,
             'quantidade' => $this->quantidade,
-            'premio'     => $this->premio,
-            'insignia'   => $this->insignia,
+            'premio' => $this->premio,
+            'insignia' => $this->insignia,
         ];
     }
 }

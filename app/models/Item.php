@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
-/** Item vendido no Poké Mart. Imutável: só getters. */
+/**
+ * Item vendido no Poké Mart. Imutável: só getters (ENCAPSULAMENTO: os
+ * atributos são private e ninguém de fora consegue alterar).
+ * O efeito de cada item é aplicado em Pokemon::usarItem(), conforme a categoria.
+ */
 class Item
 {
     public function __construct(
@@ -16,7 +20,8 @@ class Item
         private int $curaPercentual = 0,    // 0..100 (Max Potion = 100, Revive = 50)
         private ?string $statusCurado = null, // ex.: 'veneno' (Antidote)
         private bool $curaTodosStatus = false // Full Heal / Full Restore
-    ) {}
+    ) {
+    }
 
     /** Linha vinda da view vw_loja ou da tabela itens. */
     public static function fromRow(array $r): self
@@ -67,14 +72,15 @@ class Item
         return $this->curaTodosStatus;
     }
 
+    /** Só o que a loja mostra (os efeitos ficam no servidor). */
     public function paraArray(): array
     {
         return [
-            'id'        => $this->id,
-            'nome'      => $this->nome,
+            'id' => $this->id,
+            'nome' => $this->nome,
             'categoria' => $this->categoria,
             'descricao' => $this->descricao,
-            'preco'     => $this->preco,
+            'preco' => $this->preco,
         ];
     }
 }
