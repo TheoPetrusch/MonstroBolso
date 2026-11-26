@@ -13,13 +13,16 @@ use App\Controllers\ImportadorController;
 use App\Controllers\LojaController;
 use App\Controllers\TimeController;
 
+// SEGURANÇA do cookie de sessão:
+//   httponly -> o JavaScript não consegue ler o cookie (protege contra XSS);
+//   samesite -> outro site não consegue fazer ações em nome do jogador (CSRF).
+session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
 
 $router = new Router();
 
 // utilitárias
 $router->get('/api/ping', [PingController::class, 'ping']);
-$router->get('/api/db',   [PingController::class, 'db']);
 
 // páginas
 $router->get('/',     [AuthController::class, 'paginaLogin']);
@@ -33,7 +36,7 @@ $router->post('/api/login',          [AuthController::class, 'login']);
 $router->post('/api/registrar',      [AuthController::class, 'registrar']);
 $router->post('/api/logout',         [AuthController::class, 'logout']);
 $router->get('/api/eu',              [AuthController::class, 'eu']);
-$router->post('/api/perfil/trocar',  [AuthController::class, 'trocarPerfil']);
+
 
 // API do Team Builder
 $router->get('/api/especies',        [TimeController::class, 'listarEspecies']);

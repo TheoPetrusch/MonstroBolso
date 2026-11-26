@@ -5,12 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
+    <link rel="stylesheet" href="<?= $base ?>/assets/css/login.css">
 </head>
 
-<body>
+<body class="tela-login">
     <main class="cartao">
-        <h1>MonstroBolso</h1>
+        <h1>MONSTRO<br>BOLSO</h1>
+        <p class="subtitulo">Monte seu time e vença os ginásios!</p>
 
         <div class="abas">
             <button type="button" class="aba ativa" data-aba="login">Entrar</button>

@@ -80,7 +80,13 @@ class AuthController extends BaseController
         } catch (InvalidArgumentException $e) {
             $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
         } catch (PDOException $e) {
-            $this->json(['ok' => false, 'erro' => 'Erro ao gravar no banco: ' . $e->getMessage()], 500);
+            // 1062 = e-mail repetido (UNIQUE): acontece se dois cadastros iguais chegam juntos
+            if (($e->errorInfo[1] ?? 0) === 1062) {
+                $this->json(['ok' => false, 'erro' => 'Este e-mail já está cadastrado.'], 422);
+                return;
+            }
+            error_log('[MonstroBolso] ' . $e); // SEGURANÇA: detalhe só no log
+            $this->json(['ok' => false, 'erro' => 'Erro ao gravar no banco. Tente de novo.'], 500);
         }
     }
 
@@ -99,34 +105,6 @@ class AuthController extends BaseController
             return;
         }
         $this->json(['ok' => true, 'usuario' => $u->paraArray()]);
-    }
-
-    public function trocarPerfil(): void
-    {
-        try {
-            $logado = $this->usuarioLogado();
-            if (!$logado) {
-                $this->json(['ok' => false, 'erro' => 'Não autenticado.'], 401);
-                return;
-            }
-            if (!$logado->isAdmin()) {
-                $this->json(['ok' => false, 'erro' => 'Apenas admin troca perfis.'], 403);
-                return;
-            }
-
-            $d = $this->corpoJson();
-            $alvo = $this->repo->buscarPorId((int) ($d['usuario_id'] ?? 0));
-            if (!$alvo) {
-                throw new InvalidArgumentException('Usuário não encontrado.');
-            }
-
-            $alvo->setPerfil((string) ($d['perfil'] ?? '')); // valida o valor
-            $this->repo->alterarPerfil($alvo->getId(), $alvo->getPerfil());
-
-            $this->json(['ok' => true, 'usuario' => $alvo->paraArray()]);
-        } catch (InvalidArgumentException $e) {
-            $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
-        }
     }
 
     private function usuarioLogado(): ?Usuario

@@ -1,0 +1,35 @@
+/* Tela de admin: usa os painéis do time.css */
+
+.tabela-admin {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .9rem;
+}
+
+.tabela-admin th,
+.tabela-admin td {
+    padding: 8px 6px;
+    border-bottom: 2px solid #e2e6ef;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.tabela-admin th {
+    font-weight: 800;
+}
+
+.tabela-admin button {
+    padding: 6px 10px;
+    font-size: .8rem;
+}
+
+.perfil {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.perfil.admin   { background: #dfe9ff; color: #203a8c; }
+.perfil.jogador { background: #e6f6dd; color: #2f6b2f; }

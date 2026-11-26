@@ -1,0 +1,464 @@
+/* =========================================================
+   Poké Mart — visual novo (só vale em <body class="pagina mart">)
+   Tons de amarelo e marrom, como o interior de uma lojinha.
+   ========================================================= */
+
+body.mart {
+    --tinta: #3b2a1a;        /* marrom-escuro: bordas e texto */
+    --creme: #fff6dc;
+    --madeira: #a8521a;
+    min-height: 100vh;
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--tinta);
+    /* parede de tábuas amarelas */
+    background-color: #f3d382;
+    background-image: repeating-linear-gradient(90deg, #f3d382 0 46px, #e9c56c 46px 50px);
+    position: relative;
+}
+
+/* chão de madeira no pé da tela */
+body.mart::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 120px;
+    border-top: 6px solid #5a3a1e;
+    background-color: #9a6234;
+    background-image: repeating-linear-gradient(0deg, #9a6234 0 22px, #7f4f28 22px 26px);
+    z-index: -1;
+}
+
+/* barra amarela colada no canto esquerdo (igual ao Team Builder) */
+body.mart::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 18px;
+    border: 0;
+    border-right: 3px solid var(--tinta);
+    border-radius: 0;
+}
+
+/* moedinha pixelada usada no saldo e nos preços */
+.moeda {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 6px;
+    vertical-align: -1px;
+    background: #f2c230;
+    border: 2px solid #8a5a00;
+    box-shadow: inset 0 0 0 3px #f2c230, inset 0 0 0 5px #8a5a00;
+    box-sizing: border-box;
+}
+
+/* ---------- topo ---------- */
+body.mart .topo {
+    background: transparent;
+    padding: 20px 32px 4px 48px;
+}
+
+body.mart .topo h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.3rem;
+    line-height: 1.4;
+    color: #ffd84a;
+    text-shadow: 2px 0 0 var(--tinta), -2px 0 0 var(--tinta),
+                 0 2px 0 var(--tinta), 0 -2px 0 var(--tinta), 4px 4px 0 var(--madeira);
+}
+
+body.mart .topo .voltar {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 3px solid var(--tinta);
+    border-radius: 10px;
+    background: var(--creme);
+    box-shadow: 0 4px 0 var(--tinta);
+    color: var(--tinta);
+    font-weight: 800;
+}
+
+body.mart .saldo {
+    margin-left: auto;
+    padding: 8px 14px;
+    border: 3px solid var(--tinta);
+    border-radius: 12px;
+    background: var(--creme);
+    box-shadow: 0 4px 0 var(--tinta);
+    color: var(--tinta);
+    font-family: 'Press Start 2P', monospace;
+    font-size: .8rem;
+}
+
+/* ---------- layout ---------- */
+body.mart .layout {
+    grid-template-columns: minmax(260px, 380px) minmax(0, 1fr);
+    align-items: start;
+    padding: 20px 32px 150px 48px;   /* espaço embaixo pro chão */
+}
+
+@media (max-width: 900px) {
+    body.mart .layout { grid-template-columns: 1fr; }
+}
+
+body.mart h2 {
+    margin: 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: .8rem;
+    line-height: 1.5;
+    color: var(--tinta);
+}
+
+/* ---------- categorias: cores ---------- */
+[data-cat]                 { --cor-cat: #b8a26a; --fundo-cat: #f6e2b0; --texto-cat: #6b4310; }
+[data-cat="cura_hp"]       { --cor-cat: #e2463a; --fundo-cat: #fde3dc; --texto-cat: #8a1f07; }
+[data-cat="cura_status"]   { --cor-cat: #7cc96b; --fundo-cat: #e3f4da; --texto-cat: #2f6b2f; }
+[data-cat="reviver"]       { --cor-cat: #f2c230; --fundo-cat: #fff4c2; --texto-cat: #7a5a00; }
+[data-cat="evolucao"]      { --cor-cat: #5aa7f0; --fundo-cat: #dcecff; --texto-cat: #1f4f8f; }
+
+/* ---------- mochila ---------- */
+.painel-mochila {
+    background: var(--creme);
+    border: 3px solid var(--tinta);
+    border-radius: 16px;
+    box-shadow: 0 6px 0 var(--tinta);
+    overflow: hidden;
+}
+
+.painel-mochila h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--madeira);
+    border-bottom: 3px solid var(--tinta);
+    color: #ffffff;
+}
+
+.icone-mochila {
+    width: 20px;
+    height: 18px;
+    background: #e0a020;
+    border: 2px solid var(--tinta);
+    border-radius: 3px;
+    box-shadow: inset 0 -6px 0 #c58410;
+}
+
+body.mart .mochila {
+    padding: 14px;
+    gap: 10px;
+}
+
+body.mart .mochila li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 2px solid #e3c98f;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+body.mart .mochila li.vazio {
+    display: block;
+    border-style: dashed;
+    background: transparent;
+    color: #7a6040;
+    font-weight: 700;
+    text-align: center;
+}
+
+body.mart .mochila .icone {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: var(--fundo-cat);
+    display: grid;
+    place-items: center;
+}
+
+body.mart .mochila .texto {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+}
+
+body.mart .mochila small {
+    color: #7a6040;
+    font-weight: 700;
+}
+
+.qtd-mochila {
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #f6e2b0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: .65rem;
+}
+
+.lembrete {
+    margin: 0;
+    padding: 0 16px 16px;
+    font-size: .85rem;
+    font-weight: 700;
+    color: #7a6040;
+}
+
+/* ---------- itens à venda ---------- */
+.painel-loja {
+    background: #fffaf0;
+    border: 3px solid var(--tinta);
+    border-radius: 16px;
+    box-shadow: 0 6px 0 var(--tinta);
+    padding: 18px;
+}
+
+body.mart .titulo-painel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+body.mart .filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+body.mart .filtros button {
+    min-height: 36px;
+    padding: 6px 14px;
+    border: 2px solid var(--cor-cat, var(--tinta));
+    border-radius: 999px;
+    background: var(--fundo-cat, #ffffff);
+    color: var(--texto-cat, var(--tinta));
+    font-family: inherit;
+    font-weight: 800;
+}
+
+body.mart .filtros button.ativo {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: #ffffff;
+}
+
+body.mart .catalogo {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+    margin: 0;
+}
+
+.card-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 12px;
+    border: 3px solid #e3c98f;
+    border-radius: 12px;
+    background: #ffffff;
+    text-align: center;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.card-item:hover {
+    transform: translateY(-4px);
+    border-color: var(--cor-cat);
+    box-shadow: 0 6px 0 var(--tinta);
+}
+
+.card-item.caro {
+    border-color: #eadfca;
+}
+
+.card-item .icone {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--fundo-cat);
+    display: grid;
+    place-items: center;
+}
+
+/* sprite do item (pixel art pequena, ampliada sem borrar) */
+.sprite-item {
+    width: 44px;
+    height: 44px;
+    image-rendering: pixelated;
+}
+
+body.mart .mochila .sprite-item {
+    width: 34px;
+    height: 34px;
+}
+
+.card-item strong {
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.chip-cat {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--fundo-cat);
+    color: var(--texto-cat);
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+body.mart .card-item .descricao {
+    margin: 0;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #6b5538;
+    line-height: 1.35;
+}
+
+body.mart .preco {
+    font-family: 'Press Start 2P', monospace;
+    font-size: .75rem;
+    color: #6b4310;
+}
+
+.compra {
+    margin-top: auto;
+    padding-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.seletor {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--tinta);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.seletor button {
+    width: 32px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #f6e2b0;
+    color: var(--tinta);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+body.mart .seletor .qtd {
+    width: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    text-align: center;
+    font-family: inherit;
+    font-weight: 900;
+    color: var(--tinta);
+    -moz-appearance: textfield;
+}
+
+.seletor .qtd::-webkit-inner-spin-button,
+.seletor .qtd::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.compra .comprar {
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: var(--madeira);
+    box-shadow: 0 4px 0 #6b330f;
+    font-weight: 800;
+}
+
+.compra .comprar:active {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+
+.compra .falta {
+    padding: 8px 12px;
+    border: 2px dashed #c9b28a;
+    border-radius: 10px;
+    background: #f4ece0;
+    color: #7a5a3a;
+    font-size: .82rem;
+    font-weight: 800;
+}
+
+/* ---------- barraca presa no canto, em cima do chão de madeira ---------- */
+.barraca {
+    position: fixed;
+    left: 48px;
+    bottom: 40px;
+    width: var(--barraca);
+    image-rendering: pixelated;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* os painéis ficam sempre na frente da barraca e do vendedor */
+body.mart .layout {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 900px) {
+    .barraca { display: none; }
+}
+
+/* ---------- tamanho fixo da barraca e do vendedor (sem variável) ---------- */
+.barraca {
+    width: min(340px, 25vw) !important;
+    height: auto !important;               /* mantém a proporção da imagem */
+}
+
+.atendente {
+    left: calc(48px + min(340px, 25vw) * 0.3) !important;
+    bottom: calc(40px + min(340px, 25vw) * 0.12) !important;
+    width: calc(min(340px, 25vw) * 0.4) !important;
+    height: auto !important;
+}
+
+/* ---------- vendedor atrás do balcão ---------- */
+body.mart {
+    --barraca: min(340px, 25vw);
+}
+
+.barraca {
+    width: var(--barraca);
+}
+
+.atendente {
+    position: fixed;
+    left: calc(48px + var(--barraca) * 0.3);      /* posição pro lado */
+    bottom: calc(40px + var(--barraca) * 0.12);   /* maior = sobe */
+    width: calc(var(--barraca) * 0.4);            /* tamanho */
+    mix-blend-mode: multiply;                     /* o fundo da imagem se mistura com a parede */
+    pointer-events: none;
+    z-index: 0;
+}
+
+@media (max-width: 900px) {
+    .atendente { display: none; }
+}
+
+/* vendedor mais baixo, com as pernas escondidas atrás do balcão */
+.atendente {
+    bottom: calc(40px + min(340px, 25vw) * 0.02) !important;
+}
