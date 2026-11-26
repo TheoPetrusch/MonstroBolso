@@ -50,6 +50,23 @@ class ImportadorPokemon
         9 => [906, 1025],
     ];
 
+    /**
+     * Paradoxos LENDÁRIOS: versões antigas/futuras de lendários. Na PokéAPI
+     * eles não vêm com is_legendary, mas no jogo contam como lendários.
+     * 1009 Walking Wake (Suicune), 1010 Iron Leaves (Virizion),
+     * 1020 Gouging Fire (Entei), 1021 Raging Bolt (Raikou),
+     * 1022 Iron Boulder (Terrakion), 1023 Iron Crown (Cobalion).
+     */
+    public const PARADOXOS_LENDARIOS = [1009, 1010, 1020, 1021, 1022, 1023];
+
+    /**
+     * Ultra Beasts (7ª geração): também não vêm com is_legendary na PokéAPI,
+     * mas no jogo contam como lendários. 793 Nihilego, 794 Buzzwole,
+     * 795 Pheromosa, 796 Xurkitree, 797 Celesteela, 798 Kartana, 799 Guzzlord,
+     * 803 Poipole, 804 Naganadel, 805 Stakataka, 806 Blacephalon.
+     */
+    public const ULTRA_BEASTS = [793, 794, 795, 796, 797, 798, 799, 803, 804, 805, 806];
+
     /** Importa uma geração inteira (1 a 9). */
     public function importarGeracao(int $geracao): array
     {
@@ -237,6 +254,11 @@ class ImportadorPokemon
             'velocidade' => $stats['speed'],
             'sprite_url' => $pokemon['sprites']['front_default'] ?? null,
             'evolui_de'  => $pai ? PokeApiService::idDaUrl($pai) : null,
+            // lendário = lendário OU mítico (Mew, Celebi...) OU paradoxo lendário OU Ultra Beast
+            'lendario'   => !empty($especie['is_legendary'])
+                            || !empty($especie['is_mythical'])
+                            || in_array((int) $pokemon['id'], self::PARADOXOS_LENDARIOS, true)
+                            || in_array((int) $pokemon['id'], self::ULTRA_BEASTS, true),
         ];
     }
 }

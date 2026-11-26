@@ -403,7 +403,9 @@ class TeamBuilder {
                     <span class="chip-tipo">${esc(e.tipo)}</span>
                     ${e.disponivel
                         ? `<small>HP ${e.hp} &middot; Vel ${e.velocidade}</small>`
-                        : '<span class="dica">Evolua o Pokémon para desbloqueá-lo</span>'}
+                        : (e.lendario
+                            ? '<span class="dica">Lendário: vença-o numa batalha lendária para desbloqueá-lo</span>'
+                            : '<span class="dica">Evolua o Pokémon para desbloqueá-lo</span>')}
                     <div class="previa">
                         HP ${e.hp} ${barra(e.hp)}
                         Ataque ${e.ataque} ${barra(e.ataque)}
@@ -417,7 +419,7 @@ class TeamBuilder {
                                        ${cheio || linhasNoTime.has(e.linha) ? 'disabled' : ''}
                                        ${linhasNoTime.has(e.linha)
                                            ? 'title="Seu time já tem um Pokémon dessa linha evolutiva"'
-                                           : (e.basica ? '' : 'title="Desbloqueado por evolução"')}>Adicionar</button>`
+                                           : (e.lendario ? 'title="Lendário desbloqueado em batalha"' : (e.basica ? '' : 'title="Desbloqueado por evolução"'))}>Adicionar</button>`
                             : ''}
                     </div>`;
 

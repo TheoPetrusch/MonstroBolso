@@ -19,6 +19,7 @@ use InvalidArgumentException;
 class Batalha
 {
     public const PREMIO_POR_POKEMON = 150; // Pokédollar por Pokémon do oponente
+    public const PREMIO_LENDARIO    = 3000; // Pokédollar por vencer um lendário
     public const CHANCE_CONDICAO   = 10;  // % de um golpe causar condição
 
     /** Como cada condição aparece nas mensagens. */
@@ -49,7 +50,9 @@ class Batalha
         private array $oponente,
         private array $golpesOponente,
         private string $oponenteNome,
-        private ?Lider $lider = null // null = treinador comum
+        private ?Lider $lider = null, // null = treinador comum
+        private ?Especie $lendario = null, // batalha lendária: a espécie do lendário
+        private ?Especie $lendarioBase = null // quem é desbloqueado ao vencer (Kubfu p/ Urshifu)
     ) {
         $primeiro = $this->proximoDePe($this->jogador);
         if ($primeiro === null) {
@@ -380,6 +383,11 @@ class Batalha
         return $this->lider;
     }
 
+    public function getLendario(): ?Especie
+    {
+        return $this->lendario;
+    }
+
     /**
      * Prêmio só para quem venceu: o do líder ou, contra treinador comum,
      * 150 por Pokémon do oponente (mais inimigos = mais dinheiro).
@@ -388,6 +396,9 @@ class Batalha
     {
         if ($this->vencedor !== 'jogador') {
             return 0;
+        }
+        if ($this->lendario !== null) {
+            return self::PREMIO_LENDARIO;
         }
         return $this->lider?->getPremio() ?? self::PREMIO_POR_POKEMON * count($this->oponente);
     }
@@ -414,6 +425,8 @@ class Batalha
             'premio'        => $this->premio(),
             'oponente_nome' => $this->oponenteNome,
             'lider'         => $this->lider?->paraArray(),
+            'lendario'      => $this->lendario?->getNome(), // null = não é batalha lendária
+            'lendario_desbloqueia' => ($this->lendarioBase ?? $this->lendario)?->getNome(),
             'jogador'  => [
                 'ativo'    => $this->ativoJogador,
                 'pokemons' => array_map($lutador, $this->jogador, array_keys($this->jogador)),

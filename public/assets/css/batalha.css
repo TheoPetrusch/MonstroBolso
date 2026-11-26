@@ -181,3 +181,13 @@
 .ginasio .vida {
     background: #e0bb20;
 }
+
+/* lendários: mesmo quadro dos ginásios, em roxo */
+.ginasio.lendario {
+    border-color: #6f35fc;
+    background: #f3eeff;
+}
+
+.ginasio.lendario .vida {
+    background: #6f35fc;
+}

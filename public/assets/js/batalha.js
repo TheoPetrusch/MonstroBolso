@@ -81,6 +81,7 @@ class TelaBatalha {
         this.#desenharHistorico(r.historico);
         this.#necessarias = r.progresso?.necessarias ?? this.#necessarias;
         this.#desenharGinasio(r.progresso);
+        this.#desenharLendario(r.lendario);
 
         if (b === null) {
             document.getElementById('resultado').hidden = true;
@@ -93,12 +94,13 @@ class TelaBatalha {
         const deleDePe = b.oponente.pokemons.filter(p => !p.desmaiado).length;
 
         const quem = b.lider ? `Líder de Ginásio · ${esc(b.oponente_nome)}` : esc(b.oponente_nome);
+        // (na batalha lendária o nome já vem como "Lendário Mewtwo")
         document.getElementById('lado-oponente').innerHTML =
             this.#lado(dele, false, `${quem} · ${deleDePe}/${b.oponente.pokemons.length} de pé`);
         document.getElementById('lado-jogador').innerHTML = this.#lado(meu, true, 'Seu Pokémon');
 
         this.#desenharLog(b.log);
-        this.#desenharResultado(b);
+        this.#desenharResultado(b, r.lendario);
         if (!b.encerrada) {
             this.#desenharGolpes(b.golpes);
             this.#desenharMochila(r.mochila, b.jogador.pokemons, meu);
@@ -186,7 +188,7 @@ class TelaBatalha {
         lista.scrollTop = lista.scrollHeight; // mostra sempre o mais recente
     }
 
-    #desenharResultado(b) {
+    #desenharResultado(b, lendario) {
         const alvo = document.getElementById('resultado');
         alvo.hidden = !b.encerrada;
         if (!b.encerrada) return;
@@ -197,6 +199,12 @@ class TelaBatalha {
             texto += ` Você conquistou a ${esc(b.lider.insignia)}!`;
         } else if (b.lider) {
             texto += ` Vença mais ${this.#necessarias} treinadores para desafiar o líder de novo.`;
+        } else if (b.lendario && venceu) {
+            texto += b.lendario_desbloqueia !== b.lendario
+                ? ` ${esc(b.lendario_desbloqueia)} foi desbloqueado: coloque-o no time e evolua com pedra até ${esc(b.lendario)}!`
+                : ` ${esc(b.lendario)} foi desbloqueado: coloque-o no time pelo Team Builder!`;
+        } else if (b.lendario) {
+            texto += ` ${esc(b.lendario)} escapou. Vença mais ${Number(lendario?.necessarias ?? 8)} treinadores para tentar outro lendário.`;
         }
         alvo.className = 'resultado ' + (venceu ? 'vitoria' : 'derrota');
         alvo.innerHTML = `
@@ -233,6 +241,38 @@ class TelaBatalha {
         alvo.innerHTML = html;
         alvo.querySelector('#btn-lider')
             .addEventListener('click', () => this.#enviar('/api/batalha/iniciar', { lider: true }));
+    }
+
+    /** Lendários desbloqueados, vitórias até a próxima batalha lendária e o botão de desafiar. */
+    #desenharLendario(p) {
+        const alvo = document.getElementById('lendario');
+        if (!p) return;
+
+        let html = `<p><strong>Lendários desbloqueados: ${Number(p.capturados)}/${Number(p.total)}</strong></p>`;
+        if (p.total === 0) {
+            alvo.innerHTML = html + '<p class="dica">Nenhum lendário no jogo ainda: importe uma geração na Home.</p>';
+            return;
+        }
+        if (p.restantes === 0) {
+            alvo.innerHTML = html + '<p>Você desbloqueou todos os lendários importados!</p>';
+            return;
+        }
+        const pct = Math.round(p.vitorias / p.necessarias * 100);
+        html += `
+            <p class="dica">A cada ${Number(p.necessarias)} vitórias contra treinadores, enfrente um lendário
+               sorteado (com HP extra) contra o seu time inteiro. Vencendo, ele fica desbloqueado.</p>
+            <div class="hp">
+                <span>Vitórias</span>
+                <div class="trilho"><span class="vida" style="width:${pct}%"></span></div>
+                <span>${Number(p.vitorias)}/${Number(p.necessarias)}</span>
+            </div>
+            <button type="button" id="btn-lendario" ${p.liberado ? '' : 'disabled'}
+                    title="${p.liberado ? '' : 'Vença ' + Number(p.necessarias) + ' treinadores para liberar'}">
+                Desafiar um lendário
+            </button>`;
+        alvo.innerHTML = html;
+        alvo.querySelector('#btn-lendario')
+            .addEventListener('click', () => this.#enviar('/api/batalha/iniciar', { lendario: true }));
     }
 
     #desenharHistorico(historico) {

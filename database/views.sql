@@ -154,3 +154,28 @@ FROM
     JOIN especies pai ON pai.id = filho.evolui_de_id
     JOIN itens i ON i.categoria = 'evolucao'
     AND i.tipo_id = filho.tipo_id;
+
+-- 8) DQL (view): progresso de cada jogador nos ginásios, calculado pelo LOG de batalhas
+--   insignias            = líderes diferentes que ele já venceu;
+--   vitorias_desde_lider = vitórias contra treinadores comuns DEPOIS da última
+--                          batalha contra um líder (ganhando ou perdendo).
+--                          Perdeu para o líder? A contagem volta a zero.
+--   vitorias_desde_lendario = vitórias contra treinadores comuns DEPOIS da
+--                          última batalha lendária (ganhando ou perdendo).
+CREATE OR REPLACE VIEW `vw_progresso_ginasio` AS
+SELECT
+    u.id AS usuario_id,
+    (SELECT COUNT(DISTINCT b.lider_id)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NOT NULL AND b.vencedor = 'jogador') AS insignias,
+    (SELECT COUNT(*)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.lendario_id IS NULL AND b.vencedor = 'jogador'
+        AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
+                              WHERE b2.usuario_id = u.id AND b2.lider_id IS NOT NULL), 0)) AS vitorias_desde_lider,
+    (SELECT COUNT(*)
+       FROM batalhas b
+      WHERE b.usuario_id = u.id AND b.lider_id IS NULL AND b.lendario_id IS NULL AND b.vencedor = 'jogador'
+        AND b.id > COALESCE((SELECT MAX(b2.id) FROM batalhas b2
+                              WHERE b2.usuario_id = u.id AND b2.lendario_id IS NOT NULL), 0)) AS vitorias_desde_lendario
+FROM usuarios u;

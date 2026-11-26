@@ -5,8 +5,10 @@ namespace App\Controllers;
 use App\Core\BaseController;
 use App\Models\Batalha;
 use App\Models\BatalhaRepository;
+use App\Models\Especie;
 use App\Models\GinasioRepository;
 use App\Models\ItemRepository;
+use App\Models\LendarioRepository;
 use App\Models\Lider;
 use InvalidArgumentException;
 
@@ -20,12 +22,14 @@ class BatalhaController extends BaseController
     private BatalhaRepository $batalhas;
     private GinasioRepository $ginasios;
     private ItemRepository $itens;
+    private LendarioRepository $lendarios;
 
     public function __construct()
     {
         $this->batalhas = new BatalhaRepository();
         $this->ginasios = new GinasioRepository();
         $this->itens    = new ItemRepository();
+        $this->lendarios = new LendarioRepository();
     }
 
     // ---------- página ----------
@@ -49,7 +53,10 @@ class BatalhaController extends BaseController
         $this->json($this->resposta($uid, $_SESSION['batalha'] ?? null));
     }
 
-    /** Corpo JSON: {} = treinador comum; { "lider": true } = próximo líder de ginásio. */
+    /**
+     * Corpo JSON: {} = treinador comum; { "lider": true } = próximo líder de ginásio;
+     * { "lendario": true } = lendário sorteado.
+     */
     public function iniciar(): void
     {
         $uid = $this->exigirLoginApi();
@@ -58,11 +65,10 @@ class BatalhaController extends BaseController
         try {
             // se já tem uma batalha em andamento, continua ela
             if (!isset($_SESSION['batalha'])) {
-                $lider = null;
-                if (!empty($this->corpoJson()['lider'])) {
-                    $lider = $this->liderLiberado($uid);
-                }
-                $_SESSION['batalha'] = $this->batalhas->nova($uid, $lider);
+                $corpo    = $this->corpoJson();
+                $lider    = !empty($corpo['lider']) ? $this->liderLiberado($uid) : null;
+                [$lendario, $base] = !empty($corpo['lendario']) ? $this->lendarioSorteado($uid) : [null, null];
+                $_SESSION['batalha'] = $this->batalhas->nova($uid, $lider, $lendario, $base);
             }
             $this->json($this->resposta($uid, $_SESSION['batalha']));
         } catch (InvalidArgumentException $e) {
@@ -155,6 +161,32 @@ class BatalhaController extends BaseController
         return $p['proximo'];
     }
 
+    /**
+     * Regra dos lendários: a cada LendarioRepository::VITORIAS_NECESSARIAS
+     * vitórias contra treinadores comuns, enfrenta um lendário SORTEADO
+     * entre os que o jogador ainda não desbloqueou.
+     * @return array{0: Especie, 1: Especie} [lendário da batalha, base desbloqueada]
+     */
+    private function lendarioSorteado(int $uid): array
+    {
+        $p = $this->lendarios->progresso($uid);
+        if ($p['total'] === 0) {
+            throw new InvalidArgumentException('Nenhum lendário no jogo ainda: importe uma geração na Home.');
+        }
+        if ($p['restantes'] === 0) {
+            throw new InvalidArgumentException('Você já desbloqueou todos os lendários importados!');
+        }
+        if (!$p['liberado']) {
+            $faltam = $p['necessarias'] - $p['vitorias'];
+            throw new InvalidArgumentException("Vença mais {$faltam} treinador(es) para desafiar um lendário.");
+        }
+        $sorteio = $this->lendarios->sortear($uid);
+        if ($sorteio === null) {
+            throw new InvalidArgumentException('Você já desbloqueou todos os lendários importados!');
+        }
+        return $sorteio;
+    }
+
     /** Se a batalha acabou: grava no banco (log + prêmio) e tira da sessão. */
     private function encerrarSeAcabou(int $uid, Batalha $batalha): Batalha
     {
@@ -180,6 +212,7 @@ class BatalhaController extends BaseController
             'ok'        => true,
             'batalha'   => $batalha?->paraArray(),
             'progresso' => $progresso,
+            'lendario'  => $this->lendarios->progresso($uid),
             'mochila'   => $mochila,
             'historico' => $this->batalhas->historico($uid),
         ];

@@ -22,7 +22,14 @@ class Especie
         private int $spDef,
         private int $velocidade,
         private ?string $spriteUrl,
-        private ?int $evoluiDeId = null
+        private ?int $evoluiDeId = null,
+        // 1 = a pré-evolução é um bebê de geração futura (Pikachu <- Pichu):
+        // a espécie conta como básica mesmo tendo evolui_de_id preenchido
+        private bool $ignoraPreEvolucao = false,
+        // lendário (is_legendary ou is_mythical da PokéAPI, paradoxo
+        // lendário ou Ultra Beast): começa bloqueado e só é
+        // desbloqueado vencendo uma batalha lendária
+        private bool $lendario = false
     ) {}
 
     public static function fromRow(array $r): self
@@ -39,7 +46,9 @@ class Especie
             (int) $r['sp_def'],
             (int) $r['velocidade'],
             $r['sprite_url'] ?? null,
-            isset($r['evolui_de_id']) ? (int) $r['evolui_de_id'] : null
+            isset($r['evolui_de_id']) ? (int) $r['evolui_de_id'] : null,
+            !empty($r['ignora_pre_evolucao']),
+            !empty($r['lendario'])
         );
     }
 
@@ -47,10 +56,27 @@ class Especie
      * Regra de negócio: espécie BÁSICA é a que não evolui de ninguém.
      * Só ela pode entrar no time; as evoluções vêm das pedras do Poké Mart.
      * Ex.: Charmander e Eevee são básicas; Charmeleon e Vaporeon não.
+     * Exceção: Pikachu (pré-evolução Pichu é bebê da geração seguinte)
+     * também é básico, mesmo com o Pichu importado.
      */
     public function isBasica(): bool
     {
-        return $this->evoluiDeId === null;
+        return $this->evoluiDeId === null || $this->ignoraPreEvolucao;
+    }
+
+    public function isLendario(): bool
+    {
+        return $this->lendario;
+    }
+
+    /**
+     * Pode entrar no time sem precisar desbloquear: básica e NÃO lendária.
+     * O resto (evoluções e lendários) só depois de desbloqueado
+     * (tabela especies_desbloqueadas).
+     */
+    public function isLivre(): bool
+    {
+        return $this->isBasica() && !$this->lendario;
     }
 
     public function getId(): int
@@ -129,6 +155,7 @@ class Especie
             'velocidade' => $this->velocidade,
             'sprite_url' => $this->spriteUrl,
             'basica'     => $this->isBasica(),
+            'lendario'   => $this->lendario,
         ];
     }
 }

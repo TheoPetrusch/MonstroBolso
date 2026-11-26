@@ -47,7 +47,7 @@ class TimeController extends BaseController
         $desbloqueadas = $this->especies->idsDesbloqueados($uid);
         $linhas = $this->especies->linhas();
         $lista = array_map(fn(Especie $e) => $e->paraArray() + [
-            'disponivel' => $e->isBasica() || in_array($e->getId(), $desbloqueadas, true),
+            'disponivel' => $e->isLivre() || in_array($e->getId(), $desbloqueadas, true),
             'linha'      => $linhas[$e->getId()] ?? $e->getId(),
         ], $this->especies->listar());
         $this->json(['ok' => true, 'especies' => $lista]);
@@ -74,11 +74,11 @@ class TimeController extends BaseController
             }
             // confere no back-end também: não basta esconder no catálogo,
             // alguém poderia mandar o especie_id de um Charizard direto pela API
-            if (!$especie->isBasica()
+            if (!$especie->isLivre()
                 && !in_array($especie->getId(), $this->especies->idsDesbloqueados($uid), true)) {
-                throw new InvalidArgumentException(
-                    'Essa evolução ainda está bloqueada. Evolua um Pokémon com pedra para desbloqueá-la.'
-                );
+                throw new InvalidArgumentException($especie->isLendario()
+                    ? 'Esse lendário ainda está bloqueado. Vença-o numa batalha lendária para desbloqueá-lo.'
+                    : 'Essa evolução ainda está bloqueada. Evolua um Pokémon com pedra para desbloqueá-la.');
             }
 
             $novo = $this->times->adicionarEspecie($uid, $especie);

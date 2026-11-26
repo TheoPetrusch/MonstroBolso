@@ -33,6 +33,9 @@
 
                 <!-- ginásios: preenchido pelo batalha.js -->
                 <div id="ginasio" class="ginasio"></div>
+
+                <!-- lendários: preenchido pelo batalha.js -->
+                <div id="lendario" class="ginasio lendario"></div>
             </div>
 
             <!-- durante e depois da batalha -->

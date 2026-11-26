@@ -35,7 +35,7 @@ class Pokemon
     /**
      * Regra de negócio: um Pokémon novo nasce no nível 5,
      * com HP máximo e atual iguais ao HP base da espécie,
-     * e tem 1 chance em 64 de ser shiny (cor rara; continua shiny ao evoluir).
+     * e tem 1 chance em CHANCE_SHINY de ser shiny (cor rara; continua shiny ao evoluir).
      */
     public static function novoDaEspecie(int $usuarioId, Especie $especie): self
     {

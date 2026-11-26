@@ -80,8 +80,10 @@ class EspecieRepository
      */
     public function sortearParecidas(int $quantidade, int $forca, int $folga): array
     {
+        // lendários não aparecem com treinadores comuns: só na batalha lendária
         $st = $this->pdo->prepare(
             self::SELECT . '
+             WHERE e.lendario = 0
              ORDER BY GREATEST(
                         ABS(CAST(e.hp + e.ataque + e.defesa + e.sp_atk + e.sp_def + e.velocidade AS SIGNED) - :forca)
                         - :folga, 0),
@@ -90,6 +92,23 @@ class EspecieRepository
         );
         $st->execute(['forca' => $forca, 'folga' => $folga]);
         return array_map([Especie::class, 'fromRow'], $st->fetchAll());
+    }
+
+    /**
+     * Lendários que aparecem na batalha lendária: só o ÚLTIMO estágio de cada
+     * linha (ninguém evolui dele). Ex.: Urshifu sim, Kubfu não; Solgaleo e
+     * Lunala sim, Cosmog e Cosmoem não. Lendário sem evolução (Mewtwo) também.
+     * @return Especie[]
+     */
+    public function lendariosFinais(): array
+    {
+        $linhas = $this->pdo->query(
+            self::SELECT . '
+             WHERE e.lendario = 1
+               AND NOT EXISTS (SELECT 1 FROM especies f WHERE f.evolui_de_id = e.id)
+             ORDER BY e.pokeapi_id'
+        )->fetchAll();
+        return array_map([Especie::class, 'fromRow'], $linhas);
     }
 
     /** Time FIXO de um líder de ginásio (tabela lider_pokemons), na ordem de entrada. @return Especie[] */
@@ -131,15 +150,17 @@ class EspecieRepository
         $this->pdo->prepare(
             'INSERT INTO especies
                     (pokeapi_id, nome, tipo_id, hp, ataque, defesa, sp_atk, sp_def, velocidade,
-                     sprite_url, evolui_de_pokeapi_id)
+                     sprite_url, evolui_de_pokeapi_id, ignora_pre_evolucao, lendario)
              VALUES (:pid, :nome, (SELECT id FROM tipos WHERE nome = :tipo),
-                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai)
+                     :hp, :atk, :def, :spa, :spd, :vel, :sprite, :pai, :ignora, :lendario)
              ON DUPLICATE KEY UPDATE
                     nome = VALUES(nome), tipo_id = VALUES(tipo_id), hp = VALUES(hp),
                     ataque = VALUES(ataque), defesa = VALUES(defesa), sp_atk = VALUES(sp_atk),
                     sp_def = VALUES(sp_def), velocidade = VALUES(velocidade),
                     sprite_url = VALUES(sprite_url),
-                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id)'
+                    evolui_de_pokeapi_id = VALUES(evolui_de_pokeapi_id),
+                    ignora_pre_evolucao = VALUES(ignora_pre_evolucao),
+                    lendario = VALUES(lendario)'
         )->execute([
             'pid'    => $d['pokeapi_id'],
             'nome'   => $d['nome'],
@@ -152,6 +173,8 @@ class EspecieRepository
             'vel'    => $d['velocidade'],
             'sprite' => $d['sprite_url'],
             'pai'    => $d['evolui_de'],
+            'ignora' => (int) !empty($d['ignora_pre_evolucao']),
+            'lendario' => (int) !empty($d['lendario']),
         ]);
 
         $st = $this->pdo->prepare('SELECT id FROM especies WHERE pokeapi_id = :pid');
