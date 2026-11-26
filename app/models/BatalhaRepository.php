@@ -5,13 +5,18 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/**
+ * REPOSITORY da batalha: monta uma batalha nova (escolhe os oponentes) e,
+ * quando ela acaba, grava tudo nas tabelas de LOG (batalhas e batalha_turnos)
+ * numa transação. Também lê o histórico pela view vw_historico_batalhas.
+ */
 class BatalhaRepository
 {
     /**
      * DIFICULDADE dos treinadores comuns: a força buscada para os inimigos é a
      * média do seu time x 1.10 (10% mais fortes). 1.00 = mesma força.
      */
-    public const DIFICULDADE = 1.20;
+    public const DIFICULDADE = 1.10;
 
     /** Inimigos podem ter até 15% de força a mais ou a menos que essa força buscada. */
     public const FOLGA_DE_FORCA = 0.15;

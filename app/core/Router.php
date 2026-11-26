@@ -4,8 +4,15 @@ namespace App\Core;
 
 use Throwable;
 
+/**
+ * ROTEADOR (o "C" do MVC começa aqui): liga cada URL a um método de controller.
+ * O index.php registra as rotas (get/post) e chama dispatch(), que acha a rota
+ * da requisição atual e executa o método certo.
+ * Ex.: POST /api/loja/comprar -> (new LojaController())->comprar()
+ */
 class Router
 {
+    /** Lista de rotas: ['method' => 'GET', 'path' => '/time', 'handler' => [Classe, 'metodo']] */
     private array $routes = [];
 
     public function get(string $path, array $handler): void
@@ -23,8 +30,10 @@ class Router
         $this->routes[] = compact('method', 'path', 'handler');
     }
 
+    /** Executa o controller da rota que combina com o método HTTP e a URL. */
     public function dispatch(string $method, string $uri): void
     {
+        // tira a parte "/MonstroBolso/public" da URL, sobrando só a rota ("/time")
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';
         $base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
         if ($base !== '' && stripos($path, $base) === 0) {
@@ -44,6 +53,7 @@ class Router
                 if (preg_match('#^' . $regex . '$#', $path, $matches)) {
                     $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                     [$classe, $metodo] = $route['handler'];
+                    // cria o controller e chama o método pelo nome (ex.: TimeController->adicionar)
                     (new $classe())->$metodo($params);
                     return;
                 }
@@ -58,6 +68,7 @@ class Router
         }
     }
 
+    /** Resposta de erro em JSON (404 = rota não existe, 500 = erro inesperado). */
     private function erro(int $status, string $mensagem): void
     {
         http_response_code($status);

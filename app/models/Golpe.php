@@ -16,6 +16,7 @@ class Golpe
         private string $categoria // 'fisico' ou 'especial'
     ) {}
 
+    /** Monta o objeto a partir de uma linha do banco (tabela golpes). */
     public static function fromRow(array $r): self
     {
         return new self(
@@ -59,6 +60,7 @@ class Golpe
         return Tipo::criar($this->tipo);
     }
 
+    /** Versão em array, para virar JSON e ir para o JavaScript. */
     public function paraArray(): array
     {
         return [

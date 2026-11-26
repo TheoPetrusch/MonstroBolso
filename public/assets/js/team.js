@@ -1,14 +1,21 @@
+/** Escapa texto antes de ir para o innerHTML (evita XSS: nome com <script> vira texto). */
 const esc = (texto) => String(texto ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+/**
+ * TeamBuilder - tela do Team Builder (POO em JavaScript).
+ * Atributos com # são PRIVADOS (encapsulamento). Toda ação chama a API
+ * com fetch assíncrono (via ApiClient), recebe o time atualizado em JSON
+ * e redesenha a tela (#desenharTudo).
+ */
 class TeamBuilder {
-    #api;
-    #pokeApi;
-    #especies = [];
+    #api;          // ApiClient: conversa com o nosso back-end (PHP)
+    #pokeApi;      // PokeApi: consulta a PokéAPI externa (janela de detalhes)
+    #especies = []; // catálogo (todas as espécies, com "disponivel")
     #time = { maximo: 6, pokemons: [] };
-    #evolucoes = []; 
-    #mochila = [];
+    #evolucoes = []; // botões "Evoluir" possíveis (vêm da vw_evolucoes)
+    #mochila = [];   // itens de cura do jogador
     #shinies = []; // ids das espécies com shiny desbloqueado   
     #filtroTipo = ''; 
 
@@ -25,6 +32,7 @@ class TeamBuilder {
             .addEventListener('click', () => document.getElementById('janela-detalhes').close());
     }
 
+    /** Carrega catálogo e time AO MESMO TEMPO (Promise.all: duas requisições em paralelo). */
     async iniciar() {
         try {
             const [esp, time] = await Promise.all([
@@ -42,6 +50,7 @@ class TeamBuilder {
         }
     }
 
+    /** Adiciona a espécie ao time; o servidor sorteia se ela nasce shiny. */
     async #adicionar(especieId) {
         try {
             const r = await this.#api.post('/api/time/adicionar', { especie_id: especieId });
@@ -158,6 +167,7 @@ class TeamBuilder {
         }
     }
 
+    /** Janela de detalhes: consome a PokéAPI direto do navegador (arte, altura, peso, habilidades). */
     async #mostrarDetalhes(especie) {
         const janela = document.getElementById('janela-detalhes');
         const alvo = document.getElementById('detalhes');
@@ -190,6 +200,9 @@ class TeamBuilder {
 
     
 
+    // ---------- desenho da tela ----------
+
+    /** Redesenha tudo a partir dos dados atuais (chamado depois de cada ação). */
     #desenharTudo() {
         this.#desenharTime();
         this.#desenharResumo();
@@ -197,6 +210,7 @@ class TeamBuilder {
         this.#desenharCatalogo();
     }
 
+    /** Os 6 slots do time: ocupados (com botões) ou vazios. */
     #desenharTime() {
         document.getElementById('contagem').textContent = this.#time.pokemons.length;
         document.getElementById('btn-limpar').disabled = this.#time.pokemons.length === 0;
@@ -277,6 +291,10 @@ class TeamBuilder {
             </div>`;
     }
 
+    /**
+     * Resumo do time: média de cada atributo, ponto forte e fraco, tipos que
+     * faltam e uma SUGESTÃO de Pokémon disponível que reforça o ponto fraco.
+     */
     #desenharResumo() {
         const alvo = document.getElementById('resumo');
         const pokes = this.#time.pokemons;
@@ -328,6 +346,7 @@ class TeamBuilder {
             ${sugestao ? `<p class="dica">Pra reforçar ${fraco.nome}, que tal um <strong>${esc(sugestao.nome)}</strong> (${fraco.nome} ${Number(sugestao[fraco.campo])})?</p>` : ''}`;
     }
 
+    /** Botões de filtro por tipo (Todos, Fogo, Água...). */
     #desenharFiltros() {
         const alvo = document.getElementById('filtros');
         const tipos = [...new Set(this.#especies.map(e => e.tipo))];
@@ -354,6 +373,7 @@ class TeamBuilder {
     }
 
     
+    /** Select com os itens de cura da mochila + botão "Usar" em cada slot. */
     #desenharUsarItem(alvo, pokemon) {
         if (this.#mochila.length === 0) return;
 
@@ -375,6 +395,10 @@ class TeamBuilder {
         alvo.append(select, botao);
     }
 
+    /**
+     * Catálogo: filtra por tipo e pela busca. Espécies bloqueadas (evoluções
+     * e lendários) aparecem escuras e sem botão "Adicionar".
+     */
     #desenharCatalogo() {
         const termo = document.getElementById('busca').value.trim().toLowerCase();
         const cheio = this.#time.pokemons.length >= this.#time.maximo;
@@ -435,6 +459,7 @@ class TeamBuilder {
             this.#especies.find(e => e.id === p.especie.id)?.linha ?? p.especie.id));
     }
 
+    /** Mensagem flutuante (toast) por 3,5 s: vermelha = erro, verde = sucesso. */
     #aviso(texto, sucesso = false) {
         const el = document.getElementById('mensagem');
         el.textContent = texto;
@@ -444,4 +469,5 @@ class TeamBuilder {
     }
 }
 
+// cria a tela e já carrega os dados (window.BASE vem da view team.php)
 new TeamBuilder(new ApiClient(window.BASE), new PokeApi()).iniciar();

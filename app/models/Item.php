@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
-/** Item vendido no Poké Mart. Imutável: só getters. */
+/**
+ * Item vendido no Poké Mart. Imutável: só getters (ENCAPSULAMENTO: os
+ * atributos são private e ninguém de fora consegue alterar).
+ * O efeito de cada item é aplicado em Pokemon::usarItem(), conforme a categoria.
+ */
 class Item
 {
     public function __construct(
@@ -67,6 +71,7 @@ class Item
         return $this->curaTodosStatus;
     }
 
+    /** Só o que a loja mostra (os efeitos ficam no servidor). */
     public function paraArray(): array
     {
         return [

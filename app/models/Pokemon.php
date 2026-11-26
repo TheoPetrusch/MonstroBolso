@@ -16,6 +16,11 @@ class Pokemon
 
     private int $hpAtual;
 
+    /**
+     * PROMOÇÃO DE PROPRIEDADES (PHP 8): "private ?int $id" no construtor já
+     * cria o atributo e guarda o valor. O hpAtual fica de fora porque passa
+     * pelo setter (que valida e controla o desmaio).
+     */
     public function __construct(
         private ?int $id,
         private int $usuarioId,
@@ -219,6 +224,7 @@ class Pokemon
         $this->desmaiado = $this->hpAtual === 0;
     }
 
+    /** Para o JSON do Team Builder e da batalha (inclui a espécie inteira). */
     public function paraArray(): array
     {
         return [

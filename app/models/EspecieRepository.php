@@ -5,6 +5,11 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/**
+ * REPOSITORY das espécies (tabela especies + tipos): catálogo do Team Builder,
+ * linhas evolutivas, sorteio de oponentes, times dos líderes, lendários e a
+ * gravação das espécies importadas da PokéAPI.
+ */
 class EspecieRepository
 {
     private PDO $pdo;

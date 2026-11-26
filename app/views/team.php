@@ -1,3 +1,10 @@
+<?php
+/**
+ * VIEW do Team Builder. Só a estrutura da página: slots, resumo, catálogo e a
+ * janela de detalhes (<dialog>) são preenchidos pelo team.js com dados da API.
+ * $base = caminho do site (ex.: /MonstroBolso/public), usado nos links.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -59,6 +66,7 @@
 
     <p id="mensagem" role="alert" class="toast"></p>
 
+    <!-- passa o caminho do site para o JavaScript (o ApiClient usa nas URLs) -->
     <script>
         window.BASE = <?= json_encode($base) ?>;
     </script>

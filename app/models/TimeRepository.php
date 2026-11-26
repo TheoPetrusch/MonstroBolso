@@ -8,6 +8,11 @@ use App\Exceptions\TimeCheioException;
 use InvalidArgumentException;
 use PDO;
 
+/**
+ * REPOSITORY do Team Builder: lê e grava o time (tabelas times, time_pokemon
+ * e pokemons). As ações que mexem em mais de uma tabela (evoluir, usar item...)
+ * são feitas em TRANSAÇÃO, com SELECT ... FOR UPDATE para travar a linha.
+ */
 class TimeRepository
 {
     private PDO $pdo;

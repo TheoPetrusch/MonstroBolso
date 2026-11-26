@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+// =====================================================================
+// FRONT CONTROLLER: TODA requisição do site passa por este arquivo
+// (o .htaccess manda para cá qualquer URL que não seja um arquivo real,
+// como /time ou /api/loja). Aqui: autoload, sessão, rotas e dispatch.
+// =====================================================================
+
+// AUTOLOAD do Composer (PSR-4): carrega as classes sozinho, sem require em cada arquivo
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Core\Router;
@@ -19,6 +26,7 @@ use App\Controllers\TimeController;
 session_set_cookie_params(['httponly' => true, 'samesite' => 'Lax']);
 session_start();
 
+// tabela de rotas: [método HTTP, URL] -> [Controller, método]
 $router = new Router();
 
 // utilitárias
@@ -62,4 +70,5 @@ $router->post('/api/batalha/fugir',   [BatalhaController::class, 'fugir']);
 // Importação de Pokémon da PokéAPI (qualquer usuário logado)
 $router->post('/api/importar', [ImportadorController::class, 'importar']);
 
+// acha a rota da requisição atual e executa o controller
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

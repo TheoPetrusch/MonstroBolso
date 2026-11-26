@@ -28,7 +28,7 @@ class BatalhaController extends BaseController
     {
         $this->batalhas = new BatalhaRepository();
         $this->ginasios = new GinasioRepository();
-        $this->itens    = new ItemRepository();
+        $this->itens = new ItemRepository();
         $this->lendarios = new LendarioRepository();
     }
 
@@ -48,7 +48,8 @@ class BatalhaController extends BaseController
     public function estado(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $this->json($this->resposta($uid, $_SESSION['batalha'] ?? null));
     }
@@ -60,13 +61,14 @@ class BatalhaController extends BaseController
     public function iniciar(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         try {
             // se já tem uma batalha em andamento, continua ela
             if (!isset($_SESSION['batalha'])) {
-                $corpo    = $this->corpoJson();
-                $lider    = !empty($corpo['lider']) ? $this->liderLiberado($uid) : null;
+                $corpo = $this->corpoJson();
+                $lider = !empty($corpo['lider']) ? $this->liderLiberado($uid) : null;
                 [$lendario, $base] = !empty($corpo['lendario']) ? $this->lendarioSorteado($uid) : [null, null];
                 $_SESSION['batalha'] = $this->batalhas->nova($uid, $lider, $lendario, $base);
             }
@@ -85,7 +87,8 @@ class BatalhaController extends BaseController
     public function acao(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $batalha = $_SESSION['batalha'] ?? null;
         if (!$batalha instanceof Batalha) {
@@ -94,7 +97,7 @@ class BatalhaController extends BaseController
         }
 
         try {
-            $d  = $this->corpoJson();
+            $d = $this->corpoJson();
             $id = (int) ($d['id'] ?? 0);
 
             switch ($d['tipo'] ?? '') {
@@ -129,7 +132,8 @@ class BatalhaController extends BaseController
     public function fugir(): void
     {
         $uid = $this->exigirLoginApi();
-        if ($uid === null) return;
+        if ($uid === null)
+            return;
 
         $batalha = $_SESSION['batalha'] ?? null;
         if (!$batalha instanceof Batalha) {
@@ -209,11 +213,11 @@ class BatalhaController extends BaseController
         $progresso['proximo'] = $progresso['proximo']?->paraArray();
 
         return [
-            'ok'        => true,
-            'batalha'   => $batalha?->paraArray(),
+            'ok' => true,
+            'batalha' => $batalha?->paraArray(),
             'progresso' => $progresso,
-            'lendario'  => $this->lendarios->progresso($uid),
-            'mochila'   => $mochila,
+            'lendario' => $this->lendarios->progresso($uid),
+            'mochila' => $mochila,
             'historico' => $this->batalhas->historico($uid),
         ];
     }

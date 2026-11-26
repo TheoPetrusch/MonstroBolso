@@ -22,6 +22,7 @@ class Time
         }
     }
 
+    /** Regra dos 6 Pokémon: o 7º lança a exceção customizada TimeCheioException. */
     public function adicionar(Pokemon $p): void
     {
         if ($this->estaCheio()) {

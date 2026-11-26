@@ -1,3 +1,11 @@
+<?php
+/**
+ * VIEW da batalha: campo, golpes, mochila, trocas, log e histórico são
+ * preenchidos pelo batalha.js. O número de vitórias para o líder vem direto
+ * da constante do PHP (GinasioRepository::VITORIAS_NECESSARIAS).
+ * $base = caminho do site (ex.: /MonstroBolso/public), usado nos links.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -76,6 +84,7 @@
 
     <p id="mensagem" role="alert" class="toast"></p>
 
+    <!-- passa o caminho do site para o JavaScript (o ApiClient usa nas URLs) -->
     <script>
         window.BASE = <?= json_encode($base) ?>;
     </script>

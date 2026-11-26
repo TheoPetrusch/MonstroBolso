@@ -1,3 +1,10 @@
+<?php
+/**
+ * VIEW do menu inicial. Recebe $usuario do HomeController (via extract no
+ * BaseController::view) e escapa o nome com htmlspecialchars (contra XSS).
+ * $base = caminho do site (ex.: /MonstroBolso/public), usado nos links.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -42,6 +49,7 @@
         <button type="button" id="btn-sair">Sair</button>
     </main>
 
+    <!-- passa o caminho do site para o JavaScript (o ApiClient usa nas URLs) -->
     <script>
         window.BASE = <?= json_encode($base) ?>;
     </script>

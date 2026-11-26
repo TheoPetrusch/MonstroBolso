@@ -80,6 +80,7 @@ class TelaLoja {
         }
     }
 
+    /** Compra assíncrona: o servidor devolve saldo e mochila já atualizados. */
     async #comprar(item, quantidade) {
         try {
             const dados = await this.#api.post('/api/loja/comprar', {
@@ -95,6 +96,7 @@ class TelaLoja {
 
     // ---------- desenho ----------
 
+    /** Redesenha saldo, mochila, filtros e catálogo com os dados do servidor. */
     #desenhar(dados) {
         this.#dados = dados;
         document.getElementById('saldo').textContent = dados.saldo;
@@ -169,6 +171,7 @@ class TelaLoja {
         });
     }
 
+    /** Cards dos itens com seletor de quantidade; mostra "Faltam $ X" se não tiver saldo. */
     #desenharLoja(itens, saldo) {
         const loja = document.getElementById('loja');
         loja.innerHTML = '';

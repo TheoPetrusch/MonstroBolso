@@ -33,6 +33,7 @@ class TelaBatalha {
         });
     }
 
+    /** Ao abrir a tela: pega a batalha em andamento (se houver), progresso e histórico. */
     async iniciar() {
         try {
             this.#desenhar(await this.#api.get('/api/batalha'));
@@ -43,10 +44,12 @@ class TelaBatalha {
 
     // ---------- comunicação ----------
 
+    /** Manda UMA ação (golpe, item ou troca); o servidor joga o turno inteiro. */
     #acao(dados) {
         return this.#enviar('/api/batalha/acao', dados);
     }
 
+    /** POST assíncrono; #ocupado evita dois cliques mandarem duas ações. */
     async #enviar(rota, dados = {}) {
         if (this.#ocupado) return;
         this.#ocupado = true;
@@ -71,6 +74,7 @@ class TelaBatalha {
 
     // ---------- desenho ----------
 
+    /** Redesenha a tela inteira com o estado que veio do servidor (JSON). */
     #desenhar(r) {
         const b = r.batalha;
         // o bloco de início (nova batalha, Centro Pokémon, ginásio) aparece
@@ -130,6 +134,7 @@ class TelaBatalha {
             </div>`;
     }
 
+    /** Um botão por golpe do Pokémon que está lutando (cor do tipo do golpe). */
     #desenharGolpes(golpes) {
         const alvo = document.getElementById('golpes');
         alvo.innerHTML = '';
@@ -164,6 +169,7 @@ class TelaBatalha {
         document.getElementById('btn-usar').disabled = mochila.length === 0;
     }
 
+    /** Botões para trocar pelo Pokémon reserva (desmaiados ficam desativados). */
     #desenharReservas(jogador) {
         const alvo = document.getElementById('reservas');
         alvo.innerHTML = '';
@@ -180,6 +186,7 @@ class TelaBatalha {
         if (!alvo.children.length) alvo.innerHTML = '<small>Ninguém para trocar.</small>';
     }
 
+    /** Log da batalha: o que aconteceu em cada turno (vem da composição Batalha -> Turno). */
     #desenharLog(log) {
         const lista = document.getElementById('log');
         lista.innerHTML = log
@@ -188,6 +195,7 @@ class TelaBatalha {
         lista.scrollTop = lista.scrollHeight; // mostra sempre o mais recente
     }
 
+    /** Mensagem de vitória/derrota: prêmio, insígnia ou lendário desbloqueado. */
     #desenharResultado(b, lendario) {
         const alvo = document.getElementById('resultado');
         alvo.hidden = !b.encerrada;
@@ -275,6 +283,7 @@ class TelaBatalha {
             .addEventListener('click', () => this.#enviar('/api/batalha/iniciar', { lendario: true }));
     }
 
+    /** Tabela das últimas batalhas (vem da view vw_historico_batalhas). */
     #desenharHistorico(historico) {
         const alvo = document.getElementById('historico');
         if (!historico.length) {

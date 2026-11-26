@@ -1,3 +1,5 @@
+/* Estilos compartilhados pelas telas internas (topo, layout em grade, slots,
+   cards de Pokémon com animação no hover, toast de mensagens). */
 body.pagina {
     display: block;
     padding: 0 0 40px;

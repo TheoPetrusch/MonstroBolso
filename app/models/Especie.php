@@ -7,6 +7,11 @@ use App\Models\Tipos\Tipo;
 /**
  * Espécie = dados base de um Pokémon (stats da PokéAPI).
  * Imutável: só getters.
+ * Requisito "10+ variáveis": id, pokeapiId, nome, tipo, hp, ataque, defesa,
+ * spAtk, spDef, velocidade, spriteUrl, evoluiDeId... (mais nível, HP atual,
+ * status e shiny no Pokemon).
+ * O tipo é guardado como texto e vira OBJETO em tipo() (Fogo, Agua...),
+ * que é como o Pokémon "herda" o comportamento do tipo.
  */
 class Especie
 {
@@ -140,6 +145,7 @@ class Especie
         return Tipo::criar($this->tipo);
     }
 
+    /** Para o JSON do catálogo (basica e lendario dizem se precisa desbloquear). */
     public function paraArray(): array
     {
         return [

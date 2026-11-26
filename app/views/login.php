@@ -1,3 +1,10 @@
+<?php
+/**
+ * VIEW da tela de login/cadastro (o "V" do MVC). Só HTML: quem dá vida é o
+ * login.js, que envia os formulários por fetch para /api/login e /api/registrar.
+ * $base = caminho do site (ex.: /MonstroBolso/public), usado nos links.
+ */
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -37,6 +44,7 @@
         <p id="mensagem" role="alert"></p>
     </main>
 
+    <!-- passa o caminho do site para o JavaScript (o ApiClient usa nas URLs) -->
     <script>
         window.BASE = <?= json_encode($base) ?>;
     </script>

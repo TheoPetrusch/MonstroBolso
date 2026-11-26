@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Core\Database;
 use PDO;
 
+/** REPOSITORY dos golpes (tabelas golpes e especie_golpes: 4 golpes por espécie). */
 class GolpeRepository
 {
     private PDO $pdo;

@@ -1,4 +1,5 @@
-
+/* Visual do Team Builder (também usado na Batalha): céu animado, painéis,
+   cores dos 18 tipos ([data-tipo]), barras de HP e a janela de detalhes. */
 body.time {
     --tinta: #1c2a4a;       
     --creme: #fff8e6;

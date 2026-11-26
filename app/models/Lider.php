@@ -2,7 +2,11 @@
 
 namespace App\Models;
 
-/** Líder de ginásio (tabela lideres). Imutável: só getters. */
+/**
+ * Líder de ginásio (tabela lideres). Imutável: só getters.
+ * O time dele é fixo (tabela lider_pokemons) e o HP dos Pokémon é
+ * multiplicado por bonusHp (BatalhaRepository::pokemonComHpExtra).
+ */
 class Lider
 {
     public function __construct(
