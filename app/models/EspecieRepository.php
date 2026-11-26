@@ -167,20 +167,20 @@ class EspecieRepository
                     ignora_pre_evolucao = VALUES(ignora_pre_evolucao),
                     lendario = VALUES(lendario)'
         )->execute([
-            'pid'    => $d['pokeapi_id'],
-            'nome'   => $d['nome'],
-            'tipo'   => $d['tipo'],
-            'hp'     => $d['hp'],
-            'atk'    => $d['ataque'],
-            'def'    => $d['defesa'],
-            'spa'    => $d['sp_atk'],
-            'spd'    => $d['sp_def'],
-            'vel'    => $d['velocidade'],
-            'sprite' => $d['sprite_url'],
-            'pai'    => $d['evolui_de'],
-            'ignora' => (int) !empty($d['ignora_pre_evolucao']),
-            'lendario' => (int) !empty($d['lendario']),
-        ]);
+                    'pid' => $d['pokeapi_id'],
+                    'nome' => $d['nome'],
+                    'tipo' => $d['tipo'],
+                    'hp' => $d['hp'],
+                    'atk' => $d['ataque'],
+                    'def' => $d['defesa'],
+                    'spa' => $d['sp_atk'],
+                    'spd' => $d['sp_def'],
+                    'vel' => $d['velocidade'],
+                    'sprite' => $d['sprite_url'],
+                    'pai' => $d['evolui_de'],
+                    'ignora' => (int) !empty($d['ignora_pre_evolucao']),
+                    'lendario' => (int) !empty($d['lendario']),
+                ]);
 
         $st = $this->pdo->prepare('SELECT id FROM especies WHERE pokeapi_id = :pid');
         $st->execute(['pid' => $d['pokeapi_id']]);
@@ -226,7 +226,7 @@ class EspecieRepository
         $total = 0;
         foreach ($pais as $p) {
             $st->execute([
-                'pai'   => $p['pai'],
+                'pai' => $p['pai'],
                 'filho' => (int) $p['total'] === 1 ? $p['filho'] : null,
             ]);
             $total += (int) $p['total'];

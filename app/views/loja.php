@@ -12,7 +12,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Poké Mart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/mart.css">

@@ -14,7 +14,8 @@ class Golpe
         private int $poder,
         private int $precisao,
         private string $categoria // 'fisico' ou 'especial'
-    ) {}
+    ) {
+    }
 
     /** Monta o objeto a partir de uma linha do banco (tabela golpes). */
     public static function fromRow(array $r): self
@@ -64,11 +65,11 @@ class Golpe
     public function paraArray(): array
     {
         return [
-            'id'        => $this->id,
-            'nome'      => $this->nome,
-            'tipo'      => $this->tipo,
-            'poder'     => $this->poder,
-            'precisao'  => $this->precisao,
+            'id' => $this->id,
+            'nome' => $this->nome,
+            'tipo' => $this->tipo,
+            'poder' => $this->poder,
+            'precisao' => $this->precisao,
             'categoria' => $this->categoria,
         ];
     }

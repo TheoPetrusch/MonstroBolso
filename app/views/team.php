@@ -13,7 +13,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Team Builder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/time.css">
@@ -31,7 +32,8 @@
                 <div class="titulo-painel">
                     <h2>SEU TIME</h2>
                     <span class="contador"><span id="contagem">0</span>/6</span>
-                    <button type="button" id="btn-centro" title="Cura HP, condições e desmaiados de graça">Centro Pokémon</button>
+                    <button type="button" id="btn-centro" title="Cura HP, condições e desmaiados de graça">Centro
+                        Pokémon</button>
                     <button type="button" id="btn-limpar" class="perigo">Limpar time</button>
                 </div>
                 <div id="slots" class="slots"></div>

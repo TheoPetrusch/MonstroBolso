@@ -127,10 +127,10 @@ class Usuario
     public function paraArray(): array
     {
         return [
-            'id'         => $this->id,
-            'nome'       => $this->nome,
-            'email'      => $this->email,
-            'perfil'     => $this->perfil,
+            'id' => $this->id,
+            'nome' => $this->nome,
+            'email' => $this->email,
+            'perfil' => $this->perfil,
             'pokedollar' => $this->pokedollar,
         ];
     }

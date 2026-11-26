@@ -49,9 +49,9 @@ class UsuarioRepository
                  VALUES (:nome, :email, :hash, :perfil)'
             );
             $st->execute([
-                'nome'   => $u->getNome(),
-                'email'  => $u->getEmail(),
-                'hash'   => $u->getSenhaHash(),
+                'nome' => $u->getNome(),
+                'email' => $u->getEmail(),
+                'hash' => $u->getSenhaHash(),
                 'perfil' => $u->getPerfil(),
             ]);
             $id = (int) $this->pdo->lastInsertId();

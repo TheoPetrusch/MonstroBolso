@@ -35,7 +35,8 @@ class Especie
         // lendário ou Ultra Beast): começa bloqueado e só é
         // desbloqueado vencendo uma batalha lendária
         private bool $lendario = false
-    ) {}
+    ) {
+    }
 
     public static function fromRow(array $r): self
     {
@@ -149,19 +150,19 @@ class Especie
     public function paraArray(): array
     {
         return [
-            'id'         => $this->id,
+            'id' => $this->id,
             'pokeapi_id' => $this->pokeapiId,
-            'nome'       => $this->nome,
-            'tipo'       => $this->tipo,
-            'hp'         => $this->hp,
-            'ataque'     => $this->ataque,
-            'defesa'     => $this->defesa,
-            'sp_atk'     => $this->spAtk,
-            'sp_def'     => $this->spDef,
+            'nome' => $this->nome,
+            'tipo' => $this->tipo,
+            'hp' => $this->hp,
+            'ataque' => $this->ataque,
+            'defesa' => $this->defesa,
+            'sp_atk' => $this->spAtk,
+            'sp_def' => $this->spDef,
             'velocidade' => $this->velocidade,
             'sprite_url' => $this->spriteUrl,
-            'basica'     => $this->isBasica(),
-            'lendario'   => $this->lendario,
+            'basica' => $this->isBasica(),
+            'lendario' => $this->lendario,
         ];
     }
 }

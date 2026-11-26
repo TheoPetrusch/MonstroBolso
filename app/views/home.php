@@ -13,7 +13,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Início</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/home.css">
@@ -37,8 +38,17 @@
         <div class="importar">
             <p class="aviso">Importar Pokémon da PokéAPI</p>
             <select id="geracao" aria-label="Geração">
-                <?php foreach ([1 => 'Kanto', 2 => 'Johto', 3 => 'Hoenn', 4 => 'Sinnoh', 5 => 'Unova',
-                                6 => 'Kalos', 7 => 'Alola', 8 => 'Galar', 9 => 'Paldea'] as $n => $regiao): ?>
+                <?php foreach ([
+                    1 => 'Kanto',
+                    2 => 'Johto',
+                    3 => 'Hoenn',
+                    4 => 'Sinnoh',
+                    5 => 'Unova',
+                    6 => 'Kalos',
+                    7 => 'Alola',
+                    8 => 'Galar',
+                    9 => 'Paldea'
+                ] as $n => $regiao): ?>
                     <option value="<?= $n ?>"><?= $n ?>ª geração (<?= $regiao ?>)</option>
                 <?php endforeach; ?>
             </select>

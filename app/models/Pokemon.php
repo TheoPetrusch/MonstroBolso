@@ -61,7 +61,7 @@ class Pokemon
     {
         // a view usa "especie_id" e "especie"; a Especie espera "id" e "nome"
         $especie = Especie::fromRow(array_merge($r, [
-            'id'   => $r['especie_id'],
+            'id' => $r['especie_id'],
             'nome' => $r['especie'],
         ]));
 
@@ -134,7 +134,7 @@ class Pokemon
         }
         $ganho = max(0, $nova->getHp() - $this->hpMax);
         $this->especie = $nova;
-        $this->hpMax   = $nova->getHp();
+        $this->hpMax = $nova->getHp();
         $this->setHpAtual($this->hpAtual + $ganho);
     }
 
@@ -228,16 +228,16 @@ class Pokemon
     public function paraArray(): array
     {
         return [
-            'id'        => $this->id,
-            'nome'      => $this->getNomeExibicao(),
-            'posicao'   => $this->posicao,
-            'nivel'     => $this->nivel,
-            'hp_atual'  => $this->hpAtual,
-            'hp_max'    => $this->hpMax,
-            'status'    => $this->status,
+            'id' => $this->id,
+            'nome' => $this->getNomeExibicao(),
+            'posicao' => $this->posicao,
+            'nivel' => $this->nivel,
+            'hp_atual' => $this->hpAtual,
+            'hp_max' => $this->hpMax,
+            'status' => $this->status,
             'desmaiado' => $this->desmaiado,
-            'shiny'     => $this->shiny,
-            'especie'   => $this->especie->paraArray(),
+            'shiny' => $this->shiny,
+            'especie' => $this->especie->paraArray(),
         ];
     }
 }

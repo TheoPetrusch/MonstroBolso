@@ -13,7 +13,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MonstroBolso - Batalha</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800&family=Press+Start+2P&display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;800&family=Press+Start+2P&display=swap">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/team.css">
     <link rel="stylesheet" href="<?= $base ?>/assets/css/time.css">
@@ -34,8 +35,9 @@
             <!-- antes de começar e depois que a batalha termina -->
             <div id="inicio" class="inicio">
                 <p>Enfrente um treinador com 1 a 6 Pokémon de força parecida com a do seu time.
-                   Vencer dá <strong>200 Pokédollar por Pokémon</strong> derrotado.
-                   A cada <strong><?= \App\Models\GinasioRepository::VITORIAS_NECESSARIAS ?> vitórias</strong>, você pode desafiar o próximo líder de ginásio.</p>
+                    Vencer dá <strong>200 Pokédollar por Pokémon</strong> derrotado.
+                    A cada <strong><?= \App\Models\GinasioRepository::VITORIAS_NECESSARIAS ?> vitórias</strong>, você
+                    pode desafiar o próximo líder de ginásio.</p>
                 <button type="button" id="btn-iniciar">Começar batalha</button>
                 <button type="button" id="btn-centro" class="sec">Curar time no Centro Pokémon (grátis)</button>
 

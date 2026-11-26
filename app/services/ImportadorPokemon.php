@@ -28,10 +28,10 @@ class ImportadorPokemon
 
     public function __construct(?PokeApiService $api = null, ?PDO $pdo = null)
     {
-        $this->pdo      = $pdo ?? Database::getConnection();
-        $this->api      = $api ?? new PokeApiService();
+        $this->pdo = $pdo ?? Database::getConnection();
+        $this->api = $api ?? new PokeApiService();
         $this->especies = new EspecieRepository($this->pdo);
-        $this->golpes   = new GolpeRepository($this->pdo);
+        $this->golpes = new GolpeRepository($this->pdo);
     }
 
     /**
@@ -135,8 +135,8 @@ class ImportadorPokemon
         }
 
         return [
-            'importadas'    => count($dados),
-            'evolucoes'     => $evolucoes,
+            'importadas' => count($dados),
+            'evolucoes' => $evolucoes,
             'pre_evolucoes' => $preEvolucoes,
         ];
     }
@@ -243,22 +243,22 @@ class ImportadorPokemon
 
         return [
             'pokeapi_id' => (int) $pokemon['id'],
-            'nome'       => mb_substr($nome, 0, 40),
-            'tipo'       => $tipos[0],
-            'tipo2'      => $tipos[1] ?? null,
-            'hp'         => $stats['hp'],
-            'ataque'     => $stats['attack'],
-            'defesa'     => $stats['defense'],
-            'sp_atk'     => $stats['special-attack'],
-            'sp_def'     => $stats['special-defense'],
+            'nome' => mb_substr($nome, 0, 40),
+            'tipo' => $tipos[0],
+            'tipo2' => $tipos[1] ?? null,
+            'hp' => $stats['hp'],
+            'ataque' => $stats['attack'],
+            'defesa' => $stats['defense'],
+            'sp_atk' => $stats['special-attack'],
+            'sp_def' => $stats['special-defense'],
             'velocidade' => $stats['speed'],
             'sprite_url' => $pokemon['sprites']['front_default'] ?? null,
-            'evolui_de'  => $pai ? PokeApiService::idDaUrl($pai) : null,
+            'evolui_de' => $pai ? PokeApiService::idDaUrl($pai) : null,
             // lendário = lendário OU mítico (Mew, Celebi...) OU paradoxo lendário OU Ultra Beast
-            'lendario'   => !empty($especie['is_legendary'])
-                            || !empty($especie['is_mythical'])
-                            || in_array((int) $pokemon['id'], self::PARADOXOS_LENDARIOS, true)
-                            || in_array((int) $pokemon['id'], self::ULTRA_BEASTS, true),
+            'lendario' => !empty($especie['is_legendary'])
+                || !empty($especie['is_mythical'])
+                || in_array((int) $pokemon['id'], self::PARADOXOS_LENDARIOS, true)
+                || in_array((int) $pokemon['id'], self::ULTRA_BEASTS, true),
         ];
     }
 }

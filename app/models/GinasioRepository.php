@@ -35,16 +35,16 @@ class GinasioRepository
         $linha = $st->fetch() ?: ['insignias' => 0, 'vitorias_desde_lider' => 0];
 
         $insignias = (int) $linha['insignias'];
-        $vitorias  = (int) $linha['vitorias_desde_lider'];
-        $proximo   = $this->liderDaOrdem($insignias + 1); // sempre em ordem: não dá para pular
+        $vitorias = (int) $linha['vitorias_desde_lider'];
+        $proximo = $this->liderDaOrdem($insignias + 1); // sempre em ordem: não dá para pular
 
         return [
-            'insignias'     => $insignias,
-            'vitorias'      => min($vitorias, self::VITORIAS_NECESSARIAS),
-            'necessarias'   => self::VITORIAS_NECESSARIAS,
+            'insignias' => $insignias,
+            'vitorias' => min($vitorias, self::VITORIAS_NECESSARIAS),
+            'necessarias' => self::VITORIAS_NECESSARIAS,
             'total_lideres' => (int) $this->pdo->query('SELECT COUNT(*) FROM lideres')->fetchColumn(),
-            'liberado'      => $proximo !== null && $vitorias >= self::VITORIAS_NECESSARIAS,
-            'proximo'       => $proximo,
+            'liberado' => $proximo !== null && $vitorias >= self::VITORIAS_NECESSARIAS,
+            'proximo' => $proximo,
         ];
     }
 

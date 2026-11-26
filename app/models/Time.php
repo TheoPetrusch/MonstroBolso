@@ -56,7 +56,7 @@ class Time
     public function paraArray(): array
     {
         return [
-            'maximo'   => self::MAXIMO,
+            'maximo' => self::MAXIMO,
             'pokemons' => array_map(fn(Pokemon $p) => $p->paraArray(), $this->pokemons),
         ];
     }

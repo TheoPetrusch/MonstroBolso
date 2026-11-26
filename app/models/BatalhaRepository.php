@@ -24,8 +24,12 @@ class BatalhaRepository
 
     /** Nomes dos treinadores do computador (sorteado a cada batalha). */
     private const TREINADORES = [
-        'Treinador Lucas', 'Treinadora Bia', 'Campista Rui',
-        'Pescador Tião', 'Escoteira Ana', 'Montanhista Leo',
+        'Treinador Lucas',
+        'Treinadora Bia',
+        'Campista Rui',
+        'Pescador Tião',
+        'Escoteira Ana',
+        'Montanhista Leo',
     ];
 
     private PDO $pdo;
@@ -53,8 +57,7 @@ class BatalhaRepository
         ?Lider $lider = null,
         ?Especie $lendario = null,
         ?Especie $lendarioBase = null
-    ): Batalha
-    {
+    ): Batalha {
         $golpes = new GolpeRepository($this->pdo);
 
         $time = (new TimeRepository($this->pdo))->carregar($usuarioId)->getPokemons();
@@ -85,9 +88,11 @@ class BatalhaRepository
             }
         } else {
             $media = intdiv(array_sum(array_map(fn(Pokemon $p) => $p->getEspecie()->forca(), $dePe)), count($dePe));
-            $alvo  = (int) round($media * self::DIFICULDADE);
+            $alvo = (int) round($media * self::DIFICULDADE);
             $sorteadas = $especies->sortearParecidas(
-                random_int(1, count($dePe)), $alvo, (int) round($alvo * self::FOLGA_DE_FORCA)
+                random_int(1, count($dePe)),
+                $alvo,
+                (int) round($alvo * self::FOLGA_DE_FORCA)
             );
         }
 
@@ -95,8 +100,8 @@ class BatalhaRepository
         $oponente = array_map(
             fn(Especie $e) => match (true) {
                 $lendario !== null => $this->pokemonComHpExtra($e, LendarioRepository::BONUS_HP),
-                $lider !== null    => $this->pokemonComHpExtra($e, $lider->getBonusHp()),
-                default            => Pokemon::novoDaEspecie(0, $e),
+                $lider !== null => $this->pokemonComHpExtra($e, $lider->getBonusHp()),
+                default => Pokemon::novoDaEspecie(0, $e),
             },
             $sorteadas
         );
@@ -108,8 +113,8 @@ class BatalhaRepository
             $oponente,
             $golpesOponente,
             $lendario !== null
-                ? 'Lendário ' . $lendario->getNome()
-                : ($lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)]),
+            ? 'Lendário ' . $lendario->getNome()
+            : ($lider?->getNome() ?? self::TREINADORES[array_rand(self::TREINADORES)]),
             $lider,
             $lendario,
             $lendarioBase
@@ -141,14 +146,14 @@ class BatalhaRepository
                 'INSERT INTO batalhas (usuario_id, lider_id, lendario_id, oponente_nome, vencedor, dinheiro_ganho, total_turnos)
                  VALUES (:u, :lider, :lendario, :oponente, :vencedor, :dinheiro, :turnos)'
             )->execute([
-                'u'        => $usuarioId,
-                'lider'    => $b->getLider()?->getId(), // NULL = treinador comum
-                'lendario' => $b->getLendario()?->getId(), // vitória: o trigger trg_batalhas_lendario desbloqueia
-                'oponente' => $b->getOponenteNome(),
-                'vencedor' => $b->getVencedor(),
-                'dinheiro' => $b->premio(),
-                'turnos'   => $b->getNumero(),
-            ]);
+                        'u' => $usuarioId,
+                        'lider' => $b->getLider()?->getId(), // NULL = treinador comum
+                        'lendario' => $b->getLendario()?->getId(), // vitória: o trigger trg_batalhas_lendario desbloqueia
+                        'oponente' => $b->getOponenteNome(),
+                        'vencedor' => $b->getVencedor(),
+                        'dinheiro' => $b->premio(),
+                        'turnos' => $b->getNumero(),
+                    ]);
             $batalhaId = (int) $this->pdo->lastInsertId();
 
             $st = $this->pdo->prepare(
@@ -157,12 +162,12 @@ class BatalhaRepository
             );
             foreach ($b->getTurnos() as $t) {
                 $st->execute([
-                    'b'     => $batalhaId,
+                    'b' => $batalhaId,
                     'turno' => $t->getNumero(),
-                    'ator'  => $t->getAtor(),
-                    'acao'  => $t->getAcao(),
-                    'dano'  => $t->getDano(),
-                    'hp'    => $t->getHpRestante(),
+                    'ator' => $t->getAtor(),
+                    'acao' => $t->getAcao(),
+                    'dano' => $t->getDano(),
+                    'hp' => $t->getHpRestante(),
                 ]);
             }
 
@@ -172,10 +177,10 @@ class BatalhaRepository
             );
             foreach ($b->getJogador() as $p) {
                 $st->execute([
-                    'hp'     => $p->getHpAtual(),
+                    'hp' => $p->getHpAtual(),
                     'status' => $p->getStatus(),
-                    'id'     => $p->getId(),
-                    'u'      => $usuarioId,
+                    'id' => $p->getId(),
+                    'u' => $usuarioId,
                 ]);
             }
 

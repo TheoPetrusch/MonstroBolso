@@ -94,13 +94,13 @@ class TimeRepository
                 'INSERT INTO pokemons (usuario_id, especie_id, nivel, hp_max, hp_atual, shiny)
                  VALUES (:u, :e, :nivel, :hp_max, :hp_atual, :shiny)'
             )->execute([
-                'u'        => $novo->getUsuarioId(),
-                'e'        => $novo->getEspecie()->getId(),
-                'nivel'    => $novo->getNivel(),
-                'hp_max'   => $novo->getHpMax(),
-                'hp_atual' => $novo->getHpAtual(),
-                'shiny'    => (int) $novo->isShiny(),
-            ]);
+                        'u' => $novo->getUsuarioId(),
+                        'e' => $novo->getEspecie()->getId(),
+                        'nivel' => $novo->getNivel(),
+                        'hp_max' => $novo->getHpMax(),
+                        'hp_atual' => $novo->getHpAtual(),
+                        'shiny' => (int) $novo->isShiny(),
+                    ]);
             $pokemonId = (int) $this->pdo->lastInsertId();
 
             // o trigger trg_time_pokemon_dono confere se o Pokémon é do dono do time
@@ -134,11 +134,11 @@ class TimeRepository
         );
         $st->execute(['u' => $usuarioId]);
         return array_map(fn(array $r) => [
-            'pokemon_id'      => (int) $r['pokemon_id'],
+            'pokemon_id' => (int) $r['pokemon_id'],
             'para_especie_id' => (int) $r['para_especie_id'],
-            'para_nome'       => $r['para_nome'],
-            'item_id'    => (int) $r['item_id'],
-            'item_nome'  => $r['item_nome'],
+            'para_nome' => $r['para_nome'],
+            'item_id' => (int) $r['item_id'],
+            'item_nome' => $r['item_nome'],
             'quantidade' => (int) $r['quantidade'],
         ], $st->fetchAll());
     }
@@ -173,11 +173,11 @@ class TimeRepository
             $this->pdo->prepare(
                 'UPDATE pokemons SET especie_id = :e, hp_max = :max, hp_atual = :atual WHERE id = :id'
             )->execute([
-                'e'     => $nova->getId(),
-                'max'   => $pokemon->getHpMax(),
-                'atual' => $pokemon->getHpAtual(),
-                'id'    => $pokemonId,
-            ]);
+                        'e' => $nova->getId(),
+                        'max' => $pokemon->getHpMax(),
+                        'atual' => $pokemon->getHpAtual(),
+                        'id' => $pokemonId,
+                    ]);
 
             $this->pdo->commit();
             return $pokemon;
@@ -210,10 +210,10 @@ class TimeRepository
             $this->pdo->prepare(
                 'UPDATE pokemons SET hp_atual = :hp, status = :status WHERE id = :id'
             )->execute([
-                'hp'     => $pokemon->getHpAtual(),
-                'status' => $pokemon->getStatus(),
-                'id'     => $pokemonId,
-            ]);
+                        'hp' => $pokemon->getHpAtual(),
+                        'status' => $pokemon->getStatus(),
+                        'id' => $pokemonId,
+                    ]);
 
             $this->pdo->commit();
             return $pokemon;
@@ -326,10 +326,10 @@ class TimeRepository
                 }
                 $p->restaurar();
                 $st->execute([
-                    'hp'     => $p->getHpAtual(),
+                    'hp' => $p->getHpAtual(),
                     'status' => $p->getStatus(),
-                    'id'     => $p->getId(),
-                    'u'      => $usuarioId,
+                    'id' => $p->getId(),
+                    'u' => $usuarioId,
                 ]);
             }
             $this->pdo->commit();

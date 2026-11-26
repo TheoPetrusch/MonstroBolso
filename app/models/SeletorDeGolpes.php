@@ -19,11 +19,24 @@ class SeletorDeGolpes
 
     /** Tipo de cobertura para quem só tem um tipo. */
     private const COBERTURA = [
-        'Fogo' => 'Terra', 'Água' => 'Gelo', 'Planta' => 'Venenoso', 'Elétrico' => 'Aço',
-        'Gelo' => 'Água', 'Lutador' => 'Pedra', 'Venenoso' => 'Sombrio', 'Terra' => 'Pedra',
-        'Psíquico' => 'Fada', 'Inseto' => 'Venenoso', 'Pedra' => 'Terra', 'Fantasma' => 'Sombrio',
-        'Dragão' => 'Fogo', 'Normal' => 'Sombrio', 'Fada' => 'Psíquico', 'Voador' => 'Normal',
-        'Sombrio' => 'Fantasma', 'Aço' => 'Pedra',
+        'Fogo' => 'Terra',
+        'Água' => 'Gelo',
+        'Planta' => 'Venenoso',
+        'Elétrico' => 'Aço',
+        'Gelo' => 'Água',
+        'Lutador' => 'Pedra',
+        'Venenoso' => 'Sombrio',
+        'Terra' => 'Pedra',
+        'Psíquico' => 'Fada',
+        'Inseto' => 'Venenoso',
+        'Pedra' => 'Terra',
+        'Fantasma' => 'Sombrio',
+        'Dragão' => 'Fogo',
+        'Normal' => 'Sombrio',
+        'Fada' => 'Psíquico',
+        'Voador' => 'Normal',
+        'Sombrio' => 'Fantasma',
+        'Aço' => 'Pedra',
     ];
 
     /** @var array<string, Golpe[]> golpes agrupados por tipo, do mais fraco ao mais forte */
@@ -57,9 +70,9 @@ class SeletorDeGolpes
         int $velocidade,
         bool $primeiroEstagio
     ): array {
-        $cat     = $ataque >= $spAtk ? 'fisico' : 'especial';
-        $rapido  = $velocidade >= 60;
-        $outro   = $tipo2 ?? self::COBERTURA[$tipo1] ?? 'Normal';
+        $cat = $ataque >= $spAtk ? 'fisico' : 'especial';
+        $rapido = $velocidade >= 60;
+        $outro = $tipo2 ?? self::COBERTURA[$tipo1] ?? 'Normal';
         $escolha = [];
 
         $add = function (?Golpe $g) use (&$escolha): void {

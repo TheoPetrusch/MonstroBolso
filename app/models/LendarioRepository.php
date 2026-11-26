@@ -48,16 +48,16 @@ class LendarioRepository
         $st->execute(['u' => $usuarioId]);
         $vitorias = (int) $st->fetchColumn();
 
-        $total     = count($this->especies->lendariosFinais());
+        $total = count($this->especies->lendariosFinais());
         $restantes = count($this->naoCapturados($usuarioId));
 
         return [
-            'vitorias'    => min($vitorias, self::VITORIAS_NECESSARIAS),
+            'vitorias' => min($vitorias, self::VITORIAS_NECESSARIAS),
             'necessarias' => self::VITORIAS_NECESSARIAS,
-            'liberado'    => $restantes > 0 && $vitorias >= self::VITORIAS_NECESSARIAS,
-            'capturados'  => $total - $restantes,
-            'total'       => $total,
-            'restantes'   => $restantes,
+            'liberado' => $restantes > 0 && $vitorias >= self::VITORIAS_NECESSARIAS,
+            'capturados' => $total - $restantes,
+            'total' => $total,
+            'restantes' => $restantes,
         ];
     }
 
