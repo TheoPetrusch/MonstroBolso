@@ -42,9 +42,13 @@ class TimeController extends BaseController
 
         // todas aparecem; "disponivel" diz quais podem ser adicionadas:
         // as básicas e as evoluções que o jogador já conseguiu com pedra
+        // "linha" = espécie base da linha evolutiva: a tela usa para não
+        // deixar adicionar duas da mesma linha (o back-end também confere)
         $desbloqueadas = $this->especies->idsDesbloqueados($uid);
+        $linhas = $this->especies->linhas();
         $lista = array_map(fn(Especie $e) => $e->paraArray() + [
             'disponivel' => $e->isBasica() || in_array($e->getId(), $desbloqueadas, true),
+            'linha'      => $linhas[$e->getId()] ?? $e->getId(),
         ], $this->especies->listar());
         $this->json(['ok' => true, 'especies' => $lista]);
     }
@@ -148,6 +152,20 @@ class TimeController extends BaseController
         }
     }
 
+    /** Deixa um Pokémon do time shiny (ou volta ao normal), se a espécie estiver desbloqueada. */
+    public function alternarShiny(): void
+    {
+        $uid = $this->exigirLoginApi();
+        if ($uid === null) return;
+
+        try {
+            $p = $this->times->alternarShiny($uid, (int) ($this->corpoJson()['pokemon_id'] ?? 0));
+            $this->json($this->respostaTime($uid) + ['shiny' => $p->isShiny()]);
+        } catch (InvalidArgumentException $e) {
+            $this->json(['ok' => false, 'erro' => $e->getMessage()], 422);
+        }
+    }
+
     /**
      * Centro Pokémon: cura o time de graça. Não vale no meio de uma batalha
      * (lá dentro, só o item Revive revive).
@@ -179,6 +197,7 @@ class TimeController extends BaseController
             'time'      => $this->times->carregar($uid)->paraArray(),
             'evolucoes' => $this->times->opcoesDeEvolucao($uid),
             'mochila'   => $mochila,
+            'shinies'   => $this->times->shiniesDesbloqueados($uid), // espécies com shiny liberado
         ];
     }
 }

@@ -13,6 +13,7 @@ class TelaBatalha {
 
     #api;
     #ocupado = false; // evita mandar duas ações ao mesmo tempo
+    #necessarias = 10; // vitórias para o próximo líder (vem do servidor: GinasioRepository)
 
     constructor(api) {
         this.#api = api;
@@ -72,6 +73,8 @@ class TelaBatalha {
         document.getElementById('campo').hidden = b === null;
         document.getElementById('acoes').hidden = b === null || b.encerrada;
         this.#desenharHistorico(r.historico);
+        this.#necessarias = r.progresso?.necessarias ?? this.#necessarias;
+        this.#desenharGinasio(r.progresso);
 
         if (b === null) {
             document.getElementById('resultado').hidden = true;
@@ -83,8 +86,9 @@ class TelaBatalha {
         const dele = b.oponente.pokemons[b.oponente.ativo];
         const deleDePe = b.oponente.pokemons.filter(p => !p.desmaiado).length;
 
+        const quem = b.lider ? `Líder de Ginásio · ${esc(b.oponente_nome)}` : esc(b.oponente_nome);
         document.getElementById('lado-oponente').innerHTML =
-            this.#lado(dele, false, `${esc(b.oponente_nome)} · ${deleDePe}/${b.oponente.pokemons.length} de pé`);
+            this.#lado(dele, false, `${quem} · ${deleDePe}/${b.oponente.pokemons.length} de pé`);
         document.getElementById('lado-jogador').innerHTML = this.#lado(meu, true, 'Seu Pokémon');
 
         this.#desenharLog(b.log);
@@ -175,9 +179,15 @@ class TelaBatalha {
         if (!b.encerrada) return;
 
         const venceu = b.vencedor === 'jogador';
+        let texto = venceu ? `Você venceu! Ganhou $ ${Number(b.premio)}.` : 'Você perdeu a batalha.';
+        if (b.lider && venceu) {
+            texto += ` Você conquistou a ${esc(b.lider.insignia)}!`;
+        } else if (b.lider) {
+            texto += ` Vença mais ${this.#necessarias} treinadores para desafiar o líder de novo.`;
+        }
         alvo.className = 'resultado ' + (venceu ? 'vitoria' : 'derrota');
         alvo.innerHTML = `
-            <span>${venceu ? `Você venceu! Ganhou $ ${Number(b.premio)}.` : 'Você perdeu a batalha.'}</span>
+            <span>${texto}</span>
             <span>Seus Pokémon saem com o HP que sobrou: cure de graça no Centro Pokémon antes da próxima.</span>
             <span>
                 <button type="button" class="nova">Nova batalha</button>
@@ -185,6 +195,37 @@ class TelaBatalha {
             </span>`;
         alvo.querySelector('.nova').addEventListener('click', () => this.#enviar('/api/batalha/iniciar'));
         alvo.querySelector('.centro').addEventListener('click', () => this.#centroPokemon());
+    }
+
+    /** Insígnias, vitórias até o próximo líder e o botão de desafiar. */
+    #desenharGinasio(p) {
+        const alvo = document.getElementById('ginasio');
+        if (!p) return;
+
+        let html = `<p><strong>Insígnias: ${Number(p.insignias)}/${Number(p.total_lideres)}</strong></p>`;
+        if (!p.proximo) {
+            alvo.innerHTML = html + '<p>Você venceu todos os líderes de ginásio. Parabéns, campeão!</p>';
+            return;
+        }
+        const pct = Math.round(p.vitorias / p.necessarias * 100);
+        html += `
+            <p>Próximo ginásio: <strong>${esc(p.proximo.nome)}</strong>
+               <span class="chip-tipo" data-tipo="${esc(p.proximo.tipo)}">${esc(p.proximo.tipo)}</span>
+               · ${Number(p.proximo.quantidade)} Pokémon · prêmio $ ${Number(p.proximo.premio)}</p>
+            <p class="dica">Contra o líder, lutam só os ${Number(p.proximo.quantidade)} primeiros Pokémon
+               de pé do seu time (na ordem dos slots).</p>
+            <div class="hp">
+                <span>Vitórias</span>
+                <div class="trilho"><span class="vida" style="width:${pct}%"></span></div>
+                <span>${Number(p.vitorias)}/${Number(p.necessarias)}</span>
+            </div>
+            <button type="button" id="btn-lider" ${p.liberado ? '' : 'disabled'}
+                    title="${p.liberado ? '' : 'Vença ' + Number(p.necessarias) + ' treinadores para liberar'}">
+                Desafiar ${esc(p.proximo.nome)}
+            </button>`;
+        alvo.innerHTML = html;
+        alvo.querySelector('#btn-lider')
+            .addEventListener('click', () => this.#enviar('/api/batalha/iniciar', { lider: true }));
     }
 
     #desenharHistorico(historico) {

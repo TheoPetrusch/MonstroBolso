@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Exceptions\LinhaRepetidaException;
 use App\Exceptions\TimeCheioException;
 use InvalidArgumentException;
 use PDO;
@@ -45,9 +46,26 @@ class TimeRepository
                 throw new InvalidArgumentException('Time do usuário não encontrado.');
             }
 
-            $st = $this->pdo->prepare('SELECT posicao FROM time_pokemon WHERE time_id = :t');
+            // Regra: não pode haver Pokémon repetido nem evoluções do mesmo
+            // Pokémon no time (mesma linha evolutiva). Também fica dentro da
+            // transação, com o time travado, como o cálculo do slot livre.
+            $linhas = (new EspecieRepository($this->pdo))->linhas();
+            $st = $this->pdo->prepare(
+                'SELECT tp.posicao, p.especie_id, COALESCE(p.apelido, e.nome) AS nome
+                   FROM time_pokemon tp
+                   JOIN pokemons p ON p.id = tp.pokemon_id
+                   JOIN especies e ON e.id = p.especie_id
+                  WHERE tp.time_id = :t'
+            );
             $st->execute(['t' => $timeId]);
-            $ocupadas = array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+            $noTime = $st->fetchAll();
+
+            foreach ($noTime as $p) {
+                if (($linhas[(int) $p['especie_id']] ?? 0) === ($linhas[$especie->getId()] ?? -1)) {
+                    throw new LinhaRepetidaException($p['nome'], $especie->getNome());
+                }
+            }
+            $ocupadas = array_map(fn(array $p) => (int) $p['posicao'], $noTime);
 
             // O slot livre é calculado aqui (e não no model Time) porque precisa
             // acontecer DENTRO da transação, com a linha do time travada pelo
@@ -234,6 +252,52 @@ class TimeRepository
         $st->execute(['u' => $usuarioId, 'i' => $itemId]);
         if ($st->rowCount() === 0) {
             throw new InvalidArgumentException('Você não tem esse item na mochila. Compre no Poké Mart.');
+        }
+    }
+
+    /**
+     * Espécies que o jogador já conseguiu shiny (desbloqueadas para sempre).
+     * Quem preenche a tabela são os triggers trg_pokemons_shiny_insert/update.
+     * @return int[]
+     */
+    public function shiniesDesbloqueados(int $usuarioId): array
+    {
+        $st = $this->pdo->prepare('SELECT especie_id FROM shinies_desbloqueados WHERE usuario_id = :u');
+        $st->execute(['u' => $usuarioId]);
+        return array_map('intval', $st->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Deixa o Pokémon shiny (ou volta ao normal). Só vale para espécies que o
+     * jogador já conseguiu shiny alguma vez. TRANSAÇÃO com o Pokémon travado.
+     */
+    public function alternarShiny(int $usuarioId, int $pokemonId): Pokemon
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $pokemon = $this->travarPokemon($usuarioId, $pokemonId);
+            $especie = $pokemon->getEspecie();
+
+            $st = $this->pdo->prepare(
+                'SELECT 1 FROM shinies_desbloqueados WHERE usuario_id = :u AND especie_id = :e'
+            );
+            $st->execute(['u' => $usuarioId, 'e' => $especie->getId()]);
+            if (!$st->fetchColumn()) {
+                throw new InvalidArgumentException(
+                    "Você ainda não conseguiu um {$especie->getNome()} shiny. Ele aparece com chance de 1 em "
+                    . Pokemon::CHANCE_SHINY . ' ao adicionar ao time.'
+                );
+            }
+
+            $pokemon->alternarShiny();
+            $this->pdo->prepare('UPDATE pokemons SET shiny = :s WHERE id = :id')
+                ->execute(['s' => (int) $pokemon->isShiny(), 'id' => $pokemonId]);
+
+            $this->pdo->commit();
+            return $pokemon;
+        } catch (\Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
     }
 

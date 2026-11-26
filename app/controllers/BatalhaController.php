@@ -5,7 +5,9 @@ namespace App\Controllers;
 use App\Core\BaseController;
 use App\Models\Batalha;
 use App\Models\BatalhaRepository;
+use App\Models\GinasioRepository;
 use App\Models\ItemRepository;
+use App\Models\Lider;
 use InvalidArgumentException;
 
 /**
@@ -16,11 +18,13 @@ use InvalidArgumentException;
 class BatalhaController extends BaseController
 {
     private BatalhaRepository $batalhas;
+    private GinasioRepository $ginasios;
     private ItemRepository $itens;
 
     public function __construct()
     {
         $this->batalhas = new BatalhaRepository();
+        $this->ginasios = new GinasioRepository();
         $this->itens    = new ItemRepository();
     }
 
@@ -45,6 +49,7 @@ class BatalhaController extends BaseController
         $this->json($this->resposta($uid, $_SESSION['batalha'] ?? null));
     }
 
+    /** Corpo JSON: {} = treinador comum; { "lider": true } = próximo líder de ginásio. */
     public function iniciar(): void
     {
         $uid = $this->exigirLoginApi();
@@ -53,7 +58,11 @@ class BatalhaController extends BaseController
         try {
             // se já tem uma batalha em andamento, continua ela
             if (!isset($_SESSION['batalha'])) {
-                $_SESSION['batalha'] = $this->batalhas->nova($uid);
+                $lider = null;
+                if (!empty($this->corpoJson()['lider'])) {
+                    $lider = $this->liderLiberado($uid);
+                }
+                $_SESSION['batalha'] = $this->batalhas->nova($uid, $lider);
             }
             $this->json($this->resposta($uid, $_SESSION['batalha']));
         } catch (InvalidArgumentException $e) {
@@ -127,6 +136,25 @@ class BatalhaController extends BaseController
 
     // ---------- auxiliares ----------
 
+    /**
+     * Regra dos ginásios: só enfrenta o PRÓXIMO líder da ordem, e só depois
+     * de 10 vitórias contra treinadores comuns (contadas desde o último líder).
+     */
+    private function liderLiberado(int $uid): Lider
+    {
+        $p = $this->ginasios->progresso($uid);
+        if ($p['proximo'] === null) {
+            throw new InvalidArgumentException('Você já venceu todos os líderes de ginásio!');
+        }
+        if (!$p['liberado']) {
+            $faltam = $p['necessarias'] - $p['vitorias'];
+            throw new InvalidArgumentException(
+                "Vença mais {$faltam} treinador(es) para desafiar {$p['proximo']->getNome()}."
+            );
+        }
+        return $p['proximo'];
+    }
+
     /** Se a batalha acabou: grava no banco (log + prêmio) e tira da sessão. */
     private function encerrarSeAcabou(int $uid, Batalha $batalha): Batalha
     {
@@ -145,9 +173,13 @@ class BatalhaController extends BaseController
             fn(array $i) => $i['categoria'] !== 'evolucao'
         ));
 
+        $progresso = $this->ginasios->progresso($uid);
+        $progresso['proximo'] = $progresso['proximo']?->paraArray();
+
         return [
             'ok'        => true,
             'batalha'   => $batalha?->paraArray(),
+            'progresso' => $progresso,
             'mochila'   => $mochila,
             'historico' => $this->batalhas->historico($uid),
         ];

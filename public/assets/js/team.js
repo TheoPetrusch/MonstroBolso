@@ -8,7 +8,8 @@ class TeamBuilder {
     #especies = [];
     #time = { maximo: 6, pokemons: [] };
     #evolucoes = []; 
-    #mochila = [];   
+    #mochila = [];
+    #shinies = []; // ids das espécies com shiny desbloqueado   
     #filtroTipo = ''; 
 
     constructor(api, pokeApi) {
@@ -34,6 +35,7 @@ class TeamBuilder {
             this.#time = time.time;
             this.#evolucoes = time.evolucoes;
             this.#mochila = time.mochila;
+            this.#shinies = time.shinies;
             this.#desenharTudo();
         } catch (e) {
             this.#aviso(e.message);
@@ -46,10 +48,11 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#desenharTudo();
             if (r.shiny) {
                 const nome = this.#especies.find(e => e.id === especieId)?.nome ?? 'Pokémon';
-                this.#aviso(`✨ Uau! Seu ${nome} é shiny! (chance de 1 em 64)`, true);
+                this.#aviso(`✨ Uau! Seu ${nome} é shiny! Agora o shiny dele está desbloqueado para sempre.`, true);
             }
         } catch (e) {
             this.#aviso(e.message);
@@ -62,6 +65,7 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#desenharTudo();
         } catch (e) {
             this.#aviso(e.message);
@@ -77,6 +81,7 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#desenharTudo();
             this.#aviso(`Time limpo: ${r.removidos} Pokémon removidos.`, true);
         } catch (e) {
@@ -91,10 +96,26 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#desenharTudo();
             this.#aviso(r.curados > 0
                 ? `Centro Pokémon: ${r.curados} Pokémon curados!`
                 : 'Seu time já estava 100%.', true);
+        } catch (e) {
+            this.#aviso(e.message);
+        }
+    }
+
+    /** Deixa shiny ou volta ao normal (só para espécies com shiny desbloqueado). */
+    async #alternarShiny(pokemon) {
+        try {
+            const r = await this.#api.post('/api/time/shiny', { pokemon_id: pokemon.id });
+            this.#time = r.time;
+            this.#evolucoes = r.evolucoes;
+            this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
+            this.#desenharTudo();
+            this.#aviso(r.shiny ? `✨ ${pokemon.nome} agora é shiny!` : `${pokemon.nome} voltou à cor normal.`, true);
         } catch (e) {
             this.#aviso(e.message);
         }
@@ -110,6 +131,7 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#especies = (await this.#api.get('/api/especies')).especies;
             this.#desenharTudo();
             this.#aviso(`${pokemon.nome} evoluiu para ${r.evoluiu_para}! Ele agora está desbloqueado.`, true);
@@ -128,6 +150,7 @@ class TeamBuilder {
             this.#time = r.time;
             this.#evolucoes = r.evolucoes;
             this.#mochila = r.mochila;
+            this.#shinies = r.shinies;
             this.#desenharTudo();
             this.#aviso(`Usou ${item?.nome ?? 'o item'} em ${pokemon.nome}!`, true);
         } catch (e) {
@@ -199,6 +222,7 @@ class TeamBuilder {
                     <button type="button" class="perigo">Remover</button>`;
                 div.querySelector('.perigo').addEventListener('click', () => this.#remover(p.id));
                 this.#desenharEvolucoes(div.querySelector('.evolucoes'), p);
+                this.#desenharShiny(div.querySelector('.evolucoes'), p);
                 this.#desenharUsarItem(div.querySelector('.usar-item'), p);
             } else {
                 div.innerHTML = `<span class="vazio"><span class="mais">+</span>Slot ${i} vazio</span>`;
@@ -224,6 +248,17 @@ class TeamBuilder {
                 }
                 alvo.appendChild(botao);
             });
+    }
+
+    /** Botão "Deixar shiny" / "Voltar ao normal", igual aos botões de evoluir. */
+    #desenharShiny(alvo, pokemon) {
+        if (!this.#shinies.includes(pokemon.especie.id)) return;
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'sec shiny-btn';
+        botao.textContent = pokemon.shiny ? 'Voltar ao normal' : 'Deixar shiny';
+        botao.addEventListener('click', () => this.#alternarShiny(pokemon));
+        alvo.appendChild(botao);
     }
 
     /** Sprite shiny da PokéAPI (o mesmo do hover do catálogo). */
@@ -265,7 +300,7 @@ class TeamBuilder {
         const todos = [...new Set(this.#especies.map(e => e.tipo))];
 
         const sugestao = this.#especies
-            .filter(e => e.disponivel && !pokes.some(p => p.especie.id === e.id))
+            .filter(e => e.disponivel && !this.#linhasNoTime().has(e.linha))
             .sort((a, b) => Number(b[fraco.campo]) - Number(a[fraco.campo]))[0];
 
         alvo.innerHTML = `
@@ -343,6 +378,7 @@ class TeamBuilder {
     #desenharCatalogo() {
         const termo = document.getElementById('busca').value.trim().toLowerCase();
         const cheio = this.#time.pokemons.length >= this.#time.maximo;
+        const linhasNoTime = this.#linhasNoTime();
         const catalogo = document.getElementById('catalogo');
         catalogo.innerHTML = '';
 
@@ -377,8 +413,11 @@ class TeamBuilder {
                     <div class="acoes">
                         <button type="button" class="sec">Detalhes</button>
                         ${e.disponivel
-                            ? `<button type="button" class="add" ${cheio ? 'disabled' : ''}
-                                       ${e.basica ? '' : 'title="Desbloqueado por evolução"'}>Adicionar</button>`
+                            ? `<button type="button" class="add"
+                                       ${cheio || linhasNoTime.has(e.linha) ? 'disabled' : ''}
+                                       ${linhasNoTime.has(e.linha)
+                                           ? 'title="Seu time já tem um Pokémon dessa linha evolutiva"'
+                                           : (e.basica ? '' : 'title="Desbloqueado por evolução"')}>Adicionar</button>`
                             : ''}
                     </div>`;
 
@@ -386,6 +425,12 @@ class TeamBuilder {
                 card.querySelector('.add')?.addEventListener('click', () => this.#adicionar(e.id));
                 catalogo.appendChild(card);
             });
+    }
+
+    /** Linhas evolutivas que já estão no time (ex.: a do Charmander). */
+    #linhasNoTime() {
+        return new Set(this.#time.pokemons.map(p =>
+            this.#especies.find(e => e.id === p.especie.id)?.linha ?? p.especie.id));
     }
 
     #aviso(texto, sucesso = false) {

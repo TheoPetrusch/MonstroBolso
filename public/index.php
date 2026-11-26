@@ -44,6 +44,7 @@ $router->post('/api/time/limpar',    [TimeController::class, 'limpar']);
 $router->post('/api/time/evoluir',   [TimeController::class, 'evoluir']);
 $router->post('/api/time/usar-item', [TimeController::class, 'usarItem']);
 $router->post('/api/centro-pokemon', [TimeController::class, 'centroPokemon']);
+$router->post('/api/time/shiny',     [TimeController::class, 'alternarShiny']);
 
 // API do Poké Mart
 $router->get('/api/loja',             [LojaController::class, 'dados']);
