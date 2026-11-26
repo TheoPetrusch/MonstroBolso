@@ -1,0 +1,169 @@
+
+body.tela-login {
+    --tinta: #1c2a4a;
+    min-height: 100vh;
+    margin: 0;
+    padding: 32px 16px 40px 8vw;        
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 24px;
+    font-family: 'Nunito', system-ui, sans-serif;
+    color: var(--tinta);
+    background: #7fb6f2 url("../imagens/fundo-login.jpg") right bottom / cover no-repeat fixed;
+    image-rendering: pixelated;
+}
+
+body.tela-login .cartao {
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 28px 24px;
+    box-sizing: border-box;
+    background: #fff6dc;
+    border: 4px solid var(--tinta);
+    border-radius: 16px;
+    box-shadow: 0 8px 0 var(--tinta);
+}
+
+body.tela-login h1 {
+    margin: 0 0 6px;
+    text-align: center;
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: 1px;
+    color: #ffd84a;
+    text-shadow: 3px 0 0 var(--tinta), -3px 0 0 var(--tinta),
+                 0 3px 0 var(--tinta), 0 -3px 0 var(--tinta),
+                 5px 5px 0 #c92e0c;
+}
+
+.subtitulo {
+    margin: 0 0 20px;
+    text-align: center;
+    font-weight: 800;
+    color: #7a5a2a;
+}
+
+body.tela-login .abas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 6px;
+    border-radius: 12px;
+    background: #f6e2b0;
+}
+
+body.tela-login .aba {
+    min-height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #7a5a2a;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+body.tela-login .aba.ativa {
+    background: #ffffff;
+    color: var(--tinta);
+    box-shadow: 0 3px 0 #d9b76a;
+}
+
+body.tela-login form {
+    display: grid;
+    gap: 14px;
+}
+
+body.tela-login form[hidden] {
+    display: none;
+}
+
+body.tela-login label {
+    display: grid;
+    gap: 6px;
+    font-weight: 800;
+    color: var(--tinta);
+}
+
+body.tela-login input {
+    min-height: 46px;
+    padding: 0 12px;
+    border: 3px solid #e3c98f;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--tinta);
+    font-family: inherit;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+body.tela-login input:focus {
+    outline: none;
+    border-color: #e0a020;
+    background: #ffffff;
+}
+
+body.tela-login form button[type="submit"] {
+    margin-top: 4px;
+    min-height: 50px;
+    border: 0;
+    border-radius: 12px;
+    background: #f2c230;
+    box-shadow: 0 5px 0 #b8860b;
+    color: #3b2a1a;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+}
+
+body.tela-login #form-registro button[type="submit"] {
+    background: #c25700;
+    box-shadow: 0 5px 0 #8a3e00;
+}
+
+body.tela-login form button[type="submit"]:hover  { transform: translateY(-2px); }
+body.tela-login form button[type="submit"]:active { transform: translateY(4px); box-shadow: none; }
+
+body.tela-login #mensagem {
+    margin: 14px 0 0;
+    min-height: 1.2em;
+    text-align: center;
+    font-weight: 800;
+    color: #b3261e;
+}
+
+@media (max-width: 700px) {
+    body.tela-login {
+        padding-left: 16px;
+        align-items: center;
+    }
+}
+
+/* título MONSTRO BOLSO pixelado de novo */
+body.tela-login h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.7rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0;
+}
+
+/* título amarelo com contorno azul e sombra azul-escura */
+body.tela-login h1 {
+    color: #ffcb05;
+    text-shadow:
+        3px 0 0 #2a75bb, -3px 0 0 #2a75bb,
+        0 3px 0 #2a75bb, 0 -3px 0 #2a75bb,
+        3px 3px 0 #2a75bb, -3px -3px 0 #2a75bb,
+        3px -3px 0 #2a75bb, -3px 3px 0 #2a75bb,
+        6px 6px 0 #1b3f74;
+}
