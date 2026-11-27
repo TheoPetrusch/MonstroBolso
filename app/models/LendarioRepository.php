@@ -20,7 +20,7 @@ use PDO;
 class LendarioRepository
 {
     /** Vitórias contra treinadores comuns para poder desafiar um lendário. */
-    public const VITORIAS_NECESSARIAS = 1;
+    public const VITORIAS_NECESSARIAS = 10;
 
     /** Dificuldade: o HP do lendário é multiplicado por este valor. */
     public const BONUS_HP = 5.0;
